@@ -9,7 +9,7 @@ import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.ui.View;
 import com.github.rinde.rinsim.ui.renderers.AGVRenderer;
 import com.github.rinde.rinsim.ui.renderers.RoadUserRenderer;
-
+import javax.measure.unit.SI;
 
 public class Project 
 {
@@ -43,7 +43,7 @@ public class Project
         rndModel = RandomModel.create(seed);
         commModel = CommModel.builder().build();
         pdpModel = DefaultPDPModel.create();
-        roadModel = CollisionGraphRoadModel.builder(GraphUtils.createGraph())
+        roadModel = CollisionGraphRoadModel.builder(GraphCreator.createGraph())
                 	.setVehicleLength(VEHICLE_LENGTH)
                 	.build();
     	

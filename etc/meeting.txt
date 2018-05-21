@@ -1,0 +1,23 @@
+tl;dr : Define clearly the dependent variables and the hypotheses (based on the dependent variables)
+
+
+1. Define the constraints : clearly, how many
+
+2. Carrying one object is enough 
+
+3. It is mandatory to use BDI + deleguate MAS
+
+4. Define the successful criteria for our questions :
+        - Number of messages
+        - Waiting time
+   Define the dependent variables
+   
+5. Extra dynamism : battery not necessary
+    Focus on time + path first
+
+6. Hypotheses : 2 (path, time)
+               + 2 (batteries) => better grades
+               
+7. Define the proba of AVG failure
+    Make it simple, AVG failure -> just disappear after a rand time
+

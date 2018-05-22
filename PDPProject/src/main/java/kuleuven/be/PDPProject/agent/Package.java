@@ -24,6 +24,7 @@ public class Package implements TickListener, RoadUser {
 	private boolean carried;
 	private boolean deposited;
 	private boolean fragile;
+	private boolean timeIsOver;
 	
 	// Positions
 	private Point departure;
@@ -39,8 +40,8 @@ public class Package implements TickListener, RoadUser {
 	
 	private RoadModel rm;
 	
-	private FeasibilityAnt fAnt;
 	Random rnd = new Random();
+	private FeasibilityAnt fAnt;
 	
 	public Package(int parcelID, Point destination) {
 		
@@ -52,6 +53,7 @@ public class Package implements TickListener, RoadUser {
 		this.fragile = Math.random() > 0.5;
 		
 		this.timeWindowHasBeenComputed = false;
+		this.timeIsOver = false;
 	}
 	
 	public int getParcelID() {
@@ -62,8 +64,16 @@ public class Package implements TickListener, RoadUser {
 		return carried;
 	}
 	
+	public void setCarried(boolean b) {
+		carried = b;
+	}
+	
 	public boolean isDeposited() {
 		return deposited;
+	}
+	
+	public void setDeposited() {
+		deposited = true;
 	}
 	
 	public boolean isFragile(){
@@ -95,6 +105,10 @@ public class Package implements TickListener, RoadUser {
 			// /!\ SPEED SET TO 1 /!\ 
 			this.timeWindow = distanceShortestPath/1*Math.abs(rnd.nextGaussian())*factor;	
 			this.timeWindowHasBeenComputed = true;
+		}
+		
+		if(isTimeOver(timeLapse)) {
+			this.timeIsOver = true;
 		}
 	}
 	

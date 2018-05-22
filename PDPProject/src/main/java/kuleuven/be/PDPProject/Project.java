@@ -1,6 +1,5 @@
 package kuleuven.be.PDPProject;
 
-
 import com.github.rinde.rinsim.core.Simulator;
 import com.github.rinde.rinsim.core.model.road.CollisionGraphRoadModelImpl;
 import com.github.rinde.rinsim.core.model.road.RoadModelBuilders;
@@ -19,7 +18,9 @@ import com.google.common.collect.Table;
 
 import javax.measure.unit.SI;
 
-import kuleuven.be.PDPProject.agent.*; 
+import kuleuven.be.PDPProject.agent.*;
+
+import java.lang.Package;
 
 public class Project 
 {
@@ -54,7 +55,9 @@ public class Project
 								.withOneWayStreetArrows()
         	      		.withMargin(VEHICLE_LENGTH))
         	      		.with(AGVRenderer.builder()
-        	      		.withDifferentColorsForVehicles());
+        	      		.withDifferentColorsForVehicles())
+                        .with(PackageRenderer.builder()
+                        .withDifferentColorsForPackages());
 
         if (testing) {
         	viewBuilder = viewBuilder.withAutoPlay()
@@ -77,6 +80,8 @@ public class Project
         
         for (int i = 0; i < NUM_AGVS; i++) {
         	sim.register(new AgvAgent(sim.getRandomGenerator()));
+        	if (i == 0)
+        	    sim.register(new Package(sim.getRandomGenerator()));
         }
         
         sim.start();

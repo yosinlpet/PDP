@@ -7,19 +7,21 @@ import javax.measure.Measure;
 import javax.measure.quantity.Length;
 
 import com.github.rinde.rinsim.core.model.road.CollisionGraphRoadModelImpl;
+import com.github.rinde.rinsim.core.model.road.GraphRoadModelImpl;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadUser;
 import com.github.rinde.rinsim.core.model.time.TickListener;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.geom.Point;
 import com.google.common.base.Optional;
-
+import org.apache.commons.math3.random.RandomGenerator;
 
 
 public class Package implements TickListener, RoadUser {
 
 	public int parcelID;
-	
+	private final RandomGenerator rng;
+
 	// States
 	private boolean carried;
 	private boolean deposited;
@@ -40,13 +42,12 @@ public class Package implements TickListener, RoadUser {
 	
 	private RoadModel rm;
 	
-	Random rnd = new Random();
+	Random rnd = new Random(rng);
 	private FeasibilityAnt fAnt;
 	
-	public Package(int parcelID, Point destination) {
-		
+	public Package(int parcelID, RandomGenerator r) {
+		rng = r;
 		this.parcelID = parcelID;
-		this.destination = destination; 
 		
 		this.carried = false;
 		this.deposited = false;
@@ -91,7 +92,8 @@ public class Package implements TickListener, RoadUser {
 	@Override
 	public void initRoadUser(RoadModel model) {
 		this.rm = model;
-		rm.addObjectAt(this, departure);
+		departure = rm.getRandomPosition();
+		rm.addObjectAt(this, departure); //Beware
 		
 		Measure<Double, Length> m = rm.getDistanceOfPath(
 									rm.getShortestPathTo(departure, destination));

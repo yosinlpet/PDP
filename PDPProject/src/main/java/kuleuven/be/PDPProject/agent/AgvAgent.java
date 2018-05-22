@@ -43,8 +43,7 @@ public class AgvAgent implements TickListener, MovingRoadUser {
 	
 	void nextDestination() {
 	    destination = Optional.of(roadModel.get().getRandomPosition(rng));
-	    path = new LinkedList<>(roadModel.get().getShortestPathTo(this,
-	      destination.get()));
+	    path = new LinkedList<>(roadModel.get().getShortestPathTo(this, destination.get()));
 	}
 	
 	  @Override

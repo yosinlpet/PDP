@@ -2,6 +2,10 @@ tl;dr : Define clearly the dependent variables and the hypotheses (based on the 
 
 
 1. Define the constraints : clearly, how many
+	1. subgraph (circle) of a few nodes of the initial graph;
+		subgraph appears by chance when a dangerous product falls from 
+		anywhere in the wharehouse, its size and duration is also random (gaussian).
+	2. time varying for each object (random for each object between range)
 
 2. Carrying one object is enough 
 
@@ -12,12 +16,9 @@ tl;dr : Define clearly the dependent variables and the hypotheses (based on the 
         - Waiting time
    Define the dependent variables
    
-5. Extra dynamism : battery not necessary
-    Focus on time + path first
-
 6. Hypotheses : 2 (path, time)
                + 2 (batteries) => better grades
                
-7. Define the proba of AVG failure
-    Make it simple, AVG failure -> just disappear after a rand time
+5. Extra dynamism : battery not necessary
+    Focus on time + path first
 

@@ -1,8 +1,5 @@
 package kuleuven.be.PDPProject.agent;
 
-import javax.measure.Measure;
-import javax.measure.quantity.Length;
-
 import com.github.rinde.rinsim.core.model.pdp.PDPModel;
 import com.github.rinde.rinsim.core.model.pdp.Parcel;
 import com.github.rinde.rinsim.core.model.pdp.ParcelDTO;
@@ -10,6 +7,8 @@ import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.time.TickListener;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.geom.Point;
+import com.github.rinde.rinsim.util.TimeWindow;
+
 import org.apache.commons.math3.random.RandomGenerator;
 
 
@@ -29,19 +28,16 @@ public class Pack extends Parcel implements TickListener{
 	private Point departure;
 	private Point position; 
 	private Point destination;
-	
-	// Time window in which the package should be delivered
-	private long startingTime; 
-	private double distanceShortestPath; 
-	private boolean timeWindowHasBeenComputed;
-	
+		
 	private RoadModel rm;
+	ParcelDTO dto; 
 	//private FeasibilityAnt fAnt;
 	
     public Pack(ParcelDTO dto, RandomGenerator r){
         super(dto);
         
         rng = r;
+        this.dto = dto;
         this.departure = dto.getPickupLocation();
         this.destination = dto.getDeliveryLocation();
         
@@ -49,13 +45,12 @@ public class Pack extends Parcel implements TickListener{
 		this.deposited = false;
 		this.fragile = rng.nextDouble() > 0.5;
 	
-		this.timeWindowHasBeenComputed = false;
 		this.timeIsOver = false;
     }
 	
     public Pack(ParcelDTO dto, RandomGenerator r, String parcelString) {
         super(dto,parcelString);
-        
+       
         rng = r;
         this.departure = dto.getPickupLocation();
         this.destination = dto.getDeliveryLocation();
@@ -64,7 +59,6 @@ public class Pack extends Parcel implements TickListener{
 		this.deposited = false;
 		this.fragile = rng.nextDouble() > 0.5;
 		
-		this.timeWindowHasBeenComputed = false;
 		this.timeIsOver = false;
     }
     
@@ -93,17 +87,26 @@ public class Pack extends Parcel implements TickListener{
 	}
 	
 	public boolean isTimeOver(TimeLapse timeLapse) {
-		/**if((timeLapse.getTime() - startingTime) > this.deliveryTimeWindow) {
-			timeIsOver = true;
-			return timeIsOver;
+		TimeWindow tw = dto.getDeliveryTimeWindow();
+		if(tw.isAfterEnd(timeLapse.getTime())){
+			return true;
 		}
-		return false; **/
-		return true;
+		return false;
+	}
+	
+	public boolean isCritical(TimeLapse timeLapse) {
+		TimeWindow tw = dto.getDeliveryTimeWindow();
+		if(tw.isIn(timeLapse.getTime()) && timeLapse.getTime()-tw.begin() > 0.8*tw.length()){
+			return true;
+		}
+		return false;
 	}
 	
 	@Override
 	public void tick(TimeLapse timeLapse) {
-		
+		if(isCritical(timeLapse)) {
+			this.isCritical = true;
+		}
 		if(isTimeOver(timeLapse)) {
 			this.timeIsOver = true;
 		}

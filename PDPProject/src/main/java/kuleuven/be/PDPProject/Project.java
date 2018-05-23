@@ -86,7 +86,7 @@ public final class Project {
   
   private static final int factor = 10;
 
-  private Project() {}
+  public Project() {}
 
   /**
    * Starts the {@link TaxiExample}.

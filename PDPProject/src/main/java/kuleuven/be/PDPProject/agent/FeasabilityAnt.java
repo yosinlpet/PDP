@@ -14,6 +14,8 @@ import java.util.LinkedList;
 import javax.measure.unit.SI;
 import javax.xml.soap.Node;
 
+import com.google.common.collect.ImmutableSet;
+import com.sun.xml.internal.bind.v2.runtime.reflect.Lister;
 import org.apache.commons.math3.random.RandomGenerator;
 
 import com.github.rinde.rinsim.core.model.road.RoadUser;
@@ -24,24 +26,29 @@ import com.google.common.base.Optional;
 public class FeasabilityAnt implements Ant, Cloneable{
 	private Optional<CollisionGraphRoadModelImpl> roadModel;
 	private LinkedList<Point> path;
-
+	private LinkedList<Package> packages;
 
 
 	/**
 	 * Constructor
-	 * @param p	point where to initialize the FeasabilityAnt.
+	 * @param pckg {@link Package} sending the {@link FeasabilityAnt}.
+	 * @param p	location where to initialize the {@link FeasabilityAnt}.
 	 **/
-	public FeasabilityAnt(Point p) {
+	public FeasabilityAnt(Package pckg, Point p) {
 		roadModel = Optional.absent();
 		path = new LinkedList<>();
 		path.add(p);
+		packages = new LinkedList<>();
+		packages.add(pckg);
 	}
 
 	@Override
-	public void initRoadUser(RoadModel model) {
-	}
+	public void initRoadUser(RoadModel model) {}
 
-
+	/**
+	 * Displaces the {@link FeasabilityAnt} at position <code>p</code>.
+	 * @param p position to go to.
+	 */
 	public void moveTo(Point p) {
 		path.add(p);
 	}
@@ -52,10 +59,9 @@ public class FeasabilityAnt implements Ant, Cloneable{
 	 * 			initial one.
 	 */
 	public Collection<FeasabilityAnt> getClones() {
-		CollisionGraphRoadModelImpl a = Optional.of(roadModel);
 		Point p = path.getLast();
-		Graph<Node> g = a.getGraph();
-		Collection<Point> pointsCollection = g.getIncomingConnections(p);
+		Graph<Node> graph = roadModel.get().getGraph();
+		Collection<Point> pointsCollection = graph.getIncomingConnections(p);
 		LinkedList<FeasabilityAnt> clones = new LinkedList<>();
 
 		for(Point p : pointsCollection){
@@ -66,7 +72,27 @@ public class FeasabilityAnt implements Ant, Cloneable{
 		return clones;
 	}
 
-	public void dropSeeds();
-	public void getInfo();
+	/**
+	 * Leaves road signs on the {@link RoadModel}.
+	 */
+	public void dropSeeds(){
+		for (Package pckg : packages) {
+			//Under construction
+		}
+	}
+
+	/**
+	 * Collects information at position <code>p</code>.
+	 */
+	public void getInfo(){
+		Point p = path.getLast();
+		ImmutableSet<RoadUser> roadUserSet = roadModel.get().getRoadUsersOnNode(p);
+		System.out.println(roadUserSet.toString());
+
+		//Package pckg = roadUserSet.asList().get(0); //Under construction
+		//if (!packages.contains(pckg)) {
+		//	packages.add(pckg);
+		//}
+	}
 
 }

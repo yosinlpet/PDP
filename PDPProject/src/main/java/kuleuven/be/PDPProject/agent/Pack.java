@@ -104,6 +104,10 @@ public class Pack extends Parcel implements TickListener{
 		return false;
 	}
 	
+	public TimeWindow getTimeWindow() {
+		return dto.getDeliveryTimeWindow();
+	}
+	
 	@Override
 	public void tick(TimeLapse timeLapse) {
 		if(isCritical(timeLapse)) {

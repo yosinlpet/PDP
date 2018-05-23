@@ -16,6 +16,7 @@ public class Pack extends Parcel implements TickListener{
 
 	public String parcelString;
 	private final RandomGenerator rng;
+	private final double CRITIC = 0.8;
 
 	// States
 	private boolean carried;
@@ -96,7 +97,8 @@ public class Pack extends Parcel implements TickListener{
 	
 	public boolean isCritical(TimeLapse timeLapse) {
 		TimeWindow tw = dto.getDeliveryTimeWindow();
-		if(tw.isIn(timeLapse.getTime()) && timeLapse.getTime()-tw.begin() > 0.8*tw.length()){
+		if(tw.isIn(timeLapse.getTime()) 
+					&& timeLapse.getTime()-tw.begin() > CRITIC*tw.length()){
 			return true;
 		}
 		return false;

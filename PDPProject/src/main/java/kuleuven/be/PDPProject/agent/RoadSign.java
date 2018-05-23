@@ -10,6 +10,9 @@ import com.google.common.base.Optional;
 
 import java.util.LinkedList;
 
+//TODO: implement the intention flag;
+//TODO: implement the danger zone;
+
 /**
  * RoadSigns are information dropped by {@link FeasabilityAnt}s; each sign carries
  * info about where to go to find a {@link Pack} and when it expires.
@@ -19,19 +22,21 @@ public class RoadSign implements RoadUser, TickListener {
     private Optional<CollisionGraphRoadModelImpl> roadModel;
     private Pack pack;
     private Point next;
+    private int cost;
     private TimeWindow timeWindow;
     public RoadSign(Pack pack, LinkedList<Point> path, TimeWindow timeWindow){
         roadModel = Optional.absent();
         this.timeWindow = timeWindow;
         this.pack = pack;
         LinkedList<Point> path_ = path;
+        cost = path.size();
         path_.removeLast();
         next = path_.getLast();
     }
 
     @Override
     public void initRoadUser(RoadModel model){
-        roadModel = model;
+        roadModel = Optional.of((CollisionGraphRoadModelImpl) model);
     }
 
     public Pack getPack() {
@@ -46,11 +51,15 @@ public class RoadSign implements RoadUser, TickListener {
         return pack.getTimeWindow().end();
     }
     @Override
-    public void Tick(TimeLapse timeLapse)
+    public void tick(TimeLapse timeLapse)
     {
        if (timeLapse.getTime() > timeWindow.end())
             roadModel.get().removeObject(this);
     }
     @Override
     public void afterTick(TimeLapse timeLapse){}
+
+    public int getCost(){
+        return cost;
+    }
 }

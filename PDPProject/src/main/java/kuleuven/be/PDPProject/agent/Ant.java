@@ -10,8 +10,6 @@ import com.github.rinde.rinsim.core.model.road.RoadModel;
 * c.f. Hanif, Holvoet, Rinde  2011: Delegate MAS for Large Scale and Dynamic PDP: A Case Study
 */
 
-public abstract class Ant implements RoadUser{
+public interface Ant extends RoadUser{
 
-    @Override
-      public void initRoadUser(RoadModel var1){}
 }

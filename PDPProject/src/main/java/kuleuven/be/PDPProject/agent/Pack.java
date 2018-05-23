@@ -1,25 +1,21 @@
 package kuleuven.be.PDPProject.agent;
 
-import java.util.List;
-import java.util.Random;
-
 import javax.measure.Measure;
 import javax.measure.quantity.Length;
 
-import com.github.rinde.rinsim.core.model.road.CollisionGraphRoadModelImpl;
-import com.github.rinde.rinsim.core.model.road.GraphRoadModelImpl;
+import com.github.rinde.rinsim.core.model.pdp.PDPModel;
+import com.github.rinde.rinsim.core.model.pdp.Parcel;
+import com.github.rinde.rinsim.core.model.pdp.ParcelDTO;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
-import com.github.rinde.rinsim.core.model.road.RoadUser;
 import com.github.rinde.rinsim.core.model.time.TickListener;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.geom.Point;
-import com.google.common.base.Optional;
 import org.apache.commons.math3.random.RandomGenerator;
 
 
-public class Package implements TickListener, RoadUser {
+public class Pack extends Parcel implements TickListener{
 
-	public int parcelID;
+	public String parcelString;
 	private final RandomGenerator rng;
 
 	// States
@@ -27,6 +23,7 @@ public class Package implements TickListener, RoadUser {
 	private boolean deposited;
 	private boolean fragile;
 	private boolean timeIsOver;
+	private boolean isCritical;
 	
 	// Positions
 	private Point departure;
@@ -34,32 +31,46 @@ public class Package implements TickListener, RoadUser {
 	private Point destination;
 	
 	// Time window in which the package should be delivered
-	private double distanceShortestPath; 
 	private long startingTime; 
-	private double timeWindow;
+	private double distanceShortestPath; 
 	private boolean timeWindowHasBeenComputed;
-	private double factor = 10d; 
 	
 	private RoadModel rm;
+	//private FeasibilityAnt fAnt;
 	
-	Random rnd = new Random(rng);
-	private FeasibilityAnt fAnt;
-	
-	public Package(int parcelID, RandomGenerator r) {
-		rng = r;
-		this.parcelID = parcelID;
-		
+    public Pack(ParcelDTO dto, RandomGenerator r){
+        super(dto);
+        
+        rng = r;
+        this.departure = dto.getPickupLocation();
+        this.destination = dto.getDeliveryLocation();
+        
 		this.carried = false;
 		this.deposited = false;
-		this.fragile = Math.random() > 0.5;
+		this.fragile = rng.nextDouble() > 0.5;
+	
+		this.timeWindowHasBeenComputed = false;
+		this.timeIsOver = false;
+    }
+	
+    public Pack(ParcelDTO dto, RandomGenerator r, String parcelString) {
+        super(dto,parcelString);
+        
+        rng = r;
+        this.departure = dto.getPickupLocation();
+        this.destination = dto.getDeliveryLocation();
+        
+		this.carried = false;
+		this.deposited = false;
+		this.fragile = rng.nextDouble() > 0.5;
 		
 		this.timeWindowHasBeenComputed = false;
 		this.timeIsOver = false;
-	}
-	
-	public int getParcelID() {
-		return parcelID;
-	}
+    }
+    
+    @Override
+    public void initRoadPDP(RoadModel pRoadModel, PDPModel pPdpModel) {
+    }
 	
 	public boolean isCarried() {
 		return carried;
@@ -81,33 +92,17 @@ public class Package implements TickListener, RoadUser {
 		return fragile;
 	}
 	
-	public Point getDestination() {
-		return destination;
-	}
-	
 	public boolean isTimeOver(TimeLapse timeLapse) {
-		return (timeLapse.getTime() - startingTime) > timeWindow;
-	}
-	
-	@Override
-	public void initRoadUser(RoadModel model) {
-		this.rm = model;
-		departure = rm.getRandomPosition();
-		rm.addObjectAt(this, departure); //Beware
-		
-		Measure<Double, Length> m = rm.getDistanceOfPath(
-									rm.getShortestPathTo(departure, destination));
-		distanceShortestPath = m.doubleValue(m.getUnit());
+		/**if((timeLapse.getTime() - startingTime) > this.deliveryTimeWindow) {
+			timeIsOver = true;
+			return timeIsOver;
+		}
+		return false; **/
+		return true;
 	}
 	
 	@Override
 	public void tick(TimeLapse timeLapse) {
-		if(!timeWindowHasBeenComputed){
-			this.startingTime = timeLapse.getTime();
-			// /!\ SPEED SET TO 1 /!\ 
-			this.timeWindow = distanceShortestPath/1*Math.abs(rnd.nextGaussian())*factor;	
-			this.timeWindowHasBeenComputed = true;
-		}
 		
 		if(isTimeOver(timeLapse)) {
 			this.timeIsOver = true;

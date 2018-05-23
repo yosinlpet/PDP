@@ -17,7 +17,6 @@ import javax.xml.soap.Node;
 import org.apache.commons.math3.random.RandomGenerator;
 
 import com.github.rinde.rinsim.core.model.road.RoadUser;
-import com.github.rinde.rinsim.core.model.
 import com.github.rinde.rinsim.core.model.road.CollisionGraphRoadModelImpl;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.google.common.base.Optional;

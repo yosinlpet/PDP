@@ -42,7 +42,7 @@ public class IntentionAnt extends Ant{
 	* @param pckg {@link Pack} sending the {@link FeasabilityAnt}.
 	* @param p	location where to initialize the {@link FeasabilityAnt}.
 	**/
-	public IntentionAnt(String agentID, LinkedList<Point> intentionPath, long[] arrivalTime) {
+	public IntentionAnt(String packID, LinkedList<Point> intentionPath, long[] arrivalTime) {
 			roadModel = Optional.absent();
 			this.arrivalTime = arrivalTime;
 			this.agentID = agentID;
@@ -69,11 +69,11 @@ public class IntentionAnt extends Ant{
 		 */
 		public void raiseFlag() {
 			Set<RoadSign> roadSigns = collectInfo(
-									RoadSign.class, currPos, roadModel.get());
+									RoadSign.class);
 			for(RoadSign rs : roadSigns) {
 					// If 
 					if(rs.getNext().equals(intentionPath.element()) 
-							&& (this.agentID).equals(rs.getAgentID())
+							&& (this.packID).equals(rs.getPackID())
 							&& !rs.isIntentionGiven()){
 						rs.setIntention(agentID, arrivalTime[numberOfHops-1]);
 					}

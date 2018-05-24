@@ -14,7 +14,7 @@ import org.apache.commons.math3.random.RandomGenerator;
 
 public class Pack extends Parcel implements TickListener{
 
-	public String parcelString;
+	public String packID;
 	private final RandomGenerator rng;
 	private final double CRITIC = 0.8;
 
@@ -34,23 +34,11 @@ public class Pack extends Parcel implements TickListener{
 	ParcelDTO dto; 
 	//private FeasibilityAnt fAnt;
 	
-    public Pack(ParcelDTO dto, RandomGenerator r){
-        super(dto);
-        
-        rng = r;
-        this.dto = dto;
-        this.departure = dto.getPickupLocation();
-        this.destination = dto.getDeliveryLocation();
-        
-		this.carried = false;
-		this.deposited = false;
-		this.fragile = rng.nextDouble() > 0.5;
+
 	
-		this.timeIsOver = false;
-    }
-	
-    public Pack(ParcelDTO dto, RandomGenerator r, String parcelString) {
-        super(dto,parcelString);
+    public Pack(ParcelDTO dto, RandomGenerator r, String packID) {
+        super(dto,packID);
+        this.packID = packID;
        
         rng = r;
         this.departure = dto.getPickupLocation();
@@ -85,6 +73,10 @@ public class Pack extends Parcel implements TickListener{
 	
 	public boolean isFragile(){
 		return fragile;
+	}
+	
+	public String getPackID() {
+		return packID;
 	}
 	
 	public boolean isTimeOver(TimeLapse timeLapse) {

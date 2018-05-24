@@ -1,6 +1,6 @@
 package kuleuven.be.PDPProject.agent;
 
-import com.github.rinde.rinsim.core.model.road.CollisionGraphRoadModelImpl;
+import com.github.rinde.rinsim.core.model.road.GraphRoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadUser;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.geom.Point;
@@ -21,7 +21,7 @@ import java.util.Set;
 
 public abstract class Ant implements RoadUser{
         protected LinkedList<Point> path;
-        protected Optional<CollisionGraphRoadModelImpl> roadModel;
+        protected GraphRoadModel roadModel;
 
         protected Ant() {
             path = new LinkedList<>();
@@ -39,7 +39,7 @@ public abstract class Ant implements RoadUser{
      * Collects information at position <code>p</code>.
      */
     public  <Y extends RoadUser> Set<Y> collectInfo(Class c){
-        Set<Y> roadUserSet = roadModel.get().getObjectsAt((RoadUser) this, c);
+        Set<Y> roadUserSet = roadModel.getObjectsAt((RoadUser) this, c);
         return roadUserSet;
     }
     public void runAnt(){}

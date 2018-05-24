@@ -52,6 +52,7 @@ import com.github.rinde.rinsim.ui.View;
 import com.github.rinde.rinsim.ui.renderers.GraphRoadModelRenderer;
 import com.github.rinde.rinsim.ui.renderers.RoadUserRenderer;
 import com.github.rinde.rinsim.ui.renderers.PDPModelRenderer;
+import com.github.rinde.rinsim.util.TimeWindow;
 
 
 /**
@@ -185,9 +186,13 @@ public final class Project {
     		long deliveryDuration =
     			distanceShortestPath/1*(long)Math.abs(rng.nextGaussian())*factor;
         		
+    		long creationTime = time.getTime();
+    		TimeWindow tw = TimeWindow.create(creationTime,
+    											creationTime+deliveryDuration);
+    		
         	simulator.register(new Pack(
     				Parcel.builder(departure, destination)
-    					.deliveryDuration(deliveryDuration)
+    					.deliveryTimeWindow(tw)
     					.buildDTO(), rng,Integer.toString(packID)));
         	packID++;
         }

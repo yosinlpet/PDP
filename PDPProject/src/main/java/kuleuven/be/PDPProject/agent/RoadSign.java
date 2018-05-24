@@ -35,7 +35,7 @@ public class RoadSign implements RoadUser, TickListener {
     private TimeLapse timeLapse;
     private boolean tlSet;
     
-    public RoadSign(String agentID, Pack pack, LinkedList<Point> path, TimeWindow timeWindow){
+    public RoadSign(Pack pack, LinkedList<Point> path, TimeWindow timeWindow){
         roadModel = Optional.absent();
         this.timeWindow = timeWindow;
         this.pack = pack;
@@ -44,7 +44,6 @@ public class RoadSign implements RoadUser, TickListener {
         path_.removeLast();
         next = path_.getLast();
         
-        this.agentID = agentID;
         intentionGiven = false;
         tlSet = false;
     }

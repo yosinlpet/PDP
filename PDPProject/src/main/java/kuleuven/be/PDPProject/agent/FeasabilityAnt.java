@@ -17,7 +17,7 @@ import com.sun.xml.internal.bind.v2.runtime.reflect.Lister;
 import org.apache.commons.math3.random.RandomGenerator;
 
 import com.github.rinde.rinsim.core.model.road.RoadUser;
-import com.github.rinde.rinsim.core.model.road.CollisionGraphRoadModelImpl;
+import com.github.rinde.rinsim.core.model.road.GraphRoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.google.common.base.Optional;
 import sun.awt.image.ImageWatched;
@@ -32,17 +32,17 @@ public class FeasabilityAnt extends Ant implements Cloneable{
 	 * @param p	location where to initialize the {@link FeasabilityAnt}.
 	 **/
 	public FeasabilityAnt(Pack pckg, Point p, TimeWindow timeWindow) {
-		roadModel = Optional.absent();
 		path = new LinkedList<>();
 		path.add(p);
 		packages = new LinkedList<>();
 		packages.add(pckg);
 		roadSignsTimeWindow = timeWindow;
+		roadModel = (GraphRoadModel) pckg.getRM();
 	}
 
-	public  FeasabilityAnt(Optional<CollisionGraphRoadModelImpl> roadModel, LinkedList<Point> path, LinkedList<Pack> packages, TimeWindow roadSignsTimeWindow)
+	public  FeasabilityAnt(LinkedList<Point> path, LinkedList<Pack> packages, TimeWindow roadSignsTimeWindow)
 	{
-		this.roadModel = roadModel;
+		//this.roadModel = roadModel;
 		super.path = path;
 		this.packages = packages;
 		this.roadSignsTimeWindow = roadSignsTimeWindow;
@@ -51,13 +51,13 @@ public class FeasabilityAnt extends Ant implements Cloneable{
 	public FeasabilityAnt clone(FeasabilityAnt cloner) throws CloneNotSupportedException{
 		if (!( cloner instanceof Cloneable))
 		throw new CloneNotSupportedException("Invalid Cloning");
-		return new FeasabilityAnt(cloner.roadModel, cloner.path, cloner.packages, cloner.roadSignsTimeWindow);
+		return new FeasabilityAnt(cloner.path, cloner.packages, cloner.roadSignsTimeWindow);
 	}
 
 	@Override
 	public void initRoadUser(RoadModel model) {
-	    roadModel = Optional.of((CollisionGraphRoadModelImpl) model);
-    }
+	  //  roadModel = Optional.of((CollisionGraphRoadModelImpl) model);
+    } 
 
 	@Override
 	public void runAnt(){
@@ -74,7 +74,7 @@ public class FeasabilityAnt extends Ant implements Cloneable{
 	 */
 	public Collection<FeasabilityAnt> getClones() {
 		Point p = path.getLast();
-		ListenableGraph<?> graph = roadModel.get().getGraph();
+		Graph<?> graph = roadModel.getGraph();
 		Collection<Point> pointsCollection = graph.getIncomingConnections(p);
 		LinkedList<FeasabilityAnt> clones = new LinkedList<>();
 
@@ -106,8 +106,8 @@ public class FeasabilityAnt extends Ant implements Cloneable{
 	 */
 	public void dropSigns() {
 		for (Pack pckg : packages) {
-			RoadSign roadSign = new RoadSign(pckg.getPackID(), pckg, path, roadSignsTimeWindow);
-			roadModel.get().addObjectAt(roadSign, path.getLast());
+			//RoadSign roadSign = new RoadSign(pckg.getPackID(), pckg, path, roadSignsTimeWindow);
+			//roadModel.get().addObjectAt(roadSign, path.getLast());
 		}
 	}
 

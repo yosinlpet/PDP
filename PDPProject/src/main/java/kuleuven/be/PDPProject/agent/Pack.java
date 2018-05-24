@@ -10,6 +10,7 @@ import com.github.rinde.rinsim.geom.Point;
 import com.github.rinde.rinsim.util.TimeWindow;
 
 import org.apache.commons.math3.random.RandomGenerator;
+import kuleuven.be.PDPProject.agent.FeasabilityAnt;
 
 
 public class Pack extends Parcel implements TickListener{
@@ -34,9 +35,9 @@ public class Pack extends Parcel implements TickListener{
 	
 	private RoadModel rm;
 	ParcelDTO dto; 
-	//private FeasibilityAnt fAnt;
 	
-
+	private FeasabilityAnt fAnt;
+	
     public Pack(ParcelDTO dto, RandomGenerator r, String packID) {
         super(dto,packID);
         this.packID = packID;
@@ -52,10 +53,21 @@ public class Pack extends Parcel implements TickListener{
 		this.timeIsOver = false;
 		
 		this.deliveryTW = dto.getDeliveryTimeWindow();
+		
+	//fAnt = new FeasabilityAnt(this, departure, deliveryTW);
+		
+		//fAnt.runAnt();
     }
     
     @Override
     public void initRoadPDP(RoadModel pRoadModel, PDPModel pPdpModel) {
+    	this.rm = pRoadModel;
+    	fAnt = new FeasabilityAnt(this, departure, deliveryTW);
+    	fAnt.runAnt();
+    }
+   
+    public RoadModel getRM() {
+    	return rm;
     }
 	
 	public boolean isCarried() {

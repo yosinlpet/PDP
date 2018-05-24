@@ -29,7 +29,9 @@ public class Pack extends Parcel implements TickListener{
 	private Point departure;
 	private Point position; 
 	private Point destination;
-		
+	
+	private TimeWindow deliveryTW;
+	
 	private RoadModel rm;
 	ParcelDTO dto; 
 	//private FeasibilityAnt fAnt;
@@ -48,6 +50,8 @@ public class Pack extends Parcel implements TickListener{
 		this.fragile = rng.nextDouble() > 0.5;
 		
 		this.timeIsOver = false;
+		
+		this.deliveryTW = dto.getDeliveryTimeWindow();
     }
     
     @Override
@@ -79,17 +83,15 @@ public class Pack extends Parcel implements TickListener{
 	}
 	
 	public boolean isTimeOver(TimeLapse timeLapse) {
-		TimeWindow tw = dto.getDeliveryTimeWindow();
-		if(tw.isAfterEnd(timeLapse.getTime())){
+		if(deliveryTW.isAfterEnd(timeLapse.getTime())){
 			return true;
 		}
 		return false;
 	}
 	
 	public boolean isCritical(TimeLapse timeLapse) {
-		TimeWindow tw = dto.getDeliveryTimeWindow();
-		if(tw.isIn(timeLapse.getTime()) 
-					&& timeLapse.getTime()-tw.begin() > CRITIC*tw.length()){
+		if(deliveryTW.isIn(timeLapse.getTime()) 
+					&& timeLapse.getTime()-deliveryTW.begin() > CRITIC*deliveryTW.length()){
 			return true;
 		}
 		return false;

@@ -1,10 +1,14 @@
 package kuleuven.be.PDPProject.agent;
 
+import com.github.rinde.rinsim.core.model.road.CollisionGraphRoadModelImpl;
 import com.github.rinde.rinsim.core.model.road.RoadUser;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.geom.Point;
 
+import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
+
+import java.util.Collection;
 import java.util.LinkedList;
 
 // import sun.management.Agent;
@@ -14,8 +18,9 @@ import java.util.LinkedList;
 * c.f. Hanif, Holvoet, Rinde  2011: Delegate MAS for Large Scale and Dynamic PDP: A Case Study
 */
 
-public abstract class Ant extends RoadUser{
+public abstract class Ant implements RoadUser{
         protected LinkedList<Point> path;
+        protected Optional<CollisionGraphRoadModelImpl> roadModel;
 
         protected Ant() {
             path = new LinkedList<>();

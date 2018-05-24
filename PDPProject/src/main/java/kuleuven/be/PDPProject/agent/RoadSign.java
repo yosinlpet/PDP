@@ -12,6 +12,7 @@ import java.util.LinkedList;
 
 //TODO: implement the intention flag;
 //TODO: implement the danger zone;
+//TODO: edit the cost metric (total arc length);
 
 /**
  * RoadSigns are information dropped by {@link FeasabilityAnt}s; each sign carries

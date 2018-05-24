@@ -23,7 +23,6 @@ import com.google.common.base.Optional;
 import sun.awt.image.ImageWatched;
 
 public class FeasabilityAnt extends Ant implements Cloneable{
-	private Optional<CollisionGraphRoadModelImpl> roadModel;
 	private LinkedList<Pack> packages;
 	private TimeWindow roadSignsTimeWindow;
 

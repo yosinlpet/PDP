@@ -1,0 +1,122 @@
+package kuleuven.be.PDPProject.agent;
+
+import java.util.List;
+import java.util.Random;
+
+import javax.measure.Measure;
+import javax.measure.quantity.Length;
+
+import com.github.rinde.rinsim.core.model.pdp.Parcel;
+import com.github.rinde.rinsim.core.model.road.CollisionGraphRoadModelImpl;
+import com.github.rinde.rinsim.core.model.road.GraphRoadModelImpl;
+import com.github.rinde.rinsim.core.model.road.RoadModel;
+import com.github.rinde.rinsim.core.model.road.RoadUser;
+import com.github.rinde.rinsim.core.model.time.TickListener;
+import com.github.rinde.rinsim.core.model.time.TimeLapse;
+import com.github.rinde.rinsim.geom.Point;
+import com.google.common.base.Optional;
+import org.apache.commons.math3.random.RandomGenerator;
+
+
+public class Package extends Parcel implements TickListener, RoadUser {
+
+	public int parcelID;
+	private final RandomGenerator rng;
+
+	// States
+	private boolean carried;
+	private boolean deposited;
+	private boolean fragile;
+	private boolean timeIsOver;
+	
+	// Positions
+	private Point departure;
+	private Point position; 
+	private Point destination;
+	
+	// Time window in which the package should be delivered
+	private double distanceShortestPath; 
+	private long startingTime; 
+	private double timeWindow;
+	private boolean timeWindowHasBeenComputed;
+	private double factor = 10d; 
+	
+	private RoadModel rm;
+
+	//private FeasibilityAnt fAnt;
+	
+	public Package(int parcelID, RandomGenerator r) {
+		rng = r;
+		this.parcelID = parcelID;
+		
+		this.carried = false;
+		this.deposited = false;
+		this.fragile = Math.random() > 0.5;
+		
+		this.timeWindowHasBeenComputed = false;
+		this.timeIsOver = false;
+	}
+	
+	public int getParcelID() {
+		return parcelID;
+	}
+	
+	public boolean isCarried() {
+		return carried;
+	}
+	
+	public void setCarried(boolean b) {
+		carried = b;
+	}
+	
+	public boolean isDeposited() {
+		return deposited;
+	}
+	
+	public void setDeposited() {
+		deposited = true;
+	}
+	
+	public boolean isFragile(){
+		return fragile;
+	}
+	
+	public Point getDestination() {
+		return destination;
+	}
+	
+	public boolean isTimeOver(TimeLapse timeLapse) {
+		return (timeLapse.getTime() - startingTime) > timeWindow;
+	}
+	
+	@Override
+	public void initRoadUser(RoadModel model) {
+		this.rm = model;
+		departure = rm.getRandomPosition(rng);
+		rm.addObjectAt(this, departure); //Beware
+		
+		Measure<Double, Length> m = rm.getDistanceOfPath(
+									rm.getShortestPathTo(departure, destination));
+		distanceShortestPath = m.doubleValue(m.getUnit());
+	}
+	
+	@Override
+	public void tick(TimeLapse timeLapse) {
+		if(!timeWindowHasBeenComputed){
+			this.startingTime = timeLapse.getTime();
+			// /!\ SPEED SET TO 1 /!\ 
+			this.timeWindow = distanceShortestPath/1*Math.abs(rng.nextGaussian())*factor;	
+			this.timeWindowHasBeenComputed = true;
+		}
+		
+		if(isTimeOver(timeLapse)) {
+			this.timeIsOver = true;
+		}
+	}
+	
+	@Override
+	public void afterTick(TimeLapse timeLapse) {
+		  
+	}
+
+}

@@ -19,12 +19,22 @@ import java.util.LinkedList;
  * It has to die after a few ticks
  */
 public class RoadSign implements RoadUser, TickListener {
-    private Optional<CollisionGraphRoadModelImpl> roadModel;
+    
+	private Optional<CollisionGraphRoadModelImpl> roadModel;
     private Pack pack;
     private Point next;
     private int cost;
     private TimeWindow timeWindow;
-    public RoadSign(Pack pack, LinkedList<Point> path, TimeWindow timeWindow){
+    
+    private String agentID;
+    private long until;
+    private TimeWindow twIntention;
+    private boolean intentionGiven; 
+    private String intentionGivenToID;
+    private TimeLapse timeLapse;
+    private boolean tlSet;
+    
+    public RoadSign(String agentID, Pack pack, LinkedList<Point> path, TimeWindow timeWindow){
         roadModel = Optional.absent();
         this.timeWindow = timeWindow;
         this.pack = pack;
@@ -32,11 +42,29 @@ public class RoadSign implements RoadUser, TickListener {
         cost = path.size();
         path_.removeLast();
         next = path_.getLast();
+        
+        this.agentID = agentID;
+        intentionGiven = false;
+        tlSet = false;
     }
 
     @Override
     public void initRoadUser(RoadModel model){
         roadModel = Optional.of((CollisionGraphRoadModelImpl) model);
+    }
+    
+    public void setIntention(String agentID, long until) {
+    	twIntention = TimeWindow.create(timeLapse.getTime(), until);
+    	intentionGiven = true;
+    	intentionGivenToID = agentID;
+    }
+    
+    public String intentionGivenTo() {
+    	return intentionGivenToID;
+    }
+    
+    public boolean isIntentionGiven() {
+    	return intentionGiven;
     }
 
     public Pack getPack() {
@@ -46,20 +74,36 @@ public class RoadSign implements RoadUser, TickListener {
     public Point getNext() {
         return next;
     }
+    
+    public int getCost(){
+        return cost;
+    }
 
+    public String getAgentID() {
+    	return agentID;
+    }
+    
     public long getPackExpirationTime() {
         return pack.getTimeWindow().end();
     }
+    
     @Override
     public void tick(TimeLapse timeLapse)
     {
+    	if(!tlSet) {
+    		this.timeLapse = timeLapse;
+    		tlSet = true;
+    	}
+    	
        if (timeLapse.getTime() > timeWindow.end())
             roadModel.get().removeObject(this);
+              
+       // If intention expired
+       if(!twIntention.isIn(timeLapse.getTime())){
+    	   intentionGiven = false;
+       }
     }
     @Override
     public void afterTick(TimeLapse timeLapse){}
 
-    public int getCost(){
-        return cost;
-    }
 }

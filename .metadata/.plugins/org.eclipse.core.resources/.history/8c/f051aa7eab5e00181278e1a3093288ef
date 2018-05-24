@@ -1,0 +1,81 @@
+package kuleuven.be.PDPProject.agent;
+
+import java.util.Collection;
+import java.util.Map;
+
+import com.github.rinde.rinsim.core.model.road.RoadModelBuilders;
+import com.github.rinde.rinsim.geom.Graph;
+import com.github.rinde.rinsim.geom.Point;
+import java.util.Queue;
+import java.util.LinkedList;
+
+import javax.measure.unit.SI;
+import javax.xml.soap.Node;
+
+import com.google.common.collect.ImmutableSet;
+import org.apache.commons.math3.random.RandomGenerator;
+
+import com.github.rinde.rinsim.core.model.road.RoadUser;
+import com.github.rinde.rinsim.core.model.road.CollisionGraphRoadModelImpl;
+import com.github.rinde.rinsim.core.model.road.RoadModel;
+import com.google.common.base.Optional;
+
+public class IntentionAnt implements Ant, Cloneable{
+	
+	private RoadModel roadModel;
+	private Queue<Point> intentionPath;
+	private Point position;
+	private TimeWindow tw;
+	
+	/**
+	 * Constructor
+	 * @param pckg {@link Package} sending the {@link FeasabilityAnt}.
+	 * @param p	location where to initialize the {@link FeasabilityAnt}.
+	 **/
+	public IntentionAnt(AgvAgent agent, LinkedList<Point> intentionPath, TimeWindow timeWindow) {
+		this.intentionPath = intentionPath;
+		this.position = intentionPath.poll(); 
+		this.tw = timeWindow;
+	}
+
+	@Override
+	public void initRoadUser(RoadModel model) {
+		roadModel = model;
+	}
+
+	/**
+	 * Leaves intention flag on the {@link RoadModel}.
+	 */
+	public void dropFlag(){
+		IntentionFlag flag = new IntentionFlag();	
+		roadModel.addObjectAt(flag, position);
+	}
+	
+	public void hop() {
+		position = intentionPath.poll();
+	}
+	
+	// Is there a flag yet?
+	public boolean flagged() {
+		Collection<IntentionFlag> collFlags = collectInfo();
+		
+	}
+	
+	public void removeFlag() {
+		
+	}
+	
+	// Go two hops ahead and put flags
+	public void run() {
+		hop();
+		if(!flagged()) {
+			dropFlag();
+			hop();
+			if(!flagged())
+				dropFlag();
+		}
+		
+		
+	}
+	
+}

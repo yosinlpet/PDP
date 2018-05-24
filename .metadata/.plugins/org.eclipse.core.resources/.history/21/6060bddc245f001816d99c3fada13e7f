@@ -1,0 +1,95 @@
+package kuleuven.be.PDPProject.agent;
+import com.github.rinde.rinsim.core.model.road.RoadModel;
+import com.github.rinde.rinsim.core.model.time.TickListener;
+import com.github.rinde.rinsim.core.model.time.TimeLapse;
+import com.github.rinde.rinsim.geom.Point;
+import com.github.rinde.rinsim.core.model.road.CollisionGraphRoadModelImpl;
+import com.github.rinde.rinsim.core.model.road.RoadUser;
+import com.github.rinde.rinsim.util.TimeWindow;
+import com.google.common.base.Optional;
+
+import java.util.LinkedList;
+
+//TODO: implement the intention flag;
+//TODO: implement the danger zone;
+
+/**
+ * RoadSigns are information dropped by {@link FeasabilityAnt}s; each sign carries
+ * info about where to go to find a {@link Pack} and when it expires.
+ * It has to die after a few ticks
+ */
+public class RoadSign implements RoadUser, TickListener {
+    
+	private Optional<CollisionGraphRoadModelImpl> roadModel;
+    private Pack pack;
+    private Point next;
+    private int cost;
+    private TimeWindow timeWindow;
+    private boolean intentionGiven; 
+    private boolean wantIntention;
+    private TimeWindow twIntention;
+    private long until;
+    
+    public RoadSign(Pack pack, LinkedList<Point> path, TimeWindow timeWindow){
+        roadModel = Optional.absent();
+        this.timeWindow = timeWindow;
+        this.pack = pack;
+        LinkedList<Point> path_ = path;
+        cost = path.size();
+        path_.removeLast();
+        next = path_.getLast();
+        intentionGiven = false;
+        wantIntention = false;
+    }
+
+    @Override
+    public void initRoadUser(RoadModel model){
+        roadModel = Optional.of((CollisionGraphRoadModelImpl) model);
+    }
+    
+    public void wantIntention(long until) {
+    	wantIntention = true;
+    }
+    
+    public void giveIntention(TimeLapse timeLapse) {
+    	// !!!! CHANGE TIMEWINDOW END
+    	twIntention = TimeWindow.create(timeLapse.getTime(), until);
+    	intentionGiven = true;
+    }
+
+    public Pack getPack() {
+        return pack;
+    }
+
+    public Point getNext() {
+        return next;
+    }
+    
+    public int getCost(){
+        return cost;
+    }
+
+    public long getPackExpirationTime() {
+        return pack.getTimeWindow().end();
+    }
+    
+    @Override
+    public void tick(TimeLapse timeLapse)
+    {
+       if (timeLapse.getTime() > timeWindow.end())
+            roadModel.get().removeObject(this);
+       
+       if(wantIntention && !intentionGiven) {
+    	   giveIntention(timeLapse);
+    	   wantIntention = false;
+       }
+       
+       // If intention expired
+       if(!twIntention.isIn(timeLapse.getTime())){
+    	   intentionGiven = false;
+       }
+    }
+    @Override
+    public void afterTick(TimeLapse timeLapse){}
+
+}

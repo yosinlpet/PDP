@@ -6,6 +6,7 @@ import com.github.rinde.rinsim.geom.Point;
 
 import com.google.common.collect.ImmutableSet;
 import java.util.LinkedList;
+import java.util.Set;
 
 // import sun.management.Agent;
 
@@ -32,15 +33,9 @@ public abstract class Ant extends RoadUser{
     /**
      * Collects information at position <code>p</code>.
      */
-    public void collectInfo(){
-        Point p = path.getLast();
-        ImmutableSet<RoadUser> roadUserSet = roadModel.get().getRoadUsersOnNode(p);
-        System.out.println(roadUserSet.toString());
-
-        //Pack pckg = roadUserSet.asList().get(0); //Under construction
-        //if (!packages.contains(pckg)) {
-        //	packages.add(pckg);
-        //}
+    public  <Y extends RoadUser> Set<Y> collectInfo(Class c, Point p, RoadModel roadModel){
+        Set<Y> roadUserSet = roadModel.getObjectsAt((RoadUser) this, c);
+        return roadUserSet;
     }
     public void runAnt(){}
 }

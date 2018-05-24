@@ -1,0 +1,112 @@
+package kuleuven.be.PDPProject.agent;
+
+import com.github.rinde.rinsim.core.model.pdp.PDPModel;
+import com.github.rinde.rinsim.core.model.pdp.Parcel;
+import com.github.rinde.rinsim.core.model.pdp.ParcelDTO;
+import com.github.rinde.rinsim.core.model.road.RoadModel;
+import com.github.rinde.rinsim.core.model.time.TickListener;
+import com.github.rinde.rinsim.core.model.time.TimeLapse;
+import com.github.rinde.rinsim.geom.Point;
+import org.apache.commons.math3.random.RandomGenerator;
+
+
+public class Pack extends Parcel implements TickListener{
+
+	public String parcelString;
+	private final RandomGenerator rng;
+
+	// States
+	private boolean carried;
+	private boolean deposited;
+	private boolean fragile;
+	private boolean timeIsOver;
+	private boolean isCritical;
+	
+	// Positions
+	private Point departure;
+	private Point position; 
+	private Point destination;
+	
+	// Time window in which the package should be delivered
+	private long startingTime; 
+	private double distanceShortestPath; 
+	private boolean timeWindowHasBeenComputed;
+	
+	private RoadModel rm;
+	//private FeasibilityAnt fAnt;
+	
+    public Pack(ParcelDTO dto, RandomGenerator r){
+        super(dto);
+        
+        rng = r;
+        this.departure = dto.getPickupLocation();
+        this.destination = dto.getDeliveryLocation();
+        
+		this.carried = false;
+		this.deposited = false;
+		this.fragile = rng.nextDouble() > 0.5;
+	
+		this.timeIsOver = false;
+    }
+	
+    public Pack(ParcelDTO dto, RandomGenerator r, String parcelString) {
+        super(dto,parcelString);
+        
+        rng = r;
+        this.departure = dto.getPickupLocation();
+        this.destination = dto.getDeliveryLocation();
+        
+		this.carried = false;
+		this.deposited = false;
+		this.fragile = rng.nextDouble() > 0.5;
+		
+		this.timeIsOver = false;
+    }
+    
+    @Override
+    public void initRoadPDP(RoadModel pRoadModel, PDPModel pPdpModel) {
+    }
+	
+	public boolean isCarried() {
+		return carried;
+	}
+	
+	public void setCarried(boolean b) {
+		carried = b;
+	}
+	
+	public boolean isDeposited() {
+		return deposited;
+	}
+	
+	public void setDeposited() {
+		deposited = true;
+	}
+	
+	public boolean isFragile(){
+		return fragile;
+	}
+	
+	public boolean isTimeOver(TimeLapse timeLapse) {
+		/**if((timeLapse.getTime() - startingTime) > this.deliveryTimeWindow) {
+			timeIsOver = true;
+			return timeIsOver;
+		}
+		return false; **/
+		return true;
+	}
+	
+	@Override
+	public void tick(TimeLapse timeLapse) {
+		
+		if(isTimeOver(timeLapse)) {
+			this.timeIsOver = true;
+		}
+	}
+	
+	@Override
+	public void afterTick(TimeLapse timeLapse) {
+		  
+	}
+
+}

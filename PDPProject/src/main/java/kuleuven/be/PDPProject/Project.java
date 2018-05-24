@@ -65,8 +65,8 @@ import com.github.rinde.rinsim.ui.renderers.PDPModelRenderer;
 public final class Project {
 
   private static final int NUM_DEPOTS = 1;
-  private static final int NUM_AGVS = 20;
-  private static final int NUM_PCKGS = 30;
+  private static final int NUM_AGVS = 10;
+  private static final int NUM_PCKGS = 1;
 
   // time in ms
   private static final long SERVICE_DURATION = 60000;
@@ -75,9 +75,9 @@ public final class Project {
 
   private static final int SPEED_UP = 4;
   private static final int MAX_CAPACITY = 3;
-  private static final double NEW_CUSTOMER_PROB = .007;
+  private static final double NEW_CUSTOMER_PROB = .005;
 
-  private static final String MAP_FILE = "/data/maps/leuven-simple.dot";
+  private static final String MAP_FILE = "/leuven-simple.dot";
   private static final Map<String, Graph<MultiAttributeData>> GRAPH_CACHE =
     newHashMap();
 
@@ -89,7 +89,7 @@ public final class Project {
   public Project() {}
 
   /**
-   * Starts the {@link TaxiExample}.
+   * Starts the {@link Project}.
    * @param args The first option may optionally indicate the end time of the
    *          simulation.
    */
@@ -206,9 +206,9 @@ public final class Project {
       .with(GraphRoadModelRenderer.builder())
       .with(RoadUserRenderer.builder()
         .withImageAssociation(
-          AgvAgent.class, "/graphics/flat/taxi-32.png")
+          AgvAgent.class, "/AutoMultiplaW.gif")
         .withImageAssociation(
-          Pack.class, "/graphics/flat/person-red-32.png"))
+          Pack.class, "/issou.png"))
       .with(PDPModelRenderer.builder())
       .withTitleAppendix("Risoul");
 
@@ -241,7 +241,6 @@ public final class Project {
           Filters.selfCycleFilter())
         .read(
           Project.class.getResourceAsStream(name));
-
       GRAPH_CACHE.put(name, g);
       return g;
     } catch (final FileNotFoundException e) {

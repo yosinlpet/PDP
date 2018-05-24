@@ -123,6 +123,8 @@ public final class Project {
   public static Simulator run(boolean testing, final long endTime,
       String graphFile,
       @Nullable Display display, @Nullable Monitor m, @Nullable Listener list) {
+	  
+	  int packID = 0;
 
     final View.Builder view = createGui(testing, display, m, list);
 
@@ -144,7 +146,7 @@ public final class Project {
     	simulator.register(new AgvAgent(roadModel.getRandomPosition(rng),0));
     }
     
-    
+ 
     for (int i = 0; i < NUM_PCKGS; i++) {
     	Point departure = roadModel.getRandomPosition(rng);
     	Point destination = roadModel.getRandomPosition(rng);
@@ -160,10 +162,12 @@ public final class Project {
     	simulator.register(new Pack(
     				Parcel.builder(departure, destination)
     					.deliveryDuration(deliveryDuration)
-    					.buildDTO(), rng));
+    					.buildDTO(), rng,Integer.toString(packID)));
+    	packID++;
     }
 
     simulator.addTickListener(new TickListener() {
+    int packID = NUM_PCKGS;
       @Override
       public void tick(TimeLapse time) {
         if (time.getStartTime() > endTime) {
@@ -184,7 +188,8 @@ public final class Project {
         	simulator.register(new Pack(
     				Parcel.builder(departure, destination)
     					.deliveryDuration(deliveryDuration)
-    					.buildDTO(), rng));
+    					.buildDTO(), rng,Integer.toString(packID)));
+        	packID++;
         }
       }
 

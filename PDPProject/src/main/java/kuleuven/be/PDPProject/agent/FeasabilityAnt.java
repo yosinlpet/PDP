@@ -40,9 +40,9 @@ public class FeasabilityAnt extends Ant implements Cloneable{
 		roadModel = (GraphRoadModel) pckg.getRM();
 	}
 
-	public  FeasabilityAnt(LinkedList<Point> path, LinkedList<Pack> packages, TimeWindow roadSignsTimeWindow)
+	public  FeasabilityAnt(GraphRoadModel roadModel, LinkedList<Point> path, LinkedList<Pack> packages, TimeWindow roadSignsTimeWindow)
 	{
-		//this.roadModel = roadModel;
+		super.roadModel = roadModel;
 		super.path = path;
 		this.packages = packages;
 		this.roadSignsTimeWindow = roadSignsTimeWindow;
@@ -51,7 +51,7 @@ public class FeasabilityAnt extends Ant implements Cloneable{
 	public FeasabilityAnt clone(FeasabilityAnt cloner) throws CloneNotSupportedException{
 		if (!( cloner instanceof Cloneable))
 		throw new CloneNotSupportedException("Invalid Cloning");
-		return new FeasabilityAnt(cloner.path, cloner.packages, cloner.roadSignsTimeWindow);
+		return new FeasabilityAnt(cloner.roadModel, cloner.path, cloner.packages, cloner.roadSignsTimeWindow);
 	}
 
 	@Override
@@ -61,9 +61,13 @@ public class FeasabilityAnt extends Ant implements Cloneable{
 
 	@Override
 	public void runAnt(){
+		Collection<FeasabilityAnt> clones = getClones();
 		dropSigns();
-		collectInfo(RoadSign.class);
-		getClones();
+		System.out.println("Signs dropped");
+		for (FeasabilityAnt clone : clones)
+			clone.runAnt();
+		//collectInfo(RoadSign.class);
+		//System.out.println("Collected tameeeer");
 	}
 
 
@@ -106,8 +110,8 @@ public class FeasabilityAnt extends Ant implements Cloneable{
 	 */
 	public void dropSigns() {
 		for (Pack pckg : packages) {
-			//RoadSign roadSign = new RoadSign(pckg.getPackID(), pckg, path, roadSignsTimeWindow);
-			//roadModel.get().addObjectAt(roadSign, path.getLast());
+			RoadSign roadSign = new RoadSign(pckg, path, roadSignsTimeWindow);
+			roadModel.addObjectAt(roadSign, path.getLast());
 		}
 	}
 

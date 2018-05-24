@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 package kuleuven.be.PDPProject;
+import com.github.rinde.rinsim.core.model.road.DynamicGraphRoadModelImpl;
 import kuleuven.be.PDPProject.agent.*;
 
 
@@ -144,7 +145,7 @@ public final class Project {
     
     // add depots, taxis and parcels to simulator
     for (int i = 0; i < NUM_AGVS; i++) {
-    	simulator.register(new AgvAgent(roadModel.getRandomPosition(rng),0));
+    	simulator.register(new AgvAgent(roadModel.getRandomPosition(rng),1));
     }
     
  
@@ -215,10 +216,9 @@ public final class Project {
     View.Builder view = View.builder()
       .with(GraphRoadModelRenderer.builder().withDirectionArrows().withNodeCircles().withMargin(1))
       .with(RoadUserRenderer.builder()
-        .withImageAssociation(
-          AgvAgent.class, "/multix.png")
-        .withImageAssociation(
-          Pack.class, "/issou.png"))
+        .withImageAssociation(AgvAgent.class, "/multix.png")
+        .withImageAssociation(Pack.class, "/issou.png")
+          .withImageAssociation(RoadSign.class, "/roadSign.png"))
       .with(PDPModelRenderer.builder())
       .withTitleAppendix("Issou!");
 

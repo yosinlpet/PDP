@@ -3,12 +3,14 @@ package kuleuven.be.PDPProject.agent;
 import com.github.rinde.rinsim.core.model.pdp.PDPModel;
 import com.github.rinde.rinsim.core.model.pdp.Parcel;
 import com.github.rinde.rinsim.core.model.pdp.ParcelDTO;
+import com.github.rinde.rinsim.core.model.road.CollisionGraphRoadModelImpl;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.time.TickListener;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.geom.Point;
 import com.github.rinde.rinsim.util.TimeWindow;
 
+import com.google.common.base.Optional;
 import org.apache.commons.math3.random.RandomGenerator;
 import kuleuven.be.PDPProject.agent.FeasabilityAnt;
 
@@ -30,7 +32,9 @@ public class Pack extends Parcel implements TickListener{
 	private Point departure;
 	private Point position; 
 	private Point destination;
-	
+
+	private RoadModel roadModel;
+	private PDPModel pdpModel;
 	private TimeWindow deliveryTW;
 	
 	private RoadModel rm;
@@ -41,7 +45,7 @@ public class Pack extends Parcel implements TickListener{
     public Pack(ParcelDTO dto, RandomGenerator r, String packID) {
         super(dto,packID);
         this.packID = packID;
-       
+
         rng = r;
         this.departure = dto.getPickupLocation();
         this.destination = dto.getDeliveryLocation();
@@ -51,7 +55,7 @@ public class Pack extends Parcel implements TickListener{
 		this.fragile = rng.nextDouble() > 0.5;
 		
 		this.timeIsOver = false;
-		
+
 		this.deliveryTW = dto.getDeliveryTimeWindow();
 		
 	//fAnt = new FeasabilityAnt(this, departure, deliveryTW);
@@ -128,4 +132,6 @@ public class Pack extends Parcel implements TickListener{
 		  
 	}
 
+	@Override
+	public RoadModel getRoadModel() {return roadModel;}
 }

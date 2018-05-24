@@ -34,18 +34,7 @@ public class Pack extends Parcel implements TickListener{
 	ParcelDTO dto; 
 	//private FeasibilityAnt fAnt;
 	
-    public Pack(ParcelDTO dto, RandomGenerator r){
-        super(dto);
-        
-        rng = r;
-        this.dto = dto;
-        this.departure = dto.getPickupLocation();
-        this.destination = dto.getDeliveryLocation();
 
-		this.carried = false;
-		this.deposited = false;
-		this.fragile = rng.nextDouble() > 0.5;
-	
     public Pack(ParcelDTO dto, RandomGenerator r, String packID) {
         super(dto,packID);
         this.packID = packID;

@@ -106,7 +106,7 @@ public class FeasabilityAnt extends Ant implements Cloneable{
 	 */
 	public void dropSigns() {
 		for (Pack pckg : packages) {
-			RoadSign roadSign = new RoadSign(pckg.getID(), pckg, path, roadSignsTimeWindow);
+			RoadSign roadSign = new RoadSign(pckg.getPackID(), pckg, path, roadSignsTimeWindow);
 			roadModel.get().addObjectAt(roadSign, path.getLast());
 		}
 	}

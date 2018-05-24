@@ -35,7 +35,7 @@ public class IntentionAnt extends Ant{
 	Queue<Point> intentionPath;
 	long[] arrivalTime; // Prediction of the arrival time 
 	int numberOfHops;
-	String agentID;
+	String packID;
 	
 	/**
 	* Constructor
@@ -45,7 +45,7 @@ public class IntentionAnt extends Ant{
 	public IntentionAnt(String packID, LinkedList<Point> intentionPath, long[] arrivalTime) {
 			roadModel = Optional.absent();
 			this.arrivalTime = arrivalTime;
-			this.agentID = agentID;
+			this.packID = packID;
 			numberOfHops = 0;
 			hop();
 		}
@@ -73,9 +73,9 @@ public class IntentionAnt extends Ant{
 			for(RoadSign rs : roadSigns) {
 					// If 
 					if(rs.getNext().equals(intentionPath.element()) 
-							&& (this.packID).equals(rs.getPackID())
+							&& (this.packID).equals(rs.getPack().getPackID())
 							&& !rs.isIntentionGiven()){
-						rs.setIntention(agentID, arrivalTime[numberOfHops-1]);
+						rs.setIntention(packID, arrivalTime[numberOfHops-1]);
 					}
 			}			
 		}

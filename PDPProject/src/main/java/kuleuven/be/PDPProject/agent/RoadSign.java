@@ -80,10 +80,6 @@ public class RoadSign implements RoadUser, TickListener {
         return cost;
     }
 
-    public String getAgentID() {
-    	return agentID;
-    }
-    
     public long getPackExpirationTime() {
         return pack.getTimeWindow().end();
     }

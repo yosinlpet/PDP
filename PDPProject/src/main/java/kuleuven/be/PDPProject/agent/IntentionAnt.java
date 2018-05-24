@@ -60,24 +60,31 @@ public class IntentionAnt extends Ant{
 			numberOfHops++;
 		}
 		
-		@Override
-		public void runAnt(){
+		public boolean runIntAnt(){
+			boolean success = true;
+			for(long a : arrivalTime) {
+				success = success && raiseFlag();
+				hop();
+			}
+			return success;
 		}
 
 		/**
 		 * Leaves road signs on the {@link RoadModel}.
 		 */
-		public void raiseFlag() {
-			Set<RoadSign> roadSigns = collectInfo(
-									RoadSign.class);
+		public boolean raiseFlag() {
+			boolean success = false;
+			Set<RoadSign> roadSigns = collectInfo(RoadSign.class);
 			for(RoadSign rs : roadSigns) {
-					// If 
 					if(rs.getNext().equals(intentionPath.element()) 
-							&& (this.packID).equals(rs.getPack().getPackID())
-							&& !rs.isIntentionGiven()){
+								&& (this.packID).equals(rs.getPack().getPackID())
+								&& !rs.isIntentionGiven()) 
+					{
 						rs.setIntention(packID, arrivalTime[numberOfHops-1]);
+						success = true;
 					}
-			}			
+			}		
+			return success;
 		}
 		
 

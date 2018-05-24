@@ -65,7 +65,7 @@ import com.github.rinde.rinsim.ui.renderers.PDPModelRenderer;
 public final class Project {
 
   private static final int NUM_DEPOTS = 1;
-  private static final int NUM_AGVS = 10;
+  private static final int NUM_AGVS = 2;
   private static final int NUM_PCKGS = 1;
 
   // time in ms
@@ -73,11 +73,11 @@ public final class Project {
   private static final int TAXI_CAPACITY = 10;
   private static final int DEPOT_CAPACITY = 100;
 
-  private static final int SPEED_UP = 4;
+  private static final int SPEED_UP = 1;
   private static final int MAX_CAPACITY = 3;
-  private static final double NEW_CUSTOMER_PROB = .005;
+  private static final double NEW_CUSTOMER_PROB = .01;
 
-  private static final String MAP_FILE = "/leuven-simple.dot";
+  private static final String MAP_FILE = "/testGraph.dot";
   private static final Map<String, Graph<MultiAttributeData>> GRAPH_CACHE =
     newHashMap();
 
@@ -203,14 +203,14 @@ public final class Project {
       @Nullable Listener list) {
 
     View.Builder view = View.builder()
-      .with(GraphRoadModelRenderer.builder())
+      .with(GraphRoadModelRenderer.builder().withDirectionArrows().withNodeCircles().withMargin(1))
       .with(RoadUserRenderer.builder()
         .withImageAssociation(
-          AgvAgent.class, "/AutoMultiplaW.gif")
+          AgvAgent.class, "/multix.png")
         .withImageAssociation(
           Pack.class, "/issou.png"))
       .with(PDPModelRenderer.builder())
-      .withTitleAppendix("Risoul");
+      .withTitleAppendix("Issou!");
 
     if (testing) {
       view = view.withAutoClose()

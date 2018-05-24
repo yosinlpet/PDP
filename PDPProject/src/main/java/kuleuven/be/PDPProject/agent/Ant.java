@@ -38,8 +38,8 @@ public abstract class Ant implements RoadUser{
     /**
      * Collects information at position <code>p</code>.
      */
-    public  <Y extends RoadUser> Set<Y> collectInfo(Class c, Point p, RoadModel roadModel){
-        Set<Y> roadUserSet = roadModel.getObjectsAt((RoadUser) this, c);
+    public  <Y extends RoadUser> Set<Y> collectInfo(Class c){
+        Set<Y> roadUserSet = roadModel.get().getObjectsAt((RoadUser) this, c);
         return roadUserSet;
     }
     public void runAnt(){}

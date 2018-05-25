@@ -159,7 +159,7 @@ public final class Project {
 		long distanceShortestPath = (long) md.doubleValue(md.getUnit());
 
 		long deliveryDuration =
-				distanceShortestPath/1*(Math.round(Math.abs(rng.nextGaussian())*factor));
+				distanceShortestPath/1*Math.round(Math.abs(rng.nextGaussian())*factor);
 
     	simulator.register(new Pack(
     				Parcel.builder(departure, destination)
@@ -185,7 +185,8 @@ public final class Project {
     		long distanceShortestPath = (long) md.doubleValue(md.getUnit());
     		
     		long deliveryDuration =
-    			distanceShortestPath/1*(long)Math.abs(rng.nextGaussian())*factor;
+    			distanceShortestPath/1*Math.round(Math.abs(rng.nextGaussian())*factor);
+    		System.out.println(deliveryDuration);
         		
     		long creationTime = time.getTime();
     		TimeWindow tw = TimeWindow.create(creationTime,

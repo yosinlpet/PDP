@@ -86,7 +86,7 @@ public final class Project {
   private static final long TEST_STOP_TIME = 20 * 60 * 1000;
   private static final int TEST_SPEED_UP = 64;
   
-  private static final int factor = 10;
+  private static final int factor = 1;
 
   public Project() {}
 

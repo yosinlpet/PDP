@@ -69,7 +69,7 @@ public class FeasabilityAnt extends Ant implements Cloneable{
 	@Override
 	public void runAnt(){
 		Collection<FeasabilityAnt> clones = getClones();
-		System.out.println("Signs dropped");
+		//System.out.println("Signs dropped");
 		for (FeasabilityAnt clone : clones) {
 			clone.dropSigns();	
 		}
@@ -109,7 +109,7 @@ public class FeasabilityAnt extends Ant implements Cloneable{
 				if(!c.getHashMap().containsKey(p2.toString())) {	
 					clones.add(c);
 					c.getHashMap().put(p2.toString(),p2);
-					System.out.println("Cloned at :"+p2.toString());
+					//System.out.println("Cloned at :"+p2.toString());
 					
 				}
 				

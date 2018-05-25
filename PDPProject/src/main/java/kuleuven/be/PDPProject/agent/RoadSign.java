@@ -39,14 +39,14 @@ public class RoadSign implements RoadUser, TickListener {
         roadModel = Optional.absent();
         this.timeWindow = timeWindow;
         this.pack = pack;
-        LinkedList<Point> path_ = path;
+        LinkedList<Point> path_ = new LinkedList<Point>(path);
         cost = path.size();
         path_.removeLast();
         next = path_.getLast();
         this.agentID = pack.getPackID();
         intentionGiven = false;
         tlSet = false;
-        System.out.println("I am a constructed RoadSign");
+        //System.out.println("I am a constructed RoadSign");
     }
 
     @Override

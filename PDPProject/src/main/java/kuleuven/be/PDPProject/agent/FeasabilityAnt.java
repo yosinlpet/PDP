@@ -1,6 +1,6 @@
 package kuleuven.be.PDPProject.agent;
 
-
+import com.github.rinde.rinsim.core.Simulator;
 import java.sql.Time;
 import java.util.Collection;
 import java.util.Map;
@@ -26,6 +26,8 @@ import sun.awt.image.ImageWatched;
 public class FeasabilityAnt extends Ant implements Cloneable{
 	private LinkedList<Pack> packages;
 	private TimeWindow roadSignsTimeWindow;
+	
+	private Simulator sim;
 
 	private Map<String,Point> hashMap = new HashMap<String,Point>(); 
 	
@@ -34,7 +36,7 @@ public class FeasabilityAnt extends Ant implements Cloneable{
 	 * @param pckg {@link Pack} sending the {@link FeasabilityAnt}.
 	 * @param p	location where to initialize the {@link FeasabilityAnt}.
 	 **/
-	public FeasabilityAnt(Pack pckg, Point p, TimeWindow timeWindow){
+	public FeasabilityAnt(Pack pckg, Point p, TimeWindow timeWindow, Simulator sim){
 		path = new LinkedList<>();
 		path.add(p);
 		hashMap.put(p.toString(),p);
@@ -42,23 +44,26 @@ public class FeasabilityAnt extends Ant implements Cloneable{
 		packages.add(pckg);
 		roadSignsTimeWindow = timeWindow;
 		roadModel = (GraphRoadModel) pckg.getRM();
+		this.sim = sim;
 
 	}
 
 	//  Constructor used for George cloning
-	public  FeasabilityAnt(GraphRoadModel roadModel, LinkedList<Point> path, LinkedList<Pack> packages, TimeWindow roadSignsTimeWindow, Map<String,Point> hashMap)
+	public  FeasabilityAnt(GraphRoadModel roadModel, LinkedList<Point> path, LinkedList<Pack> packages, 
+					TimeWindow roadSignsTimeWindow, Map<String,Point> hashMap, Simulator sim)
 	{
 		super.roadModel = roadModel;
 		super.path = new LinkedList<Point>(path);
 		this.hashMap = hashMap;
 		this.packages = new LinkedList<Pack>(packages);
 		this.roadSignsTimeWindow = roadSignsTimeWindow;
+		this.sim = sim;
 	}
 
 	public FeasabilityAnt clone(FeasabilityAnt cloner) throws CloneNotSupportedException{
 		if (!( cloner instanceof Cloneable))
 		throw new CloneNotSupportedException("Invalid Cloning");
-		return new FeasabilityAnt(cloner.roadModel, cloner.path, cloner.packages, cloner.roadSignsTimeWindow,cloner.hashMap);
+		return new FeasabilityAnt(cloner.roadModel, cloner.path, cloner.packages, cloner.roadSignsTimeWindow,cloner.hashMap, cloner.sim);
 	}
 
 	@Override
@@ -135,7 +140,8 @@ public class FeasabilityAnt extends Ant implements Cloneable{
 	public void dropSigns() {
 		for (Pack pckg : packages) {
 			RoadSign roadSign = new RoadSign(pckg, path, roadSignsTimeWindow);
-			roadModel.addObjectAt(roadSign, path.getLast());
+			sim.register(roadSign);
+			roadModel.addObjectAt(roadSign, path.getLast());	
 		}
 	}
 

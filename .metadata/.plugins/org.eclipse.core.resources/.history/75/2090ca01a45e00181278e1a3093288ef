@@ -1,5 +1,0 @@
-package kuleuven.be.PDPProject.agent;
-
-public class IntentionFlag extends RoadUser {
-
-}

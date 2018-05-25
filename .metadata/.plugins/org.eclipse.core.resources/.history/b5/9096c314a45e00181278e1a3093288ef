@@ -1,6 +1,0 @@
-package kuleuven.be.PDPProject.agent;
-import com.github.rinde.rinsim.core.model.road.RoadUser;
-
-public class IntentionFlag implements RoadUser {
-
-}

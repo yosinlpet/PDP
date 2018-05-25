@@ -1,4 +1,5 @@
 package kuleuven.be.PDPProject.agent;
+import com.github.rinde.rinsim.core.model.road.GraphRoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.time.TickListener;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
@@ -21,7 +22,7 @@ import java.util.LinkedList;
  */
 public class RoadSign implements RoadUser, TickListener {
     
-	private Optional<CollisionGraphRoadModelImpl> roadModel;
+	private GraphRoadModel roadModel;
     private Pack pack;
     private Point next;
     private int cost;
@@ -36,7 +37,6 @@ public class RoadSign implements RoadUser, TickListener {
     private boolean tlSet;
     
     public RoadSign(Pack pack, LinkedList<Point> path, TimeWindow timeWindow){
-        roadModel = Optional.absent();
         this.timeWindow = timeWindow;
         this.pack = pack;
         LinkedList<Point> path_ = new LinkedList<>(path);
@@ -50,7 +50,7 @@ public class RoadSign implements RoadUser, TickListener {
 
     @Override
     public void initRoadUser(RoadModel model){
-        roadModel = Optional.of((CollisionGraphRoadModelImpl) model);
+        roadModel = (GraphRoadModel) model;
     }
     
     public void setIntention(String agentID, long until) {
@@ -93,13 +93,13 @@ public class RoadSign implements RoadUser, TickListener {
         System.out.println(timeLapse.getTime()+" on " + timeWindow.end());
        if (timeLapse.getTime() > timeWindow.end()) {
     	    System.out.println("RoadSigns ça dégage!");
-           roadModel.get().removeObject(this);
+           roadModel.removeObject(this);
        }
               
        // If intention expired
-       if(!twIntention.isIn(timeLapse.getTime())){
-    	   intentionGiven = false;
-       }
+       //if(!twIntention.isIn(timeLapse.getTime())){
+    	//   intentionGiven = false;
+       //}
     }
     @Override
     public void afterTick(TimeLapse timeLapse){}

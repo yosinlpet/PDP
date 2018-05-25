@@ -2,6 +2,7 @@ package kuleuven.be.PDPProject.agent;
 
 import com.github.rinde.rinsim.core.model.pdp.PDPModel;
 import com.github.rinde.rinsim.core.model.pdp.Parcel;
+import com.github.rinde.rinsim.core.Simulator;
 import com.github.rinde.rinsim.core.model.pdp.ParcelDTO;
 import com.github.rinde.rinsim.core.model.road.CollisionGraphRoadModelImpl;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
@@ -37,12 +38,14 @@ public class Pack extends Parcel implements TickListener{
 	private PDPModel pdpModel;
 	private TimeWindow deliveryTW;
 	
+	private Simulator sim;
+	
 	private RoadModel rm;
 	ParcelDTO dto; 
 	
 	private FeasabilityAnt fAnt;
 	
-    public Pack(ParcelDTO dto, RandomGenerator r, String packID) {
+    public Pack(ParcelDTO dto, RandomGenerator r, String packID, Simulator sim) {
         super(dto,packID);
         this.packID = packID;
 
@@ -58,6 +61,8 @@ public class Pack extends Parcel implements TickListener{
 
 		this.deliveryTW = dto.getDeliveryTimeWindow();
 		
+		this.sim = sim;
+		
 	//fAnt = new FeasabilityAnt(this, departure, deliveryTW);
 		
 		//fAnt.runAnt();
@@ -66,7 +71,7 @@ public class Pack extends Parcel implements TickListener{
     @Override
     public void initRoadPDP(RoadModel pRoadModel, PDPModel pPdpModel) {
     	this.rm = pRoadModel;
-    	fAnt = new FeasabilityAnt(this, departure, deliveryTW);
+    	fAnt = new FeasabilityAnt(this, departure, deliveryTW, sim);
     	fAnt.runAnt();
     }
    

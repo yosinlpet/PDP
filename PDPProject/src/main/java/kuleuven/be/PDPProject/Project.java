@@ -157,14 +157,14 @@ public final class Project {
 				roadModel.getShortestPathTo(departure, destination));
 		
 		long distanceShortestPath = (long) md.doubleValue(md.getUnit());
-		
+
 		long deliveryDuration =
-				distanceShortestPath/1*(long)Math.abs(rng.nextGaussian())*factor;
-    	
+				distanceShortestPath/1*(Math.round(Math.abs(rng.nextGaussian())*factor));
+
     	simulator.register(new Pack(
     				Parcel.builder(departure, destination)
     					.deliveryDuration(deliveryDuration)
-    					.buildDTO(), rng,Integer.toString(packID)));
+    					.buildDTO(), rng,Integer.toString(packID),simulator));
     	packID++;
     }
 
@@ -190,11 +190,13 @@ public final class Project {
     		long creationTime = time.getTime();
     		TimeWindow tw = TimeWindow.create(creationTime,
     											creationTime+deliveryDuration);
+    		System.out.println(creationTime);
+    		System.out.println(tw.toString());
     		
         	simulator.register(new Pack(
     				Parcel.builder(departure, destination)
     					.deliveryTimeWindow(tw)
-    					.buildDTO(), rng,Integer.toString(packID)));
+    					.buildDTO(), rng,Integer.toString(packID),simulator));
         	packID++;
         }
       }

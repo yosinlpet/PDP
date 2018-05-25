@@ -37,21 +37,21 @@ public class FeasabilityAnt extends Ant implements Cloneable{
 	public FeasabilityAnt(Pack pckg, Point p, TimeWindow timeWindow){
 		path = new LinkedList<>();
 		path.add(p);
-		System.out.println(p.toString());
 		hashMap.put(p.toString(),p);
 		packages = new LinkedList<>();
 		packages.add(pckg);
 		roadSignsTimeWindow = timeWindow;
 		roadModel = (GraphRoadModel) pckg.getRM();
+
 	}
 
 	//  Constructor used for George cloning
 	public  FeasabilityAnt(GraphRoadModel roadModel, LinkedList<Point> path, LinkedList<Pack> packages, TimeWindow roadSignsTimeWindow, Map<String,Point> hashMap)
 	{
 		super.roadModel = roadModel;
-		super.path = path;
+		super.path = new LinkedList<Point>(path);
 		this.hashMap = hashMap;
-		this.packages = packages;
+		this.packages = new LinkedList<Pack>(packages);
 		this.roadSignsTimeWindow = roadSignsTimeWindow;
 	}
 
@@ -69,10 +69,18 @@ public class FeasabilityAnt extends Ant implements Cloneable{
 	@Override
 	public void runAnt(){
 		Collection<FeasabilityAnt> clones = getClones();
-		dropSigns();
 		System.out.println("Signs dropped");
-		for (FeasabilityAnt clone : clones)
+		for (FeasabilityAnt clone : clones) {
+			clone.dropSigns();	
+		}
+		for (FeasabilityAnt clone : clones) {
 			clone.runAnt();
+		}
+
+		
+		//dropSigns();
+	
+		//clone.runAnt();
 		//collectInfo(RoadSign.class);
 		//System.out.println("Collected tameeeer");
 	}
@@ -93,16 +101,18 @@ public class FeasabilityAnt extends Ant implements Cloneable{
 		LinkedList<FeasabilityAnt> clones = new LinkedList<>();
 
 		for(Point p2 : pointsCollection){
-			FeasabilityAnt clone;
+
+			FeasabilityAnt c;
 			try {
-                clone = clone(this);
-				clone.moveTo(p2);
-				if(!clone.getHashMap().containsKey(p2.toString())) {
-					clone.addToPath(p2);
-					clones.add(clone);
-					clone.getHashMap().put(p2.toString(),p2);
+                c = clone(this);
+                c.addToPath(p2);
+				if(!c.getHashMap().containsKey(p2.toString())) {	
+					clones.add(c);
+					c.getHashMap().put(p2.toString(),p2);
 					System.out.println("Cloned at :"+p2.toString());
+					
 				}
+				
 			}
 			catch (CloneNotSupportedException e) {
 				System.out.println("[EXCEPTION CAUGHT] -- Impossible to clone!");
@@ -116,7 +126,7 @@ public class FeasabilityAnt extends Ant implements Cloneable{
      * @param p point to be added.
      */
     public void addToPath(Point p) {
-        this.path.add(p);
+        path.add(p);
     }
 
 	/**

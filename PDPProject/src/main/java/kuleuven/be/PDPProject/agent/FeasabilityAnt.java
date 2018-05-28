@@ -81,7 +81,7 @@ public class FeasabilityAnt extends Ant implements Cloneable{
 	public void runAnt(){
 		Collection<FeasabilityAnt> clones = getClones();
 		for (FeasabilityAnt clone : clones)
-                clone.dropSigns();
+            clone.dropSigns();
 		for (FeasabilityAnt clone : clones)
 			clone.runAnt();
 	}

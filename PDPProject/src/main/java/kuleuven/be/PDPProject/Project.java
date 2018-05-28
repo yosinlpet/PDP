@@ -68,7 +68,7 @@ public final class Project {
 
   private static final int NUM_DEPOTS = 1;
   private static final int NUM_AGVS = 1;
-  private static final int NUM_PCKGS = 1;
+  private static final int NUM_PCKGS = 0;
 
   // time in ms
   private static final long SERVICE_DURATION = 60000;

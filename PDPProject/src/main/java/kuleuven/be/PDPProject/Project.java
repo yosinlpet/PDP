@@ -67,7 +67,7 @@ import com.github.rinde.rinsim.util.TimeWindow;
 public final class Project {
 
   private static final int NUM_DEPOTS = 1;
-  private static final int NUM_AGVS = 1;
+  private static final int NUM_AGVS = 2;
   private static final int NUM_PCKGS = 0;
 
   // time in ms
@@ -77,7 +77,7 @@ public final class Project {
 
   private static final int SPEED_UP = 1;
   private static final int MAX_CAPACITY = 3;
-  private static final double NEW_CUSTOMER_PROB = .01;
+  private static final double NEW_CUSTOMER_PROB = .005;
 
   private static final String MAP_FILE = "/testGraph.dot";
   private static final Map<String, Graph<MultiAttributeData>> GRAPH_CACHE =
@@ -152,9 +152,12 @@ public final class Project {
     
  
     for (int i = 0; i < NUM_PCKGS; i++) {
-    	Point departure = roadModel.getRandomPosition(rng);
-    	Point destination = roadModel.getRandomPosition(rng);
-    	
+    	Point destination;
+        Point departure = roadModel.getRandomPosition(rng);
+        do {
+            destination = roadModel.getRandomPosition(rng);
+        }
+        while (destination.equals(departure));
 		Measure<Double, Length> md = roadModel.getDistanceOfPath(
 				roadModel.getShortestPathTo(departure, destination));
 		
@@ -179,15 +182,20 @@ public final class Project {
         if (time.getStartTime() > endTime) {
           simulator.stop();
         } else if (rng.nextDouble() < NEW_CUSTOMER_PROB) {
-        	
+
+            Point destination;
         	Point departure = roadModel.getRandomPosition(rng);
-        	Point destination = roadModel.getRandomPosition(rng);
+        	do {
+                destination = roadModel.getRandomPosition(rng);
+            }
+        	while (destination.equals(departure));
+
         	
     		Measure<Double, Length> md = roadModel.getDistanceOfPath(
     				roadModel.getShortestPathTo(departure, destination));
     		
     		long distanceShortestPath = (long) md.doubleValue(md.getUnit());
-    		
+    		System.out.println(distanceShortestPath);
     		long maxDeliveryTime =
     			distanceShortestPath/1*Math.round(Math.abs(rng.nextGaussian())*factor);
     		
@@ -220,8 +228,8 @@ public final class Project {
       .with(GraphRoadModelRenderer.builder().withDirectionArrows().withNodeCircles().withMargin(1))
       .with(RoadUserRenderer.builder()
         .withImageAssociation(Truck.class, "/multix.png")
-        .withImageAssociation(Pack.class, "/issou.png")
-          .withImageAssociation(RoadSign.class, "/roadSign.png"))
+        .withImageAssociation(Pack.class, "/issou.png"))
+          //.withImageAssociation(RoadSign.class, "/roadSign.png"))
       .with(PDPModelRenderer.builder())
       .withTitleAppendix("Issou!");
 

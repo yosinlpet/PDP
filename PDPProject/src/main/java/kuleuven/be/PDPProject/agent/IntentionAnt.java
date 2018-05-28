@@ -36,17 +36,18 @@ public class IntentionAnt extends Ant{
 	long[] arrivalTime; // Prediction of the arrival time 
 	int numberOfHops;
 	String packID;
-	
+	private boolean indicateDest;
 	/**
 	* Constructor
 	* @param pckg {@link Pack} sending the {@link FeasabilityAnt}.
 	* @param p	location where to initialize the {@link FeasabilityAnt}.
 	**/
-	public IntentionAnt(String packID, LinkedList<Point> intentionPath, long[] arrivalTime) {
+	public IntentionAnt(String packID, LinkedList<Point> intentionPath, long[] arrivalTime, boolean indicateDest) {
 			roadModel = Optional.absent();
 			this.arrivalTime = arrivalTime;
 			this.intentionPath = intentionPath;
 			this.packID = packID;
+			this.indicateDest = indicateDest;
 			numberOfHops = 0;
 			hop();
 		}
@@ -64,30 +65,38 @@ public class IntentionAnt extends Ant{
 		public boolean runIntAnt(){
 			boolean success = true;
 			for(long a : arrivalTime) {
-				success = success && raiseFlag();
+				success = success && askFlag();
 				hop();
 			}
+			if (success)
+				raiseFlag();
 			return success;
 		}
 
 		/**
 		 * Leaves road signs on the {@link RoadModel}.
 		 */
-		public boolean raiseFlag() {
+		public boolean askFlag() {
 			boolean success = false;
 			Set<RoadSign> roadSigns = collectInfo(RoadSign.class);
 			for(RoadSign rs : roadSigns) {
 					if(rs.getNext().equals(intentionPath.element()) 
 								&& (this.packID).equals(rs.getPack().getPackID())
-								&& !rs.isIntentionGiven()) 
-					{
-						rs.setIntention(packID, arrivalTime[numberOfHops-1]);
+								&& !rs.isIntentionGiven()
+								&& this.indicateDest == rs.indicateDest())
 						success = true;
-					}
-			}		
+			}
 			return success;
 		}
-		
-
+		public void raiseFlag(){
+			Set<RoadSign> roadSigns = collectInfo(RoadSign.class);
+			for(RoadSign rs : roadSigns) {
+					if(rs.getNext().equals(intentionPath.element())
+								&& (this.packID).equals(rs.getPack().getPackID())
+								&& !rs.isIntentionGiven()
+								&& this.indicateDest == rs.indicateDest())
+					    rs.setIntention(packID, arrivalTime[numberOfHops-1]);
+			}
+		}
 	}
 

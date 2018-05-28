@@ -126,7 +126,7 @@ public class FeasabilityAnt extends Ant implements Cloneable{
 	 */
 	public void dropSigns() {
 		for (Pack pckg : packages) {
-			RoadSign roadSign = new RoadSign(pckg, path, roadSignsTimeWindow, indicateDest);
+			RoadSign roadSign = new RoadSign(pckg, path, roadSignsTimeWindow, indicateDest, getDistList());
 			sim.register(roadSign);
 			roadModel.addObjectAt(roadSign, path.getLast());	
 		}
@@ -157,8 +157,8 @@ public class FeasabilityAnt extends Ant implements Cloneable{
 		p2.removeFirst();
     	while (p.size()> 1) {
     		LinkedList<Point> a = new LinkedList<Point>();
-    		a.addLast(p.getFirst());
-    		a.addLast(p2.getFirst());
+    		a.addFirst(p.getFirst());
+    		a.addFirst(p2.getFirst());
 			Measure<Double, Length> md = roadModel.getDistanceOfPath(a);
 			dl.addLast((long) md.doubleValue(md.getUnit()));
 			p2.removeFirst();

@@ -39,11 +39,13 @@ public class RoadSign implements RoadUser, TickListener {
     private LinkedList<Point> path;
     private boolean isOver;
     private boolean indicateDest;
+    private LinkedList<Long> distList;
 
-    public RoadSign(Pack pack, LinkedList<Point> path, 
-    		TimeWindow timeWindow, boolean indicateDest){
+    public RoadSign(Pack pack, LinkedList<Point> path,
+    		TimeWindow timeWindow, boolean indicateDest, LinkedList<Long> distList){
         this.timeWindow = timeWindow;
         this.pack = pack;
+        this.distList = distList;
         this.isOver = false;
         LinkedList<Point> path_ = new LinkedList<>(path);
         this.path = new LinkedList<>(path);
@@ -101,6 +103,10 @@ public class RoadSign implements RoadUser, TickListener {
     
     public boolean indicateDest() {
     	return indicateDest;
+    }
+
+    public LinkedList<Long> getDistList() {
+        return distList;
     }
     
     @Override

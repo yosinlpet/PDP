@@ -195,7 +195,7 @@ public final class Project {
     				roadModel.getShortestPathTo(departure, destination));
     		
     		long distanceShortestPath = (long) md.doubleValue(md.getUnit());
-    		System.out.println(distanceShortestPath);
+    		
     		long maxDeliveryTime =
     			distanceShortestPath/1*Math.round(Math.abs(rng.nextGaussian())*factor);
     		

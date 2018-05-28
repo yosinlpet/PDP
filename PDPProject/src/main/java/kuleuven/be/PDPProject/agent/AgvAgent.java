@@ -18,7 +18,9 @@ import com.google.common.base.Optional;
  */
 public class AgvAgent extends Vehicle {
   private static final double SPEED = 1000d;
-  private Optional<Parcel> curr;
+  private Optional<Pack> curr;
+  
+  private IntentionAnt intAnt;
 
   public AgvAgent(Point startPosition, int capacity) {
     super(VehicleDTO.builder()
@@ -41,8 +43,8 @@ public class AgvAgent extends Vehicle {
       return;
     }
     if (!curr.isPresent()) {
-      curr = Optional.fromNullable(RoadModels.findClosestObject(
-        rm.getPosition(this), rm, Parcel.class));
+      //curr = Optional.fromNullable(RoadModels.findClosestObject(
+      //  rm.getPosition(this), rm, Parcel.class));
     }
 
     if (curr.isPresent()) {

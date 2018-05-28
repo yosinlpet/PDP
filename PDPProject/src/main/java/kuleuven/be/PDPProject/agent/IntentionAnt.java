@@ -45,6 +45,7 @@ public class IntentionAnt extends Ant{
 	public IntentionAnt(String packID, LinkedList<Point> intentionPath, long[] arrivalTime) {
 			roadModel = Optional.absent();
 			this.arrivalTime = arrivalTime;
+			this.intentionPath = intentionPath;
 			this.packID = packID;
 			numberOfHops = 0;
 			hop();

@@ -4,6 +4,8 @@ import com.github.rinde.rinsim.core.Simulator;
 import java.sql.Time;
 import java.util.Collection;
 import java.util.Map;
+import javax.measure.Measure;
+import javax.measure.quantity.Length;
 import java.util.HashMap;
 
 import com.github.rinde.rinsim.geom.Graph;
@@ -22,6 +24,8 @@ import com.github.rinde.rinsim.core.model.road.GraphRoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.google.common.base.Optional;
 import sun.awt.image.ImageWatched;
+
+import javax.measure.Measure;
 
 public class FeasabilityAnt extends Ant implements Cloneable{
 	private LinkedList<Pack> packages;
@@ -146,4 +150,20 @@ public class FeasabilityAnt extends Ant implements Cloneable{
 		return hashMap;
 	}
 
+	public LinkedList<Long> getDistList() {
+    	LinkedList<Long> dl = new LinkedList<>();
+    	LinkedList<Point> p = new LinkedList<>(path);
+		LinkedList<Point> p2 = new LinkedList<>(path);
+		p2.removeFirst();
+    	while (p.size()> 1) {
+    		LinkedList<Point> a = new LinkedList<Point>();
+    		a.addLast(p.getFirst());
+    		a.addLast(p2.getFirst());
+			Measure<Double, Length> md = roadModel.getDistanceOfPath(a);
+			dl.addLast((long) md.doubleValue(md.getUnit()));
+			p2.removeFirst();
+			p.removeFirst();
+		}
+		return dl;
+	}
 }

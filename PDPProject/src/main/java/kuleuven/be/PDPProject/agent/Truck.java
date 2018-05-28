@@ -75,10 +75,8 @@ public class Truck extends Vehicle {
     
     // If no pack in target
     if (!curr.isPresent()) {
-        System.out.println("curr absent");
     	 Set<RoadSign> rs = rm.getObjectsAt((RoadUser) this, RoadSign.class);
          intPath =  selectPackPath(rs);
-        System.out.println(intPath.toString());
          if(!intPath.isEmpty()) {
              rm.moveTo(this, intPath.getFirst(), time);
     	 }
@@ -86,7 +84,6 @@ public class Truck extends Vehicle {
     
     // If we have a pack in target
     if(curr.isPresent()) {
-        System.out.println("curr present");
     	final boolean inCargo = pm.containerContains(this, curr.get());
     	
     	// Sanity check
@@ -95,23 +92,19 @@ public class Truck extends Vehicle {
           } 
         // We have the pack and we will deliver it
         else if (inCargo) {
-            System.out.println("In cargo");
         	  rm.moveTo(this, intPath.getFirst(), time);
               if (rm.getPosition(this).equals(curr.get().getDeliveryLocation())) {
                   // deliver when we arrive
                   curr.get().setDeposited();
                   pm.deliver(this, curr.get(), time);
-                  System.out.println(curr.get().getDeliveryLocation());
                   curr = Optional.absent();
                 }
           } 
         // We dont have yet the pack : go for it
         else {
-            System.out.println("get package");
           	rm.moveTo(this, intPath.getFirst(), time);
         	if(rm.equalPosition(this, curr.get())) {
         		pm.pickup(this, curr.get(), time);
-        		System.out.println("picking out!");
         		Set<RoadSign> rs = rm.getObjectsAt((RoadUser) this, RoadSign.class);
         		intPath = getCorrespondingDestPath(rs,curr.get().getPackID());
         		rm.moveTo(this, intPath.getFirst(), time);

@@ -32,7 +32,8 @@ public class IntentionAnt extends Ant{
 	private TimeWindow roadSignsTimeWindow;
 
 	Point currPos;
-	Queue<Point> intentionPath;
+	LinkedList<Point> intentionPath;
+	LinkedList<Point> currPath;
 	long[] arrivalTime; // Prediction of the arrival time 
 	int numberOfHops;
 	String packID;
@@ -45,7 +46,8 @@ public class IntentionAnt extends Ant{
 	public IntentionAnt(String packID, LinkedList<Point> intentionPath, long[] arrivalTime, boolean indicateDest) {
 			roadModel = Optional.absent();
 			this.arrivalTime = arrivalTime;
-			this.intentionPath = intentionPath;
+			this.currPath = new LinkedList<>(intentionPath);
+            this.intentionPath = intentionPath;
 			this.packID = packID;
 			this.indicateDest = indicateDest;
 			numberOfHops = 0;
@@ -58,18 +60,25 @@ public class IntentionAnt extends Ant{
 	    }
 
 		public void hop() {
-			currPos = intentionPath.poll();
+			currPos = currPath.poll();
 			numberOfHops++;
 		}
-		
+
+		public void resetHop(){
+			numberOfHops = 0;
+			currPath = new LinkedList<>(this.intentionPath);
+		}
+
 		public boolean runIntAnt(){
 			boolean success = true;
 			for(long a : arrivalTime) {
 				success = success && askFlag();
 				hop();
 			}
+			resetHop();
 			if (success)
-				raiseFlag();
+			    for (long a : arrivalTime)
+				raiseFlag(a);
 			return success;
 		}
 
@@ -88,14 +97,13 @@ public class IntentionAnt extends Ant{
 			}
 			return success;
 		}
-		public void raiseFlag(){
+		public void raiseFlag(long a){
 			Set<RoadSign> roadSigns = collectInfo(RoadSign.class);
 			for(RoadSign rs : roadSigns) {
 					if(rs.getNext().equals(intentionPath.element())
 								&& (this.packID).equals(rs.getPack().getPackID())
-								&& !rs.isIntentionGiven()
 								&& this.indicateDest == rs.indicateDest())
-					    rs.setIntention(packID, arrivalTime[numberOfHops-1]);
+					    rs.setIntention(packID, a);
 			}
 		}
 	}

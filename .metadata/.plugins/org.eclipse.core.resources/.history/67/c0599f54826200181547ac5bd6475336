@@ -1,0 +1,121 @@
+package kuleuven.be.PDPProject.agent;
+
+import java.util.Set;
+import java.util.LinkedList;
+
+import com.github.rinde.rinsim.core.model.pdp.PDPModel;
+import com.github.rinde.rinsim.core.model.pdp.Parcel;
+import com.github.rinde.rinsim.core.model.pdp.Vehicle;
+import com.github.rinde.rinsim.core.model.pdp.VehicleDTO;
+import com.github.rinde.rinsim.core.model.road.RoadModel;
+import com.github.rinde.rinsim.core.model.road.RoadModels;
+import com.github.rinde.rinsim.core.model.road.RoadUser;
+import com.github.rinde.rinsim.core.model.time.TimeLapse;
+import com.github.rinde.rinsim.geom.Point;
+import com.google.common.base.Optional;
+
+/**
+ * Implementation of a very simple taxi agent. It moves to the closest customer,
+ * picks it up, then delivers it, repeat.
+ *
+ * @author Rinde van Lon
+ */
+public class Truck extends Vehicle {
+  private static final double SPEED = 1000d;
+  private Optional<Pack> curr;
+  
+  private IntentionAnt intAnt;
+
+  private LinkedList<Point> intPath;
+  
+  private RoadModel rm;
+
+  public Truck(Point startPosition, RoadModel rm, int capacity) {
+    super(VehicleDTO.builder()
+      .capacity(capacity)
+      .startPosition(startPosition)
+      .speed(SPEED)
+      .build());
+    curr = Optional.absent();    
+    this.rmod = rmod;
+  }
+  
+  // Return the path to a pack that is the closest to the truck
+  public LinkedList<Point> selectPackPath(Set<RoadSign> rsSet) {
+	  int minCost=Integer.MAX_VALUE;
+	  LinkedList<Point> minPath = null;
+	  for(RoadSign r : rsSet) {
+		  if(!r.indicateDest() && r.getCost() < minCost) {
+			  minPath = r.getPath();
+			  curr = Optional.fromNullable(r.getPack());
+			  hasSetIntention = true;
+		  }
+	  }
+	  return minPath;
+  }
+  
+  public LinkedList<Point> getCorrespondingDestPath(Set<RoadSign> rsSet, 
+		  													String packID){
+	  LinkedList<Point> path = null;
+	  for(RoadSign r : rsSet) {
+		  if(r.indicateDest() && r.getPackID().equals(packID)) {
+			  path = r.getPath();
+		  }
+	  }
+	  return path;
+  }
+  
+  
+  @Override
+  public void afterTick(TimeLapse timeLapse) {}
+
+  @Override
+  protected void tickImpl(TimeLapse time) {
+    final RoadModel rm = getRoadModel();
+    final PDPModel pm = getPDPModel();
+    
+    // If no pack in target
+    if (!curr.isPresent()) {
+    	System.out.println("again");
+    	 Set<RoadSign> rs = rm.getObjectsAt((RoadUser) this, RoadSign.class);
+    	 if(rs.isEmpty()) { // Move to a random neigh ?
+    		 System.out.println("again2");
+    		 }
+    	 else {
+    		 intPath =  selectPackPath(rs);
+    		 if(!intPath.isEmpty()) {
+    			 rm.moveTo(this, intPath.getFirst(), time);
+    		 }
+    	 }
+    }
+    
+    // If we have a pack in target
+    if(curr.isPresent()) {
+    	final boolean inCargo = pm.containerContains(this, curr.get());
+    	
+    	// Sanity check
+        if (!inCargo && !rm.containsObject(curr.get())) {
+            curr = Optional.absent();
+          } 
+        // We have the pack and we will deliver it
+        else if (inCargo) {
+        	  rm.moveTo(this, intPath.getFirst(), time);
+              if (rm.getPosition(this).equals(curr.get().getDeliveryLocation())) {
+                  // deliver when we arrive
+                  pm.deliver(this, curr.get(), time);
+                  curr = Optional.absent();
+                }
+          } 
+        // We dont have yet the pack : go for it
+        else {
+          	rm.moveTo(this, intPath.getFirst(), time);
+        	if(rm.equalPosition(this, curr.get())) {
+        		pm.pickup(this, curr.get(), time);
+        		Set<RoadSign> rs = rm.getObjectsAt((RoadUser) this, RoadSign.class);
+        		intPath = getCorrespondingDestPath(rs,curr.get().getPackID());
+        		rm.moveTo(this, intPath.getFirst(), time);
+        	}
+          }
+    	}
+    }
+}

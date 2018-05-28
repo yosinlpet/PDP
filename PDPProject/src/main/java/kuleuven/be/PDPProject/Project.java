@@ -67,8 +67,8 @@ import com.github.rinde.rinsim.util.TimeWindow;
 public final class Project {
 
   private static final int NUM_DEPOTS = 1;
-  private static final int NUM_AGVS = 2;
-  private static final int NUM_PCKGS = 0;
+  private static final int NUM_AGVS = 1;
+  private static final int NUM_PCKGS = 1;
 
   // time in ms
   private static final long SERVICE_DURATION = 60000;
@@ -86,7 +86,8 @@ public final class Project {
   private static final long TEST_STOP_TIME = 20 * 60 * 1000;
   private static final int TEST_SPEED_UP = 64;
   
-  private static final int factor = 1000;
+  private static final int factor = 100000;
+  private static final long seed = 13L;
 
   public Project() {}
 
@@ -135,6 +136,7 @@ public final class Project {
       .addModel(RoadModelBuilders.staticGraph(loadGraph(graphFile)))
       .addModel(DefaultPDPModel.builder())
       .addModel(view)
+      .setRandomSeed(seed)
       .build();
     
     final RandomGenerator rng = simulator.getRandomGenerator();
@@ -145,7 +147,7 @@ public final class Project {
     
     // add depots, taxis and parcels to simulator
     for (int i = 0; i < NUM_AGVS; i++) {
-    	simulator.register(new AgvAgent(roadModel.getRandomPosition(rng),1));
+    	simulator.register(new Truck(roadModel.getRandomPosition(rng),1));
     }
     
  
@@ -158,12 +160,14 @@ public final class Project {
 		
 		long distanceShortestPath = (long) md.doubleValue(md.getUnit());
 
-		long deliveryDuration =
+		long maxDeliveryTime =
 				distanceShortestPath/1*Math.round(Math.abs(rng.nextGaussian())*factor);
 
+		TimeWindow tw = TimeWindow.create(0, maxDeliveryTime);
+		
     	simulator.register(new Pack(
     				Parcel.builder(departure, destination)
-    					.deliveryDuration(deliveryDuration)
+    					.deliveryTimeWindow(tw)
     					.buildDTO(), rng,Integer.toString(packID),simulator));
     	packID++;
     }
@@ -184,16 +188,12 @@ public final class Project {
     		
     		long distanceShortestPath = (long) md.doubleValue(md.getUnit());
     		
-    		long deliveryDuration =
+    		long maxDeliveryTime =
     			distanceShortestPath/1*Math.round(Math.abs(rng.nextGaussian())*factor);
-    		System.out.println(deliveryDuration);
-        		
-    		long creationTime = time.getTime();
-    		TimeWindow tw = TimeWindow.create(creationTime,
-    											creationTime+deliveryDuration);
-    		System.out.println(creationTime);
-    		System.out.println(tw.toString());
     		
+    		TimeWindow tw = TimeWindow.create(time.getStartTime(), 
+    						time.getStartTime()+maxDeliveryTime);
+        		 		
         	simulator.register(new Pack(
     				Parcel.builder(departure, destination)
     					.deliveryTimeWindow(tw)
@@ -219,7 +219,7 @@ public final class Project {
     View.Builder view = View.builder()
       .with(GraphRoadModelRenderer.builder().withDirectionArrows().withNodeCircles().withMargin(1))
       .with(RoadUserRenderer.builder()
-        .withImageAssociation(AgvAgent.class, "/multix.png")
+        .withImageAssociation(Truck.class, "/multix.png")
         .withImageAssociation(Pack.class, "/issou.png")
           .withImageAssociation(RoadSign.class, "/roadSign.png"))
       .with(PDPModelRenderer.builder())

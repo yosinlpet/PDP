@@ -43,7 +43,8 @@ public class Pack extends Parcel implements TickListener{
 	private RoadModel rm;
 	ParcelDTO dto; 
 	
-	private FeasabilityAnt fAnt;
+	private FeasabilityAnt fAntDeparture;
+	private FeasabilityAnt fAntDestination;
 	
     public Pack(ParcelDTO dto, RandomGenerator r, String packID, Simulator sim) {
         super(dto,packID);
@@ -63,16 +64,17 @@ public class Pack extends Parcel implements TickListener{
 		
 		this.sim = sim;
 		
-	//fAnt = new FeasabilityAnt(this, departure, deliveryTW);
-		
-		//fAnt.runAnt();
     }
     
     @Override
     public void initRoadPDP(RoadModel pRoadModel, PDPModel pPdpModel) {
     	this.rm = pRoadModel;
-    	fAnt = new FeasabilityAnt(this, departure, deliveryTW, sim);
-    	fAnt.runAnt();
+    	
+    	fAntDeparture = new FeasabilityAnt(this, departure, deliveryTW, sim,false);
+    	fAntDeparture.runAnt();
+    	
+    	fAntDestination = new FeasabilityAnt(this, destination, deliveryTW, sim,true);
+    	fAntDestination.runAnt();
     }
    
     public RoadModel getRM() {

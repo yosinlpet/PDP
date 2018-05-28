@@ -28,6 +28,8 @@ public class FeasabilityAnt extends Ant implements Cloneable{
 	private TimeWindow roadSignsTimeWindow;
 	
 	private Simulator sim;
+	
+	private boolean indicateDest;
 
 	private Map<String,Point> hashMap = new HashMap<String,Point>(); 
 	/**
@@ -35,7 +37,8 @@ public class FeasabilityAnt extends Ant implements Cloneable{
 	 * @param pckg {@link Pack} sending the {@link FeasabilityAnt}.
 	 * @param p	location where to initialize the {@link FeasabilityAnt}.
 	 **/
-	public FeasabilityAnt(Pack pckg, Point p, TimeWindow timeWindow, Simulator sim){
+	public FeasabilityAnt(Pack pckg, Point p, TimeWindow timeWindow, 
+			Simulator sim, boolean indicateDest){
 		path = new LinkedList<>();
 		path.add(p);
 		hashMap.put(p.toString(),p);
@@ -44,12 +47,14 @@ public class FeasabilityAnt extends Ant implements Cloneable{
 		roadSignsTimeWindow = timeWindow;
 		roadModel = (GraphRoadModel) pckg.getRM();
 		this.sim = sim;
+		this.indicateDest = indicateDest;
 
 	}
 
 	//  Constructor used for George cloning
 	public  FeasabilityAnt(GraphRoadModel roadModel, LinkedList<Point> path, LinkedList<Pack> packages, 
-					TimeWindow roadSignsTimeWindow, Map<String,Point> hashMap, Simulator sim)
+					TimeWindow roadSignsTimeWindow, Map<String,Point> hashMap, 
+					Simulator sim, boolean indicateDest)
 	{
 		super.roadModel = roadModel;
 		super.path = new LinkedList<Point>(path);
@@ -57,12 +62,14 @@ public class FeasabilityAnt extends Ant implements Cloneable{
 		this.packages = new LinkedList<Pack>(packages);
 		this.roadSignsTimeWindow = roadSignsTimeWindow;
 		this.sim = sim;
+		this.indicateDest = indicateDest;
 	}
 
 	public FeasabilityAnt clone(FeasabilityAnt cloner) throws CloneNotSupportedException{
 		if (!( cloner instanceof Cloneable))
 		throw new CloneNotSupportedException("Invalid Cloning");
-		return new FeasabilityAnt(cloner.roadModel, cloner.path, cloner.packages, cloner.roadSignsTimeWindow,cloner.hashMap, cloner.sim);
+		return new FeasabilityAnt(cloner.roadModel, cloner.path, cloner.packages, 
+				cloner.roadSignsTimeWindow,cloner.hashMap, cloner.sim, cloner.indicateDest);
 	}
 
 	@Override
@@ -73,25 +80,13 @@ public class FeasabilityAnt extends Ant implements Cloneable{
 	@Override
 	public void runAnt(){
 		Collection<FeasabilityAnt> clones = getClones();
-		//System.out.println("Signs dropped");
-		for (FeasabilityAnt clone : clones) {
+		for (FeasabilityAnt clone : clones)
                 clone.dropSigns();
-		}
-		for (FeasabilityAnt clone : clones) {
+		for (FeasabilityAnt clone : clones)
 			clone.runAnt();
-		}
-
-		
-		//dropSigns();
+	}
 	
-		//clone.runAnt();
-		//collectInfo(RoadSign.class);
-		//System.out.println("Collected tameeeer");
-	}
-
-	public Map<String,Point> getHashMap() {
-		return hashMap;
-	}
+	
 	
 	/**
 	 * Clones this {@link FeasabilityAnt} as many times as there are incoming nodes and moves them to these nodes.
@@ -105,7 +100,6 @@ public class FeasabilityAnt extends Ant implements Cloneable{
 		LinkedList<FeasabilityAnt> clones = new LinkedList<>();
 
 		for(Point p2 : pointsCollection){
-
 			FeasabilityAnt c;
 			try {
                 c = clone(this);
@@ -113,8 +107,6 @@ public class FeasabilityAnt extends Ant implements Cloneable{
 				if(!c.getHashMap().containsKey(p2.toString())) {	
 					clones.add(c);
 					c.getHashMap().put(p2.toString(),p2);
-					//System.out.println("Cloned at :"+p2.toString());
-					
 				}
 				
 			}
@@ -124,6 +116,18 @@ public class FeasabilityAnt extends Ant implements Cloneable{
 		}
 		return clones;
 	}
+	
+	/**
+	 * Leaves road signs on the {@link RoadModel}.
+	 */
+	public void dropSigns() {
+		for (Pack pckg : packages) {
+			RoadSign roadSign = new RoadSign(pckg, path, roadSignsTimeWindow, indicateDest);
+			sim.register(roadSign);
+			roadModel.addObjectAt(roadSign, path.getLast());	
+		}
+	}
+	
 
     /**
      * Add a point to the path.
@@ -136,16 +140,10 @@ public class FeasabilityAnt extends Ant implements Cloneable{
 	public LinkedList<Point> getPath() {
 		return this.path;
 	}
+	
 
-	/**
-	 * Leaves road signs on the {@link RoadModel}.
-	 */
-	public void dropSigns() {
-		for (Pack pckg : packages) {
-			RoadSign roadSign = new RoadSign(pckg, path, roadSignsTimeWindow);
-			sim.register(roadSign);
-			roadModel.addObjectAt(roadSign, path.getLast());	
-		}
+	public Map<String,Point> getHashMap() {
+		return hashMap;
 	}
 
 }

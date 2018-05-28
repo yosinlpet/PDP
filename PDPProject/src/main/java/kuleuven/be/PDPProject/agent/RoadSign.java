@@ -29,6 +29,7 @@ public class RoadSign implements RoadUser, TickListener {
     private TimeWindow timeWindow;
     
     private String agentID;
+    private String packID;
     private long until;
     private TimeWindow twIntention;
     private boolean intentionGiven; 
@@ -37,8 +38,10 @@ public class RoadSign implements RoadUser, TickListener {
     private boolean tlSet;
     private LinkedList<Point> path;
     private boolean isOver;
+    private boolean indicateDest;
 
-    public RoadSign(Pack pack, LinkedList<Point> path, TimeWindow timeWindow){
+    public RoadSign(Pack pack, LinkedList<Point> path, 
+    		TimeWindow timeWindow, boolean indicateDest){
         this.timeWindow = timeWindow;
         this.pack = pack;
         this.isOver = false;
@@ -47,9 +50,10 @@ public class RoadSign implements RoadUser, TickListener {
         cost = path.size();
         path_.removeLast();
         next = path_.getLast();
-        this.agentID = pack.getPackID();
+        this.packID = pack.getPackID();
         intentionGiven = false;
         tlSet = false;
+        this.indicateDest = indicateDest;
     }
 
     @Override
@@ -61,6 +65,10 @@ public class RoadSign implements RoadUser, TickListener {
     	twIntention = TimeWindow.create(timeLapse.getTime(), until);
     	intentionGiven = true;
     	intentionGivenToID = agentID;
+    }
+    
+    public String getPackID() {
+    	return packID;
     }
     
     public String intentionGivenTo() {
@@ -89,6 +97,10 @@ public class RoadSign implements RoadUser, TickListener {
 
     public long getPackExpirationTime() {
         return pack.getTimeWindow().end();
+    }
+    
+    public boolean indicateDest() {
+    	return indicateDest;
     }
     
     @Override

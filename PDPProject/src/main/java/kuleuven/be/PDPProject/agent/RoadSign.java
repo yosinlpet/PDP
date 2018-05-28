@@ -35,18 +35,21 @@ public class RoadSign implements RoadUser, TickListener {
     private String intentionGivenToID;
     private TimeLapse timeLapse;
     private boolean tlSet;
-    
+    private LinkedList<Point> path;
+    private boolean isOver;
+
     public RoadSign(Pack pack, LinkedList<Point> path, TimeWindow timeWindow){
         this.timeWindow = timeWindow;
         this.pack = pack;
-        LinkedList<Point> path_ = new LinkedList<Point>(path);
+        this.isOver = false;
+        LinkedList<Point> path_ = new LinkedList<>(path);
+        this.path = new LinkedList<>(path);
         cost = path.size();
         path_.removeLast();
         next = path_.getLast();
         this.agentID = pack.getPackID();
         intentionGiven = false;
         tlSet = false;
-        //System.out.println("I am a constructed RoadSign");
     }
 
     @Override
@@ -75,6 +78,10 @@ public class RoadSign implements RoadUser, TickListener {
     public Point getNext() {
         return next;
     }
+
+    public LinkedList<Point> getPath() {
+        return path;
+    }
     
     public int getCost(){
         return cost;
@@ -91,9 +98,12 @@ public class RoadSign implements RoadUser, TickListener {
     		this.timeLapse = timeLapse;
     		tlSet = true;
     	}
-    	
-       if (timeLapse.getTime() > timeWindow.end())
-            roadModel.removeObject(this);
+       if (timeLapse.getTime() > timeWindow.end() || this.pack.isDeposited()) {
+           if (!this.isOver) {
+               roadModel.removeObject(this);
+               this.isOver = true;
+           }
+       }
               
        // If intention expired
        //if(!twIntention.isIn(timeLapse.getTime())){

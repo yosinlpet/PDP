@@ -30,7 +30,6 @@ public class FeasabilityAnt extends Ant implements Cloneable{
 	private Simulator sim;
 
 	private Map<String,Point> hashMap = new HashMap<String,Point>(); 
-	
 	/**
 	 * Constructor
 	 * @param pckg {@link Pack} sending the {@link FeasabilityAnt}.
@@ -76,7 +75,7 @@ public class FeasabilityAnt extends Ant implements Cloneable{
 		Collection<FeasabilityAnt> clones = getClones();
 		//System.out.println("Signs dropped");
 		for (FeasabilityAnt clone : clones) {
-			clone.dropSigns();	
+                clone.dropSigns();
 		}
 		for (FeasabilityAnt clone : clones) {
 			clone.runAnt();
@@ -133,6 +132,10 @@ public class FeasabilityAnt extends Ant implements Cloneable{
     public void addToPath(Point p) {
         path.add(p);
     }
+
+	public LinkedList<Point> getPath() {
+		return this.path;
+	}
 
 	/**
 	 * Leaves road signs on the {@link RoadModel}.

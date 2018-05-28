@@ -68,7 +68,7 @@ public final class Project {
 
   private static final int NUM_DEPOTS = 1;
   private static final int NUM_AGVS = 2;
-  private static final int NUM_PCKGS = 1;
+  private static final int NUM_PCKGS = 0;
 
   // time in ms
   private static final long SERVICE_DURATION = 60000;
@@ -86,7 +86,7 @@ public final class Project {
   private static final long TEST_STOP_TIME = 20 * 60 * 1000;
   private static final int TEST_SPEED_UP = 64;
   
-  private static final int factor = 1;
+  private static final int factor = 1000;
 
   public Project() {}
 

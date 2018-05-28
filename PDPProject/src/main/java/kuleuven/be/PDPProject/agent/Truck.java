@@ -14,6 +14,7 @@ import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.geom.Point;
 import com.google.common.base.Optional;
 
+
 /**
  * Implementation of a very simple taxi agent. It moves to the closest customer,
  * picks it up, then delivers it, repeat.

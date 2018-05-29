@@ -41,25 +41,41 @@ public class Truck extends Vehicle {
   }
   
   // Return the path to a pack that is the closest to the truck
-  public LinkedList<Point> selectPackPath(Set<RoadSign> rsSet) {
-	  int minCost=Integer.MAX_VALUE;
-	  LinkedList<Point> minPath = new LinkedList<>();
-	  for(RoadSign r : rsSet) {
-		  if(!r.indicateDest() && r.getCost() < minCost) {
-			  minPath = r.getPath();
-			  minCost = r.getCost();
-			  curr = Optional.fromNullable(r.getPack());
+  public LinkedList<Point> selectPackPath(Set<RoadSign> rsSet, TimeLapse time) {
+		  int minCost=Integer.MAX_VALUE;
+		  LinkedList<Point> minPath = new LinkedList<>();
+		  RoadSign rsMin = new RoadSign();
+		  IntentionAnt copy = new IntentionAnt(); 
+		  for(RoadSign r : rsSet) {
+			  if(!r.indicateDest()) {
+				  intAnt = new IntentionAnt(r.getPackID(), r.getPath(), 
+						  getArrivalTime(time, r.getDistList()), false);	  
+				  if(r.getCost() < minCost && intAnt.askFlag()) {
+					  copy = intAnt;
+					  minPath = r.getPath();
+					  minCost = r.getCost();
+					  curr = Optional.fromNullable(r.getPack());
+					  rsMin = r;
+				  }
+				  copy.runIntAnt();
+				  break;
+			  }
 		  }
+		  return minPath;
 	  }
-	  return minPath;
-  }
   
   public LinkedList<Point> getCorrespondingDestPath(Set<RoadSign> rsSet, 
-		  													String packID){
+		  											String packID, TimeLapse time){
 	  LinkedList<Point> path = new LinkedList<>();
 	  for(RoadSign r : rsSet) {
-		  if(r.indicateDest() && r.getPackID().equals(packID)) {
-			  path = r.getPath();
+		  if(r.indicateDest()){
+			  intAnt = new IntentionAnt(r.getPackID(), r.getPath(), 
+					  getArrivalTime(time, r.getDistList()), true);
+			  if(r.getPackID().equals(packID) && intAnt.askFlag()) {
+				  path = r.getPath();
+				  intAnt.runAnt();
+				  break;
+			  }
 		  }
 	  }
 	  return path;
@@ -77,7 +93,7 @@ public class Truck extends Vehicle {
     // If no pack in target
     if (!curr.isPresent()) {
     	 Set<RoadSign> rs = rm.getObjectsAt((RoadUser) this, RoadSign.class);
-         intPath =  selectPackPath(rs);
+         intPath =  selectPackPath(rs, time);
          if(!intPath.isEmpty()) {
              rm.moveTo(this, intPath.getFirst(), time);
     	 }
@@ -107,7 +123,7 @@ public class Truck extends Vehicle {
         	if(rm.equalPosition(this, curr.get())) {
         		pm.pickup(this, curr.get(), time);
         		Set<RoadSign> rs = rm.getObjectsAt((RoadUser) this, RoadSign.class);
-        		intPath = getCorrespondingDestPath(rs,curr.get().getPackID());
+        		intPath = getCorrespondingDestPath(rs,curr.get().getPackID(), time);
         		rm.moveTo(this, intPath.getFirst(), time);
         	}
           }
@@ -115,12 +131,15 @@ public class Truck extends Vehicle {
     }
     public long[] getArrivalTime(TimeLapse timeLapse, LinkedList<Long> distList){
         long currTime = timeLapse.getTime();
-        long[] arrivalTime = new long[distList.size()];
+        //long[] arrivalTime = new long[distList.size()];
+        long[] arrivalTime = new long[1];
         int i = 0;
-        for (long a : distList){
-            arrivalTime[i] = currTime+Math.round(a/SPEED);
-            ++i;
-        }
+        //for (long a : distList){
+            //arrivalTime[i] = currTime+Math.round(a/SPEED);
+        //   ++i;
+        //}
+        arrivalTime[0] = currTime+Math.round(distList.getLast()/SPEED);
+        
         return arrivalTime;
     }
 }

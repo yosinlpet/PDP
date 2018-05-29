@@ -44,6 +44,11 @@ public class IntentionAnt extends Ant{
 	* @param indicateDest flag to know if the road sign si for deliveryRoadSign or PackRoadSign
     * @param arrivalTime list of forecast arrival times
     **/
+	
+	public IntentionAnt() {
+		
+	}
+	
 	public IntentionAnt(String packID, LinkedList<Point> intentionPath, long[] arrivalTime, boolean indicateDest) {
 			roadModel = Optional.absent();
 			this.arrivalTime = arrivalTime;
@@ -70,34 +75,37 @@ public class IntentionAnt extends Ant{
 			currPath = new LinkedList<>(this.intentionPath);
 		}
 
-		public boolean runIntAnt(){
-			boolean success = true;
-			for(long a : arrivalTime) {
-				success = success && askFlag();
-				hop();
-			}
-			resetHop();
-			if (success)
-			    for (long a : arrivalTime)
+		public void runIntAnt(){
+			for (long a : arrivalTime)
 				raiseFlag(a);
-			return success;
 		}
 
 		/**
 		 * Leaves road signs on the {@link RoadModel}.
 		 */
 		public boolean askFlag() {
-			boolean success = false;
-			Set<RoadSign> roadSigns = collectInfo(RoadSign.class);
-			for(RoadSign rs : roadSigns) {
-					if(rs.getNext().equals(intentionPath.element()) 
-								&& (this.packID).equals(rs.getPack().getPackID())
-								&& !rs.isIntentionGiven()
-								&& this.indicateDest == rs.indicateDest())
-						success = true;
+			boolean s1 = true;
+			boolean s2 = false;
+			for(long a : arrivalTime) {
+				s2 = false;
+				Set<RoadSign> roadSigns = collectInfo(RoadSign.class);
+				for(RoadSign rs : roadSigns) {
+						if(rs.getNext().equals(intentionPath.element())
+									&& (this.packID).equals(rs.getPack().getPackID())
+									&& !rs.isIntentionGiven()
+									&& this.indicateDest == rs.indicateDest()) {
+							s2 = true;
+							break;
+						}
+				}
+				s1 = s1 && s2;
+				hop();
 			}
-			return success;
+			resetHop();
+			return s1;
 		}
+		
+		
 		public void raiseFlag(long a){
 			Set<RoadSign> roadSigns = collectInfo(RoadSign.class);
 			for(RoadSign rs : roadSigns) {

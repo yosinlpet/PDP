@@ -41,6 +41,8 @@ public class RoadSign implements RoadUser, TickListener {
     private boolean indicateDest;
     private LinkedList<Long> distList;
 
+    public RoadSign() {}
+    
     public RoadSign(Pack pack, LinkedList<Point> path,
     		TimeWindow timeWindow, boolean indicateDest, LinkedList<Long> distList){
         this.timeWindow = timeWindow;

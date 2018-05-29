@@ -28,6 +28,7 @@ public class Truck extends Vehicle {
   private Optional<Pack> curr;
   
   private IntentionAnt intAnt;
+  private Point nextPoint;
   
   private LinkedList<Point> intPath;
 
@@ -38,6 +39,7 @@ public class Truck extends Vehicle {
       .speed(SPEED)
       .build());
     curr = Optional.absent();
+    nextPoint = startPosition;
 
   }
   
@@ -45,25 +47,23 @@ public class Truck extends Vehicle {
   public LinkedList<Point> selectPackPath(Set<RoadSign> rsSet, TimeLapse time) {
 		  int minCost=Integer.MAX_VALUE;
 		  LinkedList<Point> minPath = new LinkedList<>();
-		  RoadSign rsMin = new RoadSign();
 		  IntentionAnt copy = null;
 		  for(RoadSign r : rsSet) {
 			  if(!r.indicateDest()) {
 				  intAnt = new IntentionAnt((GraphRoadModel) this.getRoadModel(),r.getPackID(), r.getPath(),
 						  getArrivalTime(time, r.getDistList()), false);
+				  System.out.print(this.toString());
+				  System.out.println(" has chosen a Pack.");
 				  if(r.getCost() < minCost && intAnt.askFlag()) {
-					  System.out.println("hello tmer");
 					  copy = intAnt;
 					  minPath = r.getPath();
 					  minCost = r.getCost();
 					  curr = Optional.fromNullable(r.getPack());
-					  rsMin = r;
 				  }
 			  }
 		  }
 	  if (copy != null) {
-		  System.out.println("brrrrr");
-		  copy.runIntAnt();
+		  copy.runIntAnt(time);
 	  }
 		  return minPath;
 	  }
@@ -91,20 +91,31 @@ public class Truck extends Vehicle {
 
   @Override
   protected void tickImpl(TimeLapse time) {
+  	System.out.println(this.toString());
     final RoadModel rm = getRoadModel();
     final PDPModel pm = getPDPModel();
 
     // If no pack in target
     if (!curr.isPresent()) {
+        System.out.println("No curr on RoadModel");
     	 Set<RoadSign> rs = rm.getObjectsAt((RoadUser) this, RoadSign.class);
+    	 System.out.print(this.toString());
+    	 System.out.print(" sees ");
+    	 System.out.print(rs.size());
+    	 System.out.println(" roadsigns.");
+    	 System.out.println(rm.getPosition(this));
          intPath =  selectPackPath(rs, time);
          if(!intPath.isEmpty()) {
              rm.moveTo(this, intPath.getFirst(), time);
+             nextPoint = intPath.getFirst();
     	 }
+    	 else
+    	 	rm.moveTo(this, nextPoint, time);
     }
     
     // If we have a pack in target
     if(curr.isPresent()) {
+    	System.out.println("Curr here");
     	final boolean inCargo = pm.containerContains(this, curr.get());
     	
     	// Sanity check
@@ -113,6 +124,8 @@ public class Truck extends Vehicle {
           } 
         // We have the pack and we will deliver it
         else if (inCargo) {
+			System.out.print(this.toString());
+			System.out.println(" is delivering a Pack.");
         	  rm.moveTo(this, intPath.getFirst(), time);
               if (rm.getPosition(this).equals(curr.get().getDeliveryLocation())) {
                   // deliver when we arrive
@@ -124,6 +137,8 @@ public class Truck extends Vehicle {
         // We dont have yet the pack : go for it
         else {
           	rm.moveTo(this, intPath.getFirst(), time);
+			System.out.print(this.toString());
+			System.out.println(" is getting a Pack.");
         	if(rm.equalPosition(this, curr.get())) {
         		pm.pickup(this, curr.get(), time);
         		Set<RoadSign> rs = rm.getObjectsAt((RoadUser) this, RoadSign.class);

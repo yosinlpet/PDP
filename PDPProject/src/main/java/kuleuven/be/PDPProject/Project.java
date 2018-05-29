@@ -228,8 +228,8 @@ public final class Project {
       .with(GraphRoadModelRenderer.builder().withDirectionArrows().withNodeCircles().withMargin(1))
       .with(RoadUserRenderer.builder()
         .withImageAssociation(Truck.class, "/multix.png")
-        .withImageAssociation(Pack.class, "/issou.png")
-          .withImageAssociation(RoadSign.class, "/roadSign.png"))
+        .withImageAssociation(Pack.class, "/issou.png"))
+          //.withImageAssociation(RoadSign.class, "/roadSign.png"))
       .with(PDPModelRenderer.builder())
       .withTitleAppendix("Issou!");
 

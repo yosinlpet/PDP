@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.Set;
 
 import com.github.rinde.rinsim.core.model.road.GraphRoadModelImpl;
+import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.geom.Graph;
 import com.github.rinde.rinsim.geom.ListenableGraph;
 import com.github.rinde.rinsim.geom.Point;
@@ -32,7 +33,6 @@ import kuleuven.be.PDPProject.agent.*;
 public class IntentionAnt extends Ant{
 	private TimeWindow roadSignsTimeWindow;
 
-	Point currPos;
 	LinkedList<Point> intentionPath;
 	LinkedList<Point> currPath;
 	long[] arrivalTime; // Prediction of the arrival time 
@@ -58,7 +58,6 @@ public class IntentionAnt extends Ant{
 			this.indicateDest = indicateDest;
 			super.roadModel.addObjectAt(this, currPath.getLast());
 			numberOfHops = 0;
-			hop();
 		}
 
 		@Override
@@ -68,7 +67,7 @@ public class IntentionAnt extends Ant{
 
 		public void hop() {
 	    	roadModel.removeObject(this);
-			currPos = currPath.removeLast();
+			currPath.removeLast();
 			roadModel.addObjectAt(this, currPath.getLast());
 			numberOfHops++;
 		}
@@ -76,11 +75,13 @@ public class IntentionAnt extends Ant{
 		public void resetHop(){
 			numberOfHops = 0;
 			currPath = new LinkedList<>(this.intentionPath);
+			roadModel.removeObject(this);
+			roadModel.addObjectAt(this, intentionPath.getLast());
 		}
 
-		public void runIntAnt(){
+		public void runIntAnt(TimeLapse time){
 			for (long a : arrivalTime) {
-				raiseFlag(a);
+				raiseFlag(a, time);
 			}
 		}
 
@@ -95,19 +96,8 @@ public class IntentionAnt extends Ant{
 				Set<RoadSign> roadSigns = collectInfo();
 				System.out.println(roadSigns.size());
 				for(RoadSign rs : roadSigns) {
-				    System.out.println("1");
-				    System.out.println(rs.getNext().equals(intentionPath.element()));
-					System.out.println("2");
-					System.out.println((this.packID).equals(rs.getPack().getPackID()));
-					System.out.println("3");
-					System.out.println(!rs.isIntentionGiven());
-					System.out.println("4");
-					System.out.println(this.indicateDest == rs.indicateDest());
-
-						if(rs.getNext().equals(intentionPath.element())
-									&& (this.packID).equals(rs.getPack().getPackID())
-									&& !rs.isIntentionGiven()
-									&& this.indicateDest == rs.indicateDest()) {
+						if(!rs.isIntentionGiven() && indicateDest == rs.indicateDest()) {
+						    System.out.println("[SUCCESS]");
 							s2 = true;
 							break;
 						}
@@ -120,13 +110,12 @@ public class IntentionAnt extends Ant{
 		}
 		
 		
-		public void raiseFlag(long a){
+		public void raiseFlag(long a, TimeLapse time){
 			Set<RoadSign> roadSigns = collectInfo();
+			System.out.println(a);
 			for(RoadSign rs : roadSigns) {
-					if(rs.getNext().equals(intentionPath.element())
-								&& (this.packID).equals(rs.getPack().getPackID())
-								&& this.indicateDest == rs.indicateDest())
-					    rs.setIntention(packID, a);
+					if((this.packID).equals(rs.getPack().getPackID()))
+					    rs.setIntention(packID, a, time);
 			}
 		}
 	}

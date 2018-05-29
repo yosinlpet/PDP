@@ -79,14 +79,16 @@ public class FeasabilityAnt extends Ant implements Cloneable{
 	public void initRoadUser(RoadModel model) {
 	  //  roadModel = Optional.of((CollisionGraphRoadModelImpl) model);
     } 
-
-	@Override
-	public void runAnt(){
-		Collection<FeasabilityAnt> clones = getClones();
-		for (FeasabilityAnt clone : clones)
-            clone.dropSigns();
-		for (FeasabilityAnt clone : clones)
-			clone.runAnt();
+//TODO: make sure runAnt(clones) is a breadth-first algorithm.
+	public void runAnt(LinkedList<FeasabilityAnt> clones){
+	    if (clones.size() >0) {
+			LinkedList<FeasabilityAnt> newClones = new LinkedList<>(clones);
+			FeasabilityAnt clone = newClones.removeFirst();
+			clone.dropSigns();
+			for (FeasabilityAnt c : clone.getClones())
+				newClones.addLast(c);
+			runAnt(newClones);
+		}
 	}
 	
 	
@@ -96,7 +98,7 @@ public class FeasabilityAnt extends Ant implements Cloneable{
 	 * @return 	The collection of new {@link FeasabilityAnt}s on the incoming nodes, they carry the same info as the
 	 * 			initial one.
 	 */
-	public Collection<FeasabilityAnt> getClones() {
+	public LinkedList<FeasabilityAnt> getClones() {
 		Point p = path.getLast();
 		Graph<?> graph = roadModel.getGraph();
 		Collection<Point> pointsCollection = graph.getIncomingConnections(p);

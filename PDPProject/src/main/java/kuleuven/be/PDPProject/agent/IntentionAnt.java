@@ -77,24 +77,23 @@ public class IntentionAnt extends Ant{
 				Flag f = new Flag();
 				for(Flag f2 : flag) {f=f2;}
 				if(f.raiseFlag(truckID)) {
-					System.out.print("Flag raised by ");
-					System.out.print(truckID);
-					System.out.print(" at ");
-					System.out.println(node);
+					//System.out.print("Flag raised by ");
+					//System.out.print(truckID);
+					//System.out.print(" at ");
+					//System.out.println(node);
 					return true;
 				}else return false;
 			}
 		}
 		
 		public void dropFlag() {
-			Set<Flag> flag = roadModel.getObjectsAt((RoadUser) this, Flag.class);
-			if(flag.size()==0) {
-				
+			Set<Flag> flagSet = roadModel.getObjectsAt((RoadUser) this, Flag.class);
+			if(flagSet.size()==0) {
 			}
 			else {
-				Flag f = new Flag();
-				for(Flag f2 : flag) {f=f2;}
-				f.dropFlag(truckID);
+				Flag flag = new Flag();
+				for(Flag f2 : flagSet) {flag=f2;}
+				flag.dropFlag(truckID);
 				//System.out.print("Flag dropped by ");
 				//System.out.print(truckID);
 				//System.out.print(" at ");

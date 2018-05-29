@@ -71,10 +71,10 @@ public class Pack extends Parcel implements TickListener{
     	this.rm = pRoadModel;
     	
     	fAntDeparture = new FeasabilityAnt(this, departure, deliveryTW, sim,false);
-    	fAntDeparture.runAnt();
+    	fAntDeparture.runAnt(fAntDeparture.getClones());
     	
     	fAntDestination = new FeasabilityAnt(this, destination, deliveryTW, sim,true);
-    	fAntDestination.runAnt();
+    	fAntDestination.runAnt(fAntDestination.getClones());
     }
    
     public RoadModel getRM() {

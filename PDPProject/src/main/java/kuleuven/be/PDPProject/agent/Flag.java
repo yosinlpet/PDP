@@ -40,5 +40,12 @@ public class Flag implements RoadUser{
 			System.out.print("Flag dropped by ");
 			System.out.println(truckID);
 		}
+		//else if (!this.truckID.equals("nobody")){
+			//System.out.print("Drop failed, ID is \"");
+			//System.out.print(truckID);
+			//System.out.print("\" instead of \"");
+			//System.out.print(this.truckID);
+			//System.out.println("\"");
+		//}
 	}
 }

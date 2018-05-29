@@ -87,7 +87,7 @@ public final class Project {
   private static final int TEST_SPEED_UP = 64;
   
   private static final int factor = 100000;
-  private static final long seed = 10L;
+  private static final long seed = 13L;
 
   public Project() {}
 
@@ -228,8 +228,8 @@ public final class Project {
       .with(GraphRoadModelRenderer.builder().withDirectionArrows().withNodeCircles().withMargin(1))
       .with(RoadUserRenderer.builder()
         .withImageAssociation(Truck.class, "/multix.png")
-        .withImageAssociation(Pack.class, "/issou.png"))
-          //.withImageAssociation(RoadSign.class, "/roadSign.png"))
+        .withImageAssociation(Pack.class, "/issou.png")
+          .withImageAssociation(RoadSign.class, "/roadSign.png"))
       .with(PDPModelRenderer.builder())
       .withTitleAppendix("Issou!");
 

@@ -7,6 +7,7 @@ import com.github.rinde.rinsim.core.model.pdp.PDPModel;
 import com.github.rinde.rinsim.core.model.pdp.Parcel;
 import com.github.rinde.rinsim.core.model.pdp.Vehicle;
 import com.github.rinde.rinsim.core.model.pdp.VehicleDTO;
+import com.github.rinde.rinsim.core.model.road.GraphRoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadModels;
 import com.github.rinde.rinsim.core.model.road.RoadUser;
@@ -45,22 +46,25 @@ public class Truck extends Vehicle {
 		  int minCost=Integer.MAX_VALUE;
 		  LinkedList<Point> minPath = new LinkedList<>();
 		  RoadSign rsMin = new RoadSign();
-		  IntentionAnt copy = new IntentionAnt(); 
+		  IntentionAnt copy = null;
 		  for(RoadSign r : rsSet) {
 			  if(!r.indicateDest()) {
-				  intAnt = new IntentionAnt(r.getPackID(), r.getPath(), 
-						  getArrivalTime(time, r.getDistList()), false);	  
+				  intAnt = new IntentionAnt((GraphRoadModel) this.getRoadModel(),r.getPackID(), r.getPath(),
+						  getArrivalTime(time, r.getDistList()), false);
 				  if(r.getCost() < minCost && intAnt.askFlag()) {
+					  System.out.println("hello tmer");
 					  copy = intAnt;
 					  minPath = r.getPath();
 					  minCost = r.getCost();
 					  curr = Optional.fromNullable(r.getPack());
 					  rsMin = r;
 				  }
-				  copy.runIntAnt();
-				  break;
 			  }
 		  }
+	  if (copy != null) {
+		  System.out.println("brrrrr");
+		  copy.runIntAnt();
+	  }
 		  return minPath;
 	  }
   
@@ -69,7 +73,7 @@ public class Truck extends Vehicle {
 	  LinkedList<Point> path = new LinkedList<>();
 	  for(RoadSign r : rsSet) {
 		  if(r.indicateDest()){
-			  intAnt = new IntentionAnt(r.getPackID(), r.getPath(), 
+			  intAnt = new IntentionAnt((GraphRoadModel) this.getRoadModel(), r.getPackID(), r.getPath(),
 					  getArrivalTime(time, r.getDistList()), true);
 			  if(r.getPackID().equals(packID) && intAnt.askFlag()) {
 				  path = r.getPath();
@@ -89,7 +93,7 @@ public class Truck extends Vehicle {
   protected void tickImpl(TimeLapse time) {
     final RoadModel rm = getRoadModel();
     final PDPModel pm = getPDPModel();
-    
+
     // If no pack in target
     if (!curr.isPresent()) {
     	 Set<RoadSign> rs = rm.getObjectsAt((RoadUser) this, RoadSign.class);
@@ -139,7 +143,7 @@ public class Truck extends Vehicle {
         //   ++i;
         //}
         arrivalTime[0] = currTime+Math.round(distList.getLast()/SPEED);
-        
+
         return arrivalTime;
     }
 }

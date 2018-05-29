@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Arrays;
 import java.util.Set;
 
+import com.github.rinde.rinsim.core.model.road.GraphRoadModelImpl;
 import com.github.rinde.rinsim.geom.Graph;
 import com.github.rinde.rinsim.geom.ListenableGraph;
 import com.github.rinde.rinsim.geom.Point;
@@ -22,13 +23,13 @@ import org.apache.commons.math3.random.RandomGenerator;
 import com.github.rinde.rinsim.core.model.road.RoadUser;
 import com.github.rinde.rinsim.core.model.road.CollisionGraphRoadModelImpl;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
+import com.github.rinde.rinsim.core.model.road.GraphRoadModel;
 import com.google.common.base.Optional;
 import sun.awt.image.ImageWatched;
 
 import kuleuven.be.PDPProject.agent.*;
 	
 public class IntentionAnt extends Ant{
-	private Optional<CollisionGraphRoadModelImpl> roadModel;
 	private TimeWindow roadSignsTimeWindow;
 
 	Point currPos;
@@ -38,35 +39,37 @@ public class IntentionAnt extends Ant{
 	int numberOfHops;
 	String packID;
 	private boolean indicateDest;
+
+	public IntentionAnt() {
+		
+	}
 	/**
 	* Constructor
 	* @param packID {@link Pack} sending the {@link FeasabilityAnt}.
 	* @param indicateDest flag to know if the road sign si for deliveryRoadSign or PackRoadSign
     * @param arrivalTime list of forecast arrival times
     **/
-	
-	public IntentionAnt() {
-		
-	}
-	
-	public IntentionAnt(String packID, LinkedList<Point> intentionPath, long[] arrivalTime, boolean indicateDest) {
-			roadModel = Optional.absent();
+	public IntentionAnt(GraphRoadModel roadModel, String packID, LinkedList<Point> intentionPath, long[] arrivalTime, boolean indicateDest) {
 			this.arrivalTime = arrivalTime;
 			this.currPath = new LinkedList<>(intentionPath);
             this.intentionPath = intentionPath;
 			this.packID = packID;
+			super.roadModel = roadModel;
 			this.indicateDest = indicateDest;
+			super.roadModel.addObjectAt(this, currPath.getLast());
 			numberOfHops = 0;
 			hop();
 		}
 
 		@Override
 		public void initRoadUser(RoadModel model) {
-		    roadModel = Optional.of((CollisionGraphRoadModelImpl) model);
+		    //roadModel = Optional.of((CollisionGraphRoadModelImpl) model);
 	    }
 
 		public void hop() {
-			currPos = currPath.poll();
+	    	roadModel.removeObject(this);
+			currPos = currPath.removeLast();
+			roadModel.addObjectAt(this, currPath.getLast());
 			numberOfHops++;
 		}
 
@@ -76,8 +79,9 @@ public class IntentionAnt extends Ant{
 		}
 
 		public void runIntAnt(){
-			for (long a : arrivalTime)
+			for (long a : arrivalTime) {
 				raiseFlag(a);
+			}
 		}
 
 		/**
@@ -88,8 +92,18 @@ public class IntentionAnt extends Ant{
 			boolean s2 = false;
 			for(long a : arrivalTime) {
 				s2 = false;
-				Set<RoadSign> roadSigns = collectInfo(RoadSign.class);
+				Set<RoadSign> roadSigns = collectInfo();
+				System.out.println(roadSigns.size());
 				for(RoadSign rs : roadSigns) {
+				    System.out.println("1");
+				    System.out.println(rs.getNext().equals(intentionPath.element()));
+					System.out.println("2");
+					System.out.println((this.packID).equals(rs.getPack().getPackID()));
+					System.out.println("3");
+					System.out.println(!rs.isIntentionGiven());
+					System.out.println("4");
+					System.out.println(this.indicateDest == rs.indicateDest());
+
 						if(rs.getNext().equals(intentionPath.element())
 									&& (this.packID).equals(rs.getPack().getPackID())
 									&& !rs.isIntentionGiven()
@@ -107,7 +121,7 @@ public class IntentionAnt extends Ant{
 		
 		
 		public void raiseFlag(long a){
-			Set<RoadSign> roadSigns = collectInfo(RoadSign.class);
+			Set<RoadSign> roadSigns = collectInfo();
 			for(RoadSign rs : roadSigns) {
 					if(rs.getNext().equals(intentionPath.element())
 								&& (this.packID).equals(rs.getPack().getPackID())

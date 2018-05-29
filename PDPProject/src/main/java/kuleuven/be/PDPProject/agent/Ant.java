@@ -28,18 +28,10 @@ public abstract class Ant implements RoadUser{
         }
 
     /**
-     * Displaces the {@link Ant} at position <code>p</code>.
-     * Must be a correct position ! Relevant with initial position of the {@link Ant}: in/outComing Node.
-     * @param p position to go to.
-     */
-    public void moveTo(Point p) {
-        path.add(p);
-    }
-    /**
      * Collects information at position <code>p</code>.
      */
-    public  <Y extends RoadUser> Set<Y> collectInfo(Class c){
-        Set<Y> roadUserSet = roadModel.getObjectsAt((RoadUser) this, c);
+    public Set<RoadSign> collectInfo(){
+        Set<RoadSign> roadUserSet = roadModel.getObjectsAt((RoadUser) this, RoadSign.class);
         return roadUserSet;
     }
     public void runAnt(){}

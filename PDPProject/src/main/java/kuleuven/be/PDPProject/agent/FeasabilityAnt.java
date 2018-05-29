@@ -52,7 +52,6 @@ public class FeasabilityAnt extends Ant implements Cloneable{
 		roadModel = (GraphRoadModel) pckg.getRM();
 		this.sim = sim;
 		this.indicateDest = indicateDest;
-
 	}
 
 	//  Constructor used for George cloning

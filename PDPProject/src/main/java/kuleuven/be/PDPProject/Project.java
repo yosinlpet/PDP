@@ -15,6 +15,7 @@
  */
 package kuleuven.be.PDPProject;
 import com.github.rinde.rinsim.core.model.road.DynamicGraphRoadModelImpl;
+import com.github.rinde.rinsim.core.model.time.TimeModel;
 import kuleuven.be.PDPProject.agent.*;
 
 
@@ -27,6 +28,8 @@ import java.util.Map;
 import javax.annotation.Nullable;
 import javax.measure.Measure;
 import javax.measure.quantity.Length;
+import javax.measure.unit.NonSI;
+import javax.measure.unit.SI;
 
 import org.apache.commons.math3.random.RandomGenerator;
 import org.eclipse.swt.widgets.Display;
@@ -77,7 +80,7 @@ public final class Project {
 
   private static final int SPEED_UP = 1;
   private static final int MAX_CAPACITY = 3;
-  private static final double NEW_CUSTOMER_PROB = .005;
+  private static final double NEW_CUSTOMER_PROB = .015;
 
   private static final String MAP_FILE = "/testGraph.dot";
   private static final Map<String, Graph<MultiAttributeData>> GRAPH_CACHE =
@@ -86,8 +89,8 @@ public final class Project {
   private static final long TEST_STOP_TIME = 20 * 60 * 1000;
   private static final int TEST_SPEED_UP = 64;
   
-  private static final int factor = 100000;
-  private static final long seed = 13L;
+  private static final int factor = 100;
+  private static final long seed = 11L;
 
   public Project() {}
 
@@ -133,8 +136,9 @@ public final class Project {
 
     // use map of leuven
     final Simulator simulator = Simulator.builder()
-      .addModel(RoadModelBuilders.staticGraph(loadGraph(graphFile)))
+      .addModel(RoadModelBuilders.staticGraph(loadGraph(graphFile)).withDistanceUnit(SI.METER).withSpeedUnit(SI.METERS_PER_SECOND))
       .addModel(DefaultPDPModel.builder())
+            .addModel(TimeModel.builder().withTickLength(1).withTimeUnit(SI.SECOND))
       .addModel(view)
       .setRandomSeed(seed)
       .build();
@@ -228,8 +232,8 @@ public final class Project {
       .with(GraphRoadModelRenderer.builder().withDirectionArrows().withNodeCircles().withMargin(1))
       .with(RoadUserRenderer.builder()
         .withImageAssociation(Truck.class, "/multix.png")
-        .withImageAssociation(Pack.class, "/issou.png"))
-          //.withImageAssociation(RoadSign.class, "/roadSign.png"))
+        .withImageAssociation(Pack.class, "/issou.png")
+          .withImageAssociation(RoadSign.class, "/roadSign.png"))
       .with(PDPModelRenderer.builder())
       .withTitleAppendix("Issou!");
 

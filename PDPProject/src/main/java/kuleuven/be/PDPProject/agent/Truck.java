@@ -24,7 +24,7 @@ import sun.awt.image.ImageWatched;
  * @author Rinde van Lon
  */
 public class Truck extends Vehicle {
-  private static final double SPEED = 1000d;
+  private static final double SPEED = 0.5;
   private Optional<Pack> curr;
   
   private IntentionAnt intAntFront;

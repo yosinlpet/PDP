@@ -118,7 +118,7 @@ public class RoadSign implements RoadUser, TickListener {
     		this.timeLapse = timeLapse;
     		tlSet = true;
     	}
-       if (this.pack.isDeposited()) {
+       if (this.pack.isDeposited() || (!this.indicateDest && this.pack.isCarried())) {
            if (!this.isOver) {
                roadModel.removeObject(this);
                this.isOver = true;

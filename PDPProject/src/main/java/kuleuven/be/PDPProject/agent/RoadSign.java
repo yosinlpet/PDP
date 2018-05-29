@@ -66,7 +66,7 @@ public class RoadSign implements RoadUser, TickListener {
     }
     
     public void setIntention(String agentID, long until, TimeLapse timeLapse) {
-    	twIntention = TimeWindow.create(timeLapse.getTime(), until);
+    	twIntention = TimeWindow.create(timeLapse.getTime(), timeLapse.getTime()+until);
     	intentionGiven = true;
     	intentionGivenToID = agentID;
     }

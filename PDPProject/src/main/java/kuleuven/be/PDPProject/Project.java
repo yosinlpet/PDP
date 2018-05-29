@@ -147,7 +147,7 @@ public final class Project {
     
     // add depots, taxis and parcels to simulator
     for (int i = 0; i < NUM_AGVS; i++) {
-    	simulator.register(new Truck(roadModel.getRandomPosition(rng),1));
+    	simulator.register(new Truck(roadModel.getRandomPosition(rng),1,Integer.toString(i)));
     }
     
  

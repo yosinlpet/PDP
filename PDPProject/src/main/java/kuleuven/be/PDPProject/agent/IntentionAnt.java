@@ -31,14 +31,9 @@ import sun.awt.image.ImageWatched;
 import kuleuven.be.PDPProject.agent.*;
 	
 public class IntentionAnt extends Ant{
-	private TimeWindow roadSignsTimeWindow;
 
-	LinkedList<Point> intentionPath;
-	LinkedList<Point> currPath;
-	long[] arrivalTime; // Prediction of the arrival time 
-	int numberOfHops;
-	String packID;
-	private boolean indicateDest;
+	Point node;
+	String truckID;
 
 	public IntentionAnt() {
 		
@@ -49,73 +44,61 @@ public class IntentionAnt extends Ant{
 	* @param indicateDest flag to know if the road sign si for deliveryRoadSign or PackRoadSign
     * @param arrivalTime list of forecast arrival times
     **/
-	public IntentionAnt(GraphRoadModel roadModel, String packID, LinkedList<Point> intentionPath, long[] arrivalTime, boolean indicateDest) {
-			this.arrivalTime = arrivalTime;
-			this.currPath = new LinkedList<>(intentionPath);
-            this.intentionPath = intentionPath;
-			this.packID = packID;
-			super.roadModel = roadModel;
-			this.indicateDest = indicateDest;
-			super.roadModel.addObjectAt(this, currPath.getLast());
-			numberOfHops = 0;
+	public IntentionAnt(RoadModel roadModel, String truckID, Point node) {
+		
+			this.node = node;
+			super.roadModel = (GraphRoadModel) roadModel;
+			super.roadModel.addObjectAt(this, node);
+			this.truckID = truckID;
 		}
 
 		@Override
 		public void initRoadUser(RoadModel model) {
-		    //roadModel = Optional.of((CollisionGraphRoadModelImpl) model);
-	    }
-
-		public void hop() {
-	    	roadModel.removeObject(this);
-			currPath.removeLast();
-			roadModel.addObjectAt(this, currPath.getLast());
-			numberOfHops++;
-		}
-
-		public void resetHop(){
-			numberOfHops = 0;
-			currPath = new LinkedList<>(this.intentionPath);
-			roadModel.removeObject(this);
-			roadModel.addObjectAt(this, intentionPath.getLast());
-		}
-
-		public void runIntAnt(TimeLapse time){
-			for (long a : arrivalTime) {
-				raiseFlag(a, time);
-			}
 		}
 
 		/**
 		 * Leaves road signs on the {@link RoadModel}.
 		 */
 		public boolean askFlag() {
-			boolean s1 = true;
-			boolean s2 = false;
-			for(long a : arrivalTime) {
-				s2 = false;
-				Set<RoadSign> roadSigns = collectInfo();
-				System.out.println(roadSigns.size());
-				for(RoadSign rs : roadSigns) {
-						if(!rs.isIntentionGiven() && indicateDest == rs.indicateDest()) {
-						    System.out.println("[SUCCESS]");
-							s2 = true;
-							break;
-						}
-				}
-				s1 = s1 && s2;
-				hop();
+			Set<Flag> flag = roadModel.getObjectsAt((RoadUser) this, Flag.class);
+			
+			// If no flag yet
+			if(flag.size()==0) {
+				Flag f = new Flag(truckID);
+				roadModel.addObjectAt(f, node);
+				System.out.print("Flag created by ");
+				System.out.print(truckID);
+				System.out.print(" at ");
+				System.out.println(node);
+				return true;
 			}
-			resetHop();
-			return s1;
+			// If flag : try to change the name
+			else {
+				Flag f = new Flag();
+				for(Flag f2 : flag) {f=f2;}
+				if(f.raiseFlag(truckID)) {
+					System.out.print("Flag raised by ");
+					System.out.print(truckID);
+					System.out.print(" at ");
+					System.out.println(node);
+					return true;
+				}else return false;
+			}
 		}
 		
-		
-		public void raiseFlag(long a, TimeLapse time){
-			Set<RoadSign> roadSigns = collectInfo();
-			System.out.println(a);
-			for(RoadSign rs : roadSigns) {
-					if((this.packID).equals(rs.getPack().getPackID()))
-					    rs.setIntention(packID, a, time);
+		public void dropFlag() {
+			Set<Flag> flag = roadModel.getObjectsAt((RoadUser) this, Flag.class);
+			if(flag.size()==0) {
+				
+			}
+			else {
+				Flag f = new Flag();
+				for(Flag f2 : flag) {f=f2;}
+				f.dropFlag(truckID);
+				//System.out.print("Flag dropped by ");
+				//System.out.print(truckID);
+				//System.out.print(" at ");
+				//System.out.println(node);
 			}
 		}
 	}

@@ -40,9 +40,10 @@ public class IntentionAnt extends Ant{
 	private boolean indicateDest;
 	/**
 	* Constructor
-	* @param pckg {@link Pack} sending the {@link FeasabilityAnt}.
-	* @param p	location where to initialize the {@link FeasabilityAnt}.
-	**/
+	* @param packID {@link Pack} sending the {@link FeasabilityAnt}.
+	* @param indicateDest flag to know if the road sign si for deliveryRoadSign or PackRoadSign
+    * @param arrivalTime list of forecast arrival times
+    **/
 	public IntentionAnt(String packID, LinkedList<Point> intentionPath, long[] arrivalTime, boolean indicateDest) {
 			roadModel = Optional.absent();
 			this.arrivalTime = arrivalTime;

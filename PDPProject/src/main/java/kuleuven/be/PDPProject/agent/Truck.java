@@ -13,6 +13,7 @@ import com.github.rinde.rinsim.core.model.road.RoadUser;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.geom.Point;
 import com.google.common.base.Optional;
+import sun.awt.image.ImageWatched;
 
 
 /**
@@ -111,5 +112,15 @@ public class Truck extends Vehicle {
         	}
           }
     	}
+    }
+    public long[] getArrivalTime(TimeLapse timeLapse, LinkedList<Long> distList){
+        long currTime = timeLapse.getTime();
+        long[] arrivalTime = new long[distList.size()];
+        int i = 0;
+        for (long a : distList){
+            arrivalTime[i] = currTime+Math.round(a/SPEED);
+            ++i;
+        }
+        return arrivalTime;
     }
 }

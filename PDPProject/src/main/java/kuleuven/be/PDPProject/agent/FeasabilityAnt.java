@@ -153,15 +153,15 @@ public class FeasabilityAnt extends Ant implements Cloneable{
     	LinkedList<Long> dl = new LinkedList<>();
     	LinkedList<Point> p = new LinkedList<>(path);
 		LinkedList<Point> p2 = new LinkedList<>(path);
-		p2.removeFirst();
+		p2.removeLast();
     	while (p.size()> 1) {
     		LinkedList<Point> a = new LinkedList<Point>();
-    		a.addFirst(p.getFirst());
-    		a.addFirst(p2.getFirst());
+    		a.addLast(p.getLast());
+    		a.addLast(p2.getLast());
 			Measure<Double, Length> md = roadModel.getDistanceOfPath(a);
 			dl.addLast((long) md.doubleValue(md.getUnit()));
-			p2.removeFirst();
-			p.removeFirst();
+			p2.removeLast();
+			p.removeLast();
 		}
 		return dl;
 	}

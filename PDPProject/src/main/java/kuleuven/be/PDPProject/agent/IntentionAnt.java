@@ -79,7 +79,7 @@ public class IntentionAnt extends Ant{
 			roadModel.addObjectAt(this, intentionPath.getLast());
 		}
 
-		public void runIntAnt(TimeLapse time){
+		public void runAnt(TimeLapse time){
 			for (long a : arrivalTime) {
 				raiseFlag(a, time);
 			}
@@ -94,10 +94,8 @@ public class IntentionAnt extends Ant{
 			for(long a : arrivalTime) {
 				s2 = false;
 				Set<RoadSign> roadSigns = collectInfo();
-				System.out.println(roadSigns.size());
 				for(RoadSign rs : roadSigns) {
 						if(!rs.isIntentionGiven() && indicateDest == rs.indicateDest()) {
-						    System.out.println("[SUCCESS]");
 							s2 = true;
 							break;
 						}
@@ -112,7 +110,6 @@ public class IntentionAnt extends Ant{
 		
 		public void raiseFlag(long a, TimeLapse time){
 			Set<RoadSign> roadSigns = collectInfo();
-			System.out.println(a);
 			for(RoadSign rs : roadSigns) {
 					if((this.packID).equals(rs.getPack().getPackID()))
 					    rs.setIntention(packID, a, time);

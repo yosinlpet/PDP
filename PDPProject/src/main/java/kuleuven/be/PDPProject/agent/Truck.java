@@ -24,7 +24,7 @@ import sun.awt.image.ImageWatched;
  * @author Rinde van Lon
  */
 public class Truck extends Vehicle {
-  private static final double SPEED = 1000d;
+  private static final double SPEED = 0.5;
   private Optional<Pack> curr;
   
   private IntentionAnt intAnt;
@@ -52,8 +52,6 @@ public class Truck extends Vehicle {
 			  if(!r.indicateDest()) {
 				  intAnt = new IntentionAnt((GraphRoadModel) this.getRoadModel(),r.getPackID(), r.getPath(),
 						  getArrivalTime(time, r.getDistList()), false);
-				  System.out.print(this.toString());
-				  System.out.println(" has chosen a Pack.");
 				  if(r.getCost() < minCost && intAnt.askFlag()) {
 					  copy = intAnt;
 					  minPath = r.getPath();
@@ -63,7 +61,9 @@ public class Truck extends Vehicle {
 			  }
 		  }
 	  if (copy != null) {
-		  copy.runIntAnt(time);
+		  System.out.print(this.toString());
+		  System.out.println(" is tracking a new Pack.");
+		  copy.runAnt(time);
 	  }
 		  return minPath;
 	  }
@@ -77,7 +77,7 @@ public class Truck extends Vehicle {
 					  getArrivalTime(time, r.getDistList()), true);
 			  if(r.getPackID().equals(packID) && intAnt.askFlag()) {
 				  path = r.getPath();
-				  intAnt.runAnt();
+				  intAnt.runAnt(time);
 				  break;
 			  }
 		  }
@@ -91,31 +91,36 @@ public class Truck extends Vehicle {
 
   @Override
   protected void tickImpl(TimeLapse time) {
-  	System.out.println(this.toString());
     final RoadModel rm = getRoadModel();
     final PDPModel pm = getPDPModel();
 
     // If no pack in target
     if (!curr.isPresent()) {
-        System.out.println("No curr on RoadModel");
     	 Set<RoadSign> rs = rm.getObjectsAt((RoadUser) this, RoadSign.class);
-    	 System.out.print(this.toString());
-    	 System.out.print(" sees ");
-    	 System.out.print(rs.size());
-    	 System.out.println(" roadsigns.");
-    	 System.out.println(rm.getPosition(this));
-         intPath =  selectPackPath(rs, time);
-         if(!intPath.isEmpty()) {
-             rm.moveTo(this, intPath.getFirst(), time);
-             nextPoint = intPath.getFirst();
-    	 }
-    	 else
-    	 	rm.moveTo(this, nextPoint, time);
+    	 Set<Pack> ps = rm.getObjectsAt((RoadUser)this, Pack.class);
+    	 if (ps.isEmpty()) {
+			 intPath = selectPackPath(rs, time);
+			 if (!intPath.isEmpty()) {
+				 nextPoint = intPath.getLast();
+				 rm.moveTo(this, intPath.getLast(), time);
+			 } else
+				 rm.moveTo(this, nextPoint, time);
+		 }
+		 else {
+    	 	System.out.println("Ouch, a Pack just landed on me.");
+    	 	for (Pack p : ps) {
+				curr = Optional.fromNullable(p);
+				break;
+			}
+			 pm.pickup(this, curr.get(), time);
+    	 	intPath = getCorrespondingDestPath(rs, curr.get().packID, time);
+    	 	rm.moveTo(this,intPath.getLast(), time);
+
+		 }
     }
     
     // If we have a pack in target
     if(curr.isPresent()) {
-    	System.out.println("Curr here");
     	final boolean inCargo = pm.containerContains(this, curr.get());
     	
     	// Sanity check
@@ -124,6 +129,7 @@ public class Truck extends Vehicle {
           } 
         // We have the pack and we will deliver it
         else if (inCargo) {
+			//intAnt.runAnt(time);
 			System.out.print(this.toString());
 			System.out.println(" is delivering a Pack.");
         	  rm.moveTo(this, intPath.getFirst(), time);
@@ -131,16 +137,22 @@ public class Truck extends Vehicle {
                   // deliver when we arrive
                   curr.get().setDeposited();
                   pm.deliver(this, curr.get(), time);
+				  System.out.print(this.toString());
+				  System.out.println(" has delivered its Pack.");
+                  nextPoint = rm.getPosition(this);
                   curr = Optional.absent();
                 }
           } 
         // We dont have yet the pack : go for it
         else {
+			//intAnt.runAnt(time);
           	rm.moveTo(this, intPath.getFirst(), time);
 			System.out.print(this.toString());
 			System.out.println(" is getting a Pack.");
         	if(rm.equalPosition(this, curr.get())) {
         		pm.pickup(this, curr.get(), time);
+        		System.out.print("RealArrivalTime ");
+        		System.out.println(time.getTime());
         		Set<RoadSign> rs = rm.getObjectsAt((RoadUser) this, RoadSign.class);
         		intPath = getCorrespondingDestPath(rs,curr.get().getPackID(), time);
         		rm.moveTo(this, intPath.getFirst(), time);
@@ -159,6 +171,13 @@ public class Truck extends Vehicle {
         //}
         arrivalTime[0] = currTime+Math.round(distList.getLast()/SPEED);
 
+		System.out.print("dist =");
+		System.out.println(distList.getLast());
+
+		System.out.print("currTime =");
+		System.out.println(currTime);
+		System.out.print("arrTime =");
+		System.out.println(arrivalTime[0]);
         return arrivalTime;
     }
 }

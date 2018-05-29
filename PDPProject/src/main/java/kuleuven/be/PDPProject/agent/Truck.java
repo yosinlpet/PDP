@@ -113,6 +113,7 @@ public class Truck extends Vehicle {
 				break;
 			}
 			 pm.pickup(this, curr.get(), time);
+    	 	curr.get().setCarried(true);
     	 	intPath = getCorrespondingDestPath(rs, curr.get().packID, time);
     	 	rm.moveTo(this,intPath.getLast(), time);
 
@@ -151,6 +152,7 @@ public class Truck extends Vehicle {
 			System.out.println(" is getting a Pack.");
         	if(rm.equalPosition(this, curr.get())) {
         		pm.pickup(this, curr.get(), time);
+        		curr.get().setCarried(true);
         		System.out.print("RealArrivalTime ");
         		System.out.println(time.getTime());
         		Set<RoadSign> rs = rm.getObjectsAt((RoadUser) this, RoadSign.class);
@@ -171,13 +173,6 @@ public class Truck extends Vehicle {
         //}
         arrivalTime[0] = currTime+Math.round(distList.getLast()/SPEED);
 
-		System.out.print("dist =");
-		System.out.println(distList.getLast());
-
-		System.out.print("currTime =");
-		System.out.println(currTime);
-		System.out.print("arrTime =");
-		System.out.println(arrivalTime[0]);
         return arrivalTime;
     }
 }

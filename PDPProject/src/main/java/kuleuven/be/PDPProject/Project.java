@@ -71,7 +71,7 @@ public final class Project {
 
   private static final int NUM_DEPOTS = 1;
   private static final int NUM_AGVS = 2;
-  private static final int NUM_PCKGS = 1;
+  private static final int NUM_PCKGS = 0;
 
   // time in ms
   private static final long SERVICE_DURATION = 60000;
@@ -80,7 +80,7 @@ public final class Project {
 
   private static final int SPEED_UP = 1;
   private static final int MAX_CAPACITY = 3;
-  private static final double NEW_CUSTOMER_PROB = .005;
+  private static final double NEW_CUSTOMER_PROB = .015;
 
   private static final String MAP_FILE = "/testGraph.dot";
   private static final Map<String, Graph<MultiAttributeData>> GRAPH_CACHE =
@@ -90,7 +90,7 @@ public final class Project {
   private static final int TEST_SPEED_UP = 64;
   
   private static final int factor = 100;
-  private static final long seed = 13L;
+  private static final long seed = 11L;
 
   public Project() {}
 

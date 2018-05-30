@@ -66,9 +66,13 @@ public class RoadSign implements RoadUser, TickListener {
     }
     
     public void setTruckID(String truckID) {
-    	intentionGivenToID = truckID;
+    	this.truckID = truckID;
     }
-    
+
+    public String getTruckID() {
+        return truckID;
+    }
+
     public String getPackID() {
     	return packID;
     }

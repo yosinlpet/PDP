@@ -109,7 +109,14 @@ public class Truck extends Vehicle {
 	@Override
 	public void afterTick(TimeLapse timeLapse) {
 		if (mustAfterTick) {
-			boolean isAllowed = applicationAnt.isSameTruckID(truckID, waitingPack);
+		    boolean isAllowed = false;
+			Set<RoadSign> roadSignSet = getRoadModel().getObjectsAt(this, RoadSign.class);
+			for (RoadSign rs : roadSignSet)	{
+				if (rs.getPack().equals(waitingPack) && !rs.indicateDest()) {
+					isAllowed = (this.truckID == rs.getTruckID());
+				}
+			}
+
 			if (isAllowed) {
 				intPath = waitingPath;
 				nextPoint = intPath.getLast();
@@ -169,7 +176,6 @@ public class Truck extends Vehicle {
 								waitingCost = r.getCost();
 							}
 						}
-						System.out.println(rm.getPosition(this));
 						applicationAnt = new IntentionAnt(getRoadModel(), truckID, waitingPath.getFirst());
 						applicationAnt.sendTruckID(truckID, waitingPack, (double) waitingCost);
 						mustAfterTick = true;

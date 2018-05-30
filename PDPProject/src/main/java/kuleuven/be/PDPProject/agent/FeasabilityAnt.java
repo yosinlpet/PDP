@@ -34,6 +34,8 @@ public class FeasabilityAnt extends Ant implements Cloneable{
 	private Simulator sim;
 	
 	private boolean indicateDest;
+	
+	private static int feasabilityAntCounter = 0;
 
 	private Map<String,Point> hashMap = new HashMap<String,Point>(); 
 	/**
@@ -52,6 +54,11 @@ public class FeasabilityAnt extends Ant implements Cloneable{
 		roadModel = (GraphRoadModel) pckg.getRM();
 		this.sim = sim;
 		this.indicateDest = indicateDest;
+		feasabilityAntCounter++;
+		if(feasabilityAntCounter%100==0) {
+			System.out.print("Number of feasability ants already created : ");
+			System.out.println(feasabilityAntCounter);
+		}
 	}
 
 	//  Constructor used for George cloning
@@ -66,6 +73,12 @@ public class FeasabilityAnt extends Ant implements Cloneable{
 		this.roadSignsTimeWindow = roadSignsTimeWindow;
 		this.sim = sim;
 		this.indicateDest = indicateDest;
+		
+		feasabilityAntCounter++;
+		if(feasabilityAntCounter%100==0) {
+			System.out.print("Number of feasability ants already created : ");
+			System.out.println(feasabilityAntCounter);
+		}
 	}
 
 	public FeasabilityAnt clone(FeasabilityAnt cloner) throws CloneNotSupportedException{

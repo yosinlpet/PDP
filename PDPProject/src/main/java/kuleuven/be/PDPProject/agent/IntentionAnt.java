@@ -34,6 +34,7 @@ public class IntentionAnt extends Ant{
 
 	Point node;
 	String truckID;
+	static int intentionAntCounter = 0;
 
 	public IntentionAnt() {
 		
@@ -50,7 +51,13 @@ public class IntentionAnt extends Ant{
 			super.roadModel = (GraphRoadModel) roadModel;
 			super.roadModel.addObjectAt(this, node);
 			this.truckID = truckID;
+			intentionAntCounter++;
+			if(intentionAntCounter%100==0) {
+				System.out.print("Number of intention ants already created : ");
+				System.out.println(intentionAntCounter);
+			}
 		}
+	
 
 		@Override
 		public void initRoadUser(RoadModel model) {

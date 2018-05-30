@@ -66,10 +66,10 @@ public class IntentionAnt extends Ant{
 			if(flag.size()==0) {
 				Flag f = new Flag(truckID);
 				roadModel.addObjectAt(f, node);
-				System.out.print("Flag created by ");
-				System.out.print(truckID);
-				System.out.print(" at ");
-				System.out.println(node);
+				//System.out.print("Flag created by ");
+				//System.out.print(truckID);
+				//System.out.print(" at ");
+				//System.out.println(node);
 				return true;
 			}
 			// If flag : try to change the name

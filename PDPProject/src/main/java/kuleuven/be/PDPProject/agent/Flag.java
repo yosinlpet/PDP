@@ -25,8 +25,8 @@ public class Flag implements RoadUser{
 	public boolean raiseFlag(String truckID) {
 		if(this.truckID.equals("nobody")) {
 			this.truckID = truckID;
-			System.out.print("Flag raised by ");
-			System.out.println(truckID);
+			//System.out.print("Flag raised by ");
+			//System.out.println(truckID);
 			return true;
 		}
 		else if(this.truckID.equals(truckID))
@@ -37,8 +37,8 @@ public class Flag implements RoadUser{
 	public void dropFlag(String truckID) {
 		if(this.truckID.equals(truckID)) {
 			this.truckID = "nobody";
-			System.out.print("Flag dropped by ");
-			System.out.println(truckID);
+			//System.out.print("Flag dropped by ");
+			//System.out.println(truckID);
 		}
 		//else if (!this.truckID.equals("nobody")){
 			//System.out.print("Drop failed, ID is \"");

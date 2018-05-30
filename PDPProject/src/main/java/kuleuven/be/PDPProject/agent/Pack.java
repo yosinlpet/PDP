@@ -59,6 +59,7 @@ public class Pack extends Parcel implements TickListener{
         rng = r;
         this.departure = dto.getPickupLocation();
         this.destination = dto.getDeliveryLocation();
+        System.out.println("Pack created!");
         
 		this.carried = false;
 		this.deposited = false;
@@ -139,6 +140,7 @@ public class Pack extends Parcel implements TickListener{
 	   {
 	   		double val = candidates.get(key);
 	   		if (val < minCost) {
+	   			System.out.println("key = " + key);
 				minKey = key;
 				minCost = val;
 			}

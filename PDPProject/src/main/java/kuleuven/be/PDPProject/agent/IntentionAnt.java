@@ -109,16 +109,25 @@ public class IntentionAnt extends Ant{
 		public void sendTruckID(String truckID, Pack pack, double cost) {
 			Set<Pack> packSet = this.roadModel.getObjectsAt(this, Pack.class);
 			for (Pack p : packSet) {
+				System.out.println(pack.toString());
+				System.out.println(p.toString());
 				if (p.equals(pack))
 					pack.setCandidate(truckID, cost);
 			}
 		}
 
-		public boolean isSameTruckID(String TruckID, Pack pack) {
+		public boolean isSameTruckID(String truckID, Pack pack) {
 			Set<Pack> packSet = this.roadModel.getObjectsAt(this, Pack.class);
 			for (Pack p : packSet) {
-				if (p.equals(pack))
+				System.out.println(pack.toString());
+				System.out.println(p.toString());
+				if (p.equals(pack)) {
+					System.out.print("Found ID :");
+					System.out.print(pack.selectTruck());
+					System.out.print(" -- our ID : ");
+					System.out.println(truckID);
 					return (truckID.equals(pack.selectTruck()));
+				}
 			}
 			return false;
 		}

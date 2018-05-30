@@ -30,12 +30,18 @@ public class Truck extends Vehicle {
 
 	private IntentionAnt intAntFront;
 	private IntentionAnt intAntBack;
+	private IntentionAnt applicationAnt;
 	private Point nextPoint;
 	private Point previousPoint;
 
 	private boolean abandon;
 	private boolean isBackFlagDropped;
 	private boolean isFrontFlagRaised;
+	private boolean mustAfterTick;
+
+	private Pack waitingPack;
+	private double waitingCost;
+	private LinkedList<Point> waitingPath;
 
 	String truckID;
 
@@ -50,18 +56,21 @@ public class Truck extends Vehicle {
 		this.truckID = truckID;
 		curr = Optional.absent();
 		previousPoint = getStartPosition();
-		intPath = new LinkedList<Point>();
+		intPath = new LinkedList<>();
+		waitingPath = new LinkedList<>();
 		isBackFlagDropped = true;
 		isFrontFlagRaised = false;
+		waitingCost = Double.MAX_VALUE;
+		waitingPack = null;
 		abandon=false;
 	}
-	
+
 	public void initRoadPDP(RoadModel pRoadModel, PDPModel pPdpModel) {
 		// Set flag under us at the beginning
-			intAntBack = new IntentionAnt(getRoadModel(), truckID, previousPoint);
-			isBackFlagDropped = !intAntBack.askFlag();
-		}
-	
+		intAntBack = new IntentionAnt(getRoadModel(), truckID, previousPoint);
+		isBackFlagDropped = !intAntBack.askFlag();
+	}
+
 
 	// Return the path (without the first node!) to a pack that is the closest to the truck
 	public LinkedList<Point> selectPackPath(Set<RoadSign> rsSet, TimeLapse time) {
@@ -70,11 +79,9 @@ public class Truck extends Vehicle {
 		for(RoadSign rs : rsSet) {
 			if(!rs.indicateDest()) {
 				if(rs.getCost() < minCost) {
-					nextPoint = rs.getNext(); // ??
 					minPath = new LinkedList<>(rs.getPath());
 					minCost = rs.getCost();
-					curr = Optional.fromNullable(rs.getPack());
-						minPath.removeLast();
+					minPath.removeLast();
 				}
 			}
 		}
@@ -102,7 +109,19 @@ public class Truck extends Vehicle {
 
 
 	@Override
-	public void afterTick(TimeLapse timeLapse) {}
+	public void afterTick(TimeLapse timeLapse) {
+	    System.out.println("Aftertchip!");
+		if (mustAfterTick) {
+			boolean isAllowed = applicationAnt.isSameTruckID(truckID, waitingPack);
+			if (isAllowed) {
+				intPath = waitingPath;
+				nextPoint = intPath.getLast();
+				curr = Optional.fromNullable(waitingPack);
+			}
+		}
+		mustAfterTick = false;
+		waitingPath = new LinkedList<>();
+	}
 
 	@Override
 	protected void tickImpl(TimeLapse time) {
@@ -135,7 +154,7 @@ public class Truck extends Vehicle {
 		}
 		//System.out.print(" -- nextPoint: ");
 		//if (nextPoint != null)
-            //System.out.println(nextPoint.toString());
+		//System.out.println(nextPoint.toString());
 
 		if(rm.getPosition(this).equals(nextPoint) && abandon) {
 			//System.out.println("givin up1 					jfdlqkjf		efqds");
@@ -149,9 +168,9 @@ public class Truck extends Vehicle {
 		if (!curr.isPresent()) {
 			if(abandon) {
 				//System.out.println("givin up2				fdjqfil	f		fjdqil");
-                if (!isFrontFlagRaised) {
+				if (!isFrontFlagRaised) {
 					intAntFront = new IntentionAnt(getRoadModel(), truckID, nextPoint);
-                    isFrontFlagRaised = intAntFront.askFlag();
+					isFrontFlagRaised = intAntFront.askFlag();
 				}
 				if (isFrontFlagRaised) {
 					rm.moveTo(this, nextPoint, time);
@@ -170,29 +189,27 @@ public class Truck extends Vehicle {
 				Set<RoadSign> rs = rm.getObjectsAt((RoadUser) this, RoadSign.class);
 				Set<Pack> ps = rm.getObjectsAt((RoadUser) this, Pack.class);
 				// If no pack on us
+				nextPoint = rm.getPosition(this);
 				if(ps.isEmpty()) {
-				    LinkedList<Point> trialPath = selectPackPath(rs, time);
-				    if (!trialPath.isEmpty()) {
-						Pack pack = null;
-						double cost = Double.MAX_VALUE;
+					waitingPath = selectPackPath(rs, time);
+					if (!waitingPath.isEmpty()) {
 						for (RoadSign r : rs) {
-							if (r.getPath().equals(trialPath)) {
-								pack = r.getPack();
-								cost = r.getCost();
+							LinkedList<Point> path = new LinkedList<>(r.getPath());
+							path.removeLast();
+							if (path.equals(waitingPath)) {
+								waitingPack = r.getPack();
+								waitingCost = r.getCost();
 							}
 						}
-						IntentionAnt applicationAnt = new IntentionAnt(getRoadModel(), truckID, trialPath.getFirst());
-						applicationAnt.sendTruckID(truckID, pack, (double) cost);
-						boolean isAllowed = applicationAnt.isSameTruckID(truckID, pack);
-						if (isAllowed)
-							intPath = selectPackPath(rs, time);
-						else
-							System.out.println("not selected...");
+						System.out.println(rm.getPosition(this));
+						applicationAnt = new IntentionAnt(getRoadModel(), truckID, waitingPath.getFirst());
+						applicationAnt.sendTruckID(truckID, waitingPack, (double) waitingCost);
+						mustAfterTick = true;
 					}
 					//System.out.print(" for truck ");
 					//System.out.println(this.truckID);
 					if(!intPath.isEmpty()) {
-					    if (!isFrontFlagRaised) {
+						if (!isFrontFlagRaised) {
 							intAntFront = new IntentionAnt(getRoadModel(), truckID, nextPoint);
 							isFrontFlagRaised = intAntFront.askFlag();
 						}
@@ -270,9 +287,9 @@ public class Truck extends Vehicle {
 			// We dont have yet the pack : go for it
 			else {
 				if (!isFrontFlagRaised) {
-                    intAntFront = new IntentionAnt(getRoadModel(), truckID, nextPoint);
-                    isFrontFlagRaised = intAntFront.askFlag();
-                }
+					intAntFront = new IntentionAnt(getRoadModel(), truckID, nextPoint);
+					isFrontFlagRaised = intAntFront.askFlag();
+				}
 				if(isFrontFlagRaised) {
 					rm.moveTo(this, nextPoint, time);
 					intAntBack = new IntentionAnt(getRoadModel(),truckID,previousPoint);

@@ -86,14 +86,15 @@ public class IntentionAnt extends Ant{
 			}
 		}
 		
-		public void dropFlag() {
+		public boolean dropFlag() {
 			Set<Flag> flagSet = roadModel.getObjectsAt((RoadUser) this, Flag.class);
 			if(flagSet.size()==0) {
+				return false;
 			}
 			else {
 				Flag flag = new Flag();
 				for(Flag f2 : flagSet) {flag=f2;}
-				flag.dropFlag(truckID);
+				return flag.dropFlag(truckID);
 				//System.out.print("Flag dropped by ");
 				//System.out.print(truckID);
 				//System.out.print(" at ");

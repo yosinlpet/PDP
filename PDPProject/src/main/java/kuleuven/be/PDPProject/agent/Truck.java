@@ -35,6 +35,8 @@ public class Truck extends Vehicle {
 
 	private boolean hasRaisedFlag;
 	private boolean abandon;
+	private boolean isBackFlagDropped;
+	private boolean isFrontFlagRaised;
 
 	String truckID;
 
@@ -51,6 +53,8 @@ public class Truck extends Vehicle {
 		previousPoint = getStartPosition();
 		intPath = new LinkedList<Point>();
 		hasRaisedFlag = false;
+		isBackFlagDropped = true;
+		isFrontFlagRaised = false;
 		abandon=false;
 	}
 
@@ -99,7 +103,11 @@ public class Truck extends Vehicle {
 	protected void tickImpl(TimeLapse time) {
 		final RoadModel rm = getRoadModel();
 		final PDPModel pm = getPDPModel();
-		//System.out.print(truckID);
+		System.out.print(truckID);
+		System.out.print(" has back flag dropped ? ");
+		System.out.print(isBackFlagDropped);
+		System.out.print(" has front flag raised ? ");
+		System.out.println(isFrontFlagRaised);
 		//System.out.print(" has targeted object ? ");
 		//System.out.println(curr.isPresent());
 		//System.out.print("intention path: ");
@@ -114,6 +122,8 @@ public class Truck extends Vehicle {
 
 				//System.out.print("Change in previous and next node for truck nb : ");
 				//System.out.println(truckID);
+				isFrontFlagRaised = false;
+				isBackFlagDropped = false;
 				previousPoint = nextPoint;
 				nextPoint = intPath.removeLast();
 			}
@@ -126,19 +136,28 @@ public class Truck extends Vehicle {
 			//System.out.println("givin up1 					jfdlqkjf		efqds");
 			intPath = new LinkedList<>();
 			previousPoint = nextPoint;
+			isBackFlagDropped = false;
+			isFrontFlagRaised = false;
 			abandon = false;
 		}
 		// If no pack in target
 		if (!curr.isPresent()) {
 			if(hasRaisedFlag && abandon) {
 				//System.out.println("givin up2				fdjqfil	f		fjdqil");
-				intAntFront = new IntentionAnt(getRoadModel(), truckID, nextPoint);
-				if (intAntFront.askFlag()) {
+                if (!isFrontFlagRaised) {
+					intAntFront = new IntentionAnt(getRoadModel(), truckID, nextPoint);
+                    isFrontFlagRaised = intAntFront.askFlag();
+				}
+				if (isFrontFlagRaised) {
 					rm.moveTo(this, nextPoint, time);
-					intAntBack = new IntentionAnt(getRoadModel(), truckID, previousPoint);
-					if (!previousPoint.equals(nextPoint))
-                        intAntBack.dropFlag();
+					if (!isBackFlagDropped) {
+						intAntBack = new IntentionAnt(getRoadModel(), truckID, previousPoint);
+						if (!previousPoint.equals(nextPoint))
+							isBackFlagDropped = intAntBack.dropFlag();
+					}
 					previousPoint = nextPoint;
+					isBackFlagDropped = false;
+					isFrontFlagRaised = false;
 				}
 
 			}
@@ -151,18 +170,25 @@ public class Truck extends Vehicle {
 					//System.out.print(" for truck ");
 					//System.out.println(this.truckID);
 					if(!intPath.isEmpty()) {
-						intAntFront = new IntentionAnt(getRoadModel(),truckID,nextPoint);
-						if(intAntFront.askFlag()) {
+					    if (!isFrontFlagRaised) {
+							intAntFront = new IntentionAnt(getRoadModel(), truckID, nextPoint);
+							isFrontFlagRaised = intAntFront.askFlag();
+						}
+						if(isFrontFlagRaised) {
 							rm.moveTo(this, nextPoint, time);
-							intAntBack = new IntentionAnt(getRoadModel(),truckID,previousPoint);
-							if (!previousPoint.equals(nextPoint))
-                                intAntBack.dropFlag();
+							if (!isBackFlagDropped) {
+								intAntBack = new IntentionAnt(getRoadModel(), truckID, previousPoint);
+								if (!previousPoint.equals(nextPoint))
+									isBackFlagDropped = intAntBack.dropFlag();
+							}
 
-						} else if(Point.distance(rm.getPosition(this), nextPoint) < 0.5){
+						} else if(Point.distance(rm.getPosition(this), nextPoint) < 0.5) {
 							rm.moveTo(this, nextPoint, time);
-							intAntBack = new IntentionAnt(getRoadModel(),truckID,previousPoint);
-							if (!previousPoint.equals(nextPoint))
-                                intAntBack.dropFlag();
+							if (!isBackFlagDropped){
+                                intAntBack = new IntentionAnt(getRoadModel(), truckID, previousPoint);
+                                if (!previousPoint.equals(nextPoint))
+                                    isBackFlagDropped = intAntBack.dropFlag();
+						}
 
 						} else {
 
@@ -184,6 +210,8 @@ public class Truck extends Vehicle {
 
 						previousPoint = rm.getPosition(this);
 						nextPoint = intPath.removeLast();
+						isBackFlagDropped = false;
+						isFrontFlagRaised = false;
 						break;
 					}
 					pm.pickup(this, curr.get(), time);
@@ -206,43 +234,58 @@ public class Truck extends Vehicle {
 
 			// We have the pack and we will deliver it
 			else if (inCargo) {
-				intAntFront = new IntentionAnt(getRoadModel(),truckID,nextPoint);
-				if(intAntFront.askFlag()) {
+				if (!isFrontFlagRaised) {
+					intAntFront = new IntentionAnt(getRoadModel(), truckID, nextPoint);
+					isFrontFlagRaised = intAntFront.askFlag();
+				}
+				if(isFrontFlagRaised) {
 					rm.moveTo(this, nextPoint, time);
-					intAntBack = new IntentionAnt(getRoadModel(),truckID,previousPoint);
-					if (!previousPoint.equals(nextPoint))
-                        intAntBack.dropFlag();
-
+					if (!isBackFlagDropped) {
+						intAntBack = new IntentionAnt(getRoadModel(), truckID, previousPoint);
+						if (!previousPoint.equals(nextPoint))
+							isBackFlagDropped = intAntBack.dropFlag();
+					}
 					if (rm.getPosition(this).equals(curr.get().getDeliveryLocation())) {
 						// deliver when we arrive
 						pm.deliver(this, curr.get(), time);
 						curr.get().setDeposited();
 						previousPoint = rm.getPosition(this);
+						isBackFlagDropped = false;
+						isFrontFlagRaised = false;
 						curr = Optional.absent();
 					}
 				}
 				else if(Point.distance(rm.getPosition(this), nextPoint) < 0.5){
 					rm.moveTo(this, nextPoint, time);
-					intAntBack = new IntentionAnt(getRoadModel(),truckID,previousPoint);
-					if (!previousPoint.equals(nextPoint))
-                        intAntBack.dropFlag();
+					if (!isBackFlagDropped) {
+						intAntBack = new IntentionAnt(getRoadModel(), truckID, previousPoint);
+						if (!previousPoint.equals(nextPoint))
+							isBackFlagDropped = intAntBack.dropFlag();
+					}
 
 				} //else rm.moveTo(this, nextPoint, time);
 			}
 			// We dont have yet the pack : go for it
 			else {
-				intAntFront = new IntentionAnt(getRoadModel(),truckID,nextPoint);
-				if(intAntFront.askFlag()) {
+				if (!isFrontFlagRaised) {
+                    intAntFront = new IntentionAnt(getRoadModel(), truckID, nextPoint);
+                    isFrontFlagRaised = intAntFront.askFlag();
+                }
+				if(isFrontFlagRaised) {
 					hasRaisedFlag = true;
 					rm.moveTo(this, nextPoint, time);
 					intAntBack = new IntentionAnt(getRoadModel(),truckID,previousPoint);
-					if (!previousPoint.equals(nextPoint))
-                        intAntBack.dropFlag();
+					if (!isBackFlagDropped) {
+						if (!previousPoint.equals(nextPoint))
+							isBackFlagDropped = intAntBack.dropFlag();
+					}
 
 					if(rm.equalPosition(this, curr.get())) {
 						pm.pickup(this, curr.get(), time);
 						curr.get().setCarried(true);
 						previousPoint = nextPoint;
+						isBackFlagDropped = false;
+						isFrontFlagRaised = false;
 						Set<RoadSign> rs = rm.getObjectsAt((RoadUser) this, RoadSign.class);
 						intPath = getCorrespondingDestPath(rs,curr.get().getPackID());
 						//System.out.print(" for truck ");
@@ -250,9 +293,11 @@ public class Truck extends Vehicle {
 					}
 				} else if(Point.distance(rm.getPosition(this), nextPoint) < 0.5){
 					rm.moveTo(this, nextPoint, time);
-					intAntBack = new IntentionAnt(getRoadModel(),truckID,previousPoint);
-					if (!previousPoint.equals(nextPoint))
-                        intAntBack.dropFlag();
+					if (!isBackFlagDropped) {
+						intAntBack = new IntentionAnt(getRoadModel(), truckID, previousPoint);
+						if (!previousPoint.equals(nextPoint))
+							isBackFlagDropped = intAntBack.dropFlag();
+					}
 
 				}
 			}

@@ -34,12 +34,14 @@ public class Flag implements RoadUser{
 		else return false;
 	}
 	
-	public void dropFlag(String truckID) {
+	public boolean dropFlag(String truckID) {
 		if(this.truckID.equals(truckID)) {
 			this.truckID = "nobody";
+			return true;
 			//System.out.print("Flag dropped by ");
 			//System.out.println(truckID);
 		}
+		else return false;
 		//else if (!this.truckID.equals("nobody")){
 			//System.out.print("Drop failed, ID is \"");
 			//System.out.print(truckID);

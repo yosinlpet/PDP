@@ -23,6 +23,7 @@ import static com.google.common.collect.Maps.newHashMap;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.LinkedList;
 import java.util.Map;
 
 import javax.annotation.Nullable;
@@ -33,6 +34,7 @@ import javax.measure.unit.SI;
 
 import org.apache.commons.math3.random.RandomGenerator;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Link;
 import org.eclipse.swt.widgets.Monitor;
 
 import com.github.rinde.rinsim.core.Simulator;
@@ -90,7 +92,7 @@ public final class Project {
   private static final int TEST_SPEED_UP = 64;
   
   private static final int factor = 100;
-  private static final long seed = 13L;
+  private static final long seed = 2L;
 
   public Project() {}
 
@@ -150,8 +152,20 @@ public final class Project {
     
     
     // add depots, taxis and parcels to simulator
+      LinkedList<Point> positions = new LinkedList<>();
     for (int i = 0; i < NUM_AGVS; i++) {
-    	simulator.register(new Truck(roadModel.getRandomPosition(rng),1,Integer.toString(i)));
+        Point position;
+        if (positions.isEmpty()) {
+            position = roadModel.getRandomPosition(rng);
+            positions.addLast(position);
+        }
+        else {
+            do
+                position = roadModel.getRandomPosition(rng);
+            while (position.equals(positions.element()));
+            positions.addLast(position);
+        }
+    	simulator.register(new Truck(position,1,Integer.toString(i)));
     }
     
  

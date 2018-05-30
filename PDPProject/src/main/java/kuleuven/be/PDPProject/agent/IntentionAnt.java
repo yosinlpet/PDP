@@ -114,5 +114,13 @@ public class IntentionAnt extends Ant{
 					pack.setCandidate(truckID, cost);
 			}
 		}
+
+		public void setEmergency() {
+			Set<Truck> truckSet = this.roadModel.getObjectsAt(this, Truck.class);
+			for (Truck t : truckSet) {
+			    System.out.println("Truck found: "+ t.getTruckID());
+				t.setEmergencyMove(true);
+			}
+		}
 	}
 

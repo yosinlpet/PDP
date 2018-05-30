@@ -93,7 +93,7 @@ public final class Project {
   
   private static final int factor = 100;
   private static final long END = 3600;
-  private static final long seed = 13L;
+  private static final long seed = 1L;
 
   public Project() {}
 

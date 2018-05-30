@@ -53,6 +53,13 @@ public class Truck extends Vehicle {
 		hasRaisedFlag = false;
 		abandon=false;
 	}
+	
+	public void initRoadPDP(RoadModel pRoadModel, PDPModel pPdpModel) {
+		// Set flag under us at the beginning
+			intAntBack = new IntentionAnt(getRoadModel(), truckID, previousPoint);
+			intAntBack.askFlag();
+		}
+	
 
 	// Return the path (without the first node!) to a pack that is the closest to the truck
 	public LinkedList<Point> selectPackPath(Set<RoadSign> rsSet, TimeLapse time) {

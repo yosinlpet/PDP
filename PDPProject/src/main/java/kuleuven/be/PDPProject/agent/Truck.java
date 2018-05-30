@@ -110,7 +110,6 @@ public class Truck extends Vehicle {
 
 	@Override
 	public void afterTick(TimeLapse timeLapse) {
-	    System.out.println("Aftertchip!");
 		if (mustAfterTick) {
 			boolean isAllowed = applicationAnt.isSameTruckID(truckID, waitingPack);
 			if (isAllowed) {

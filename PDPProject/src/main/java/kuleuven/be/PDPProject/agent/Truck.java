@@ -118,6 +118,12 @@ public class Truck extends Vehicle {
 			  previousPoint = nextPoint;
 			  nextPoint = intPath.removeLast();
 		  }
+		 if(rm.getPosition(this).equals(nextPoint) && abandon) {
+		     intPath = new LinkedList<>();
+		     previousPoint = nextPoint;
+			 abandon = false;
+		 }
+
 	  }
 
     // If no pack in target
@@ -130,8 +136,6 @@ public class Truck extends Vehicle {
 				intAntBack.dropFlag();
 			}
 
-    		if(rm.getPosition(this).equals(nextPoint))
-    			abandon = false;
     	}
     	else {
 	    	 Set<RoadSign> rs = rm.getObjectsAt((RoadUser) this, RoadSign.class);
@@ -175,7 +179,7 @@ public class Truck extends Vehicle {
 	        		 break;
 	        	 }
 	        	 pm.pickup(this, curr.get(), time);
-	        	 curr.get().isCarried();
+				 curr.get().setCarried(true);
 	         }
     	}
     }
@@ -187,6 +191,8 @@ public class Truck extends Vehicle {
     	// Sanity check
         if (!inCargo && !rm.containsObject(curr.get())) {
             curr = Optional.absent();
+            System.out.print(this.truckID);
+            System.out.println(" abandoning!!!!!");
             abandon = true;
           }
 
@@ -224,7 +230,7 @@ public class Truck extends Vehicle {
 
          		 if(rm.equalPosition(this, curr.get())) {
 	        		pm.pickup(this, curr.get(), time);
-					curr.get().isCarried();
+					curr.get().setCarried(true);
 
 	        		Set<RoadSign> rs = rm.getObjectsAt((RoadUser) this, RoadSign.class);
 	        		intPath = getCorrespondingDestPath(rs,curr.get().getPackID());

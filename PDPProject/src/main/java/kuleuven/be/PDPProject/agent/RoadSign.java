@@ -114,6 +114,10 @@ public class RoadSign implements RoadUser, TickListener {
     @Override
     public void tick(TimeLapse timeLapse)
     {
+        //System.out.print("pack ");
+        //System.out.print(this.packID);
+        //System.out.print(" is Carried ?");
+        //System.out.println(this.pack.isCarried());
     	if(!tlSet) {
     		this.timeLapse = timeLapse;
     		tlSet = true;

@@ -34,7 +34,6 @@ public class Truck extends Vehicle {
 	private Point nextPoint;
 	private Point previousPoint;
 
-	private boolean abandon;
 	private boolean isBackFlagDropped;
 	private boolean isFrontFlagRaised;
 	private boolean mustAfterTick;
@@ -62,7 +61,6 @@ public class Truck extends Vehicle {
 		isFrontFlagRaised = false;
 		waitingCost = Double.MAX_VALUE;
 		waitingPack = null;
-		abandon=false;
 	}
 
 	public void initRoadPDP(RoadModel pRoadModel, PDPModel pPdpModel) {
@@ -141,7 +139,7 @@ public class Truck extends Vehicle {
 		//System.out.print(previousPoint.toString());
 		// compute next and previous point
 		if(!intPath.isEmpty()) {
-			if(rm.getPosition(this).equals(nextPoint) && !abandon) {
+			if(rm.getPosition(this).equals(nextPoint)) {
 
 				//System.out.print("Change in previous and next node for truck nb : ");
 				//System.out.println(truckID);
@@ -155,40 +153,11 @@ public class Truck extends Vehicle {
 		//if (nextPoint != null)
 		//System.out.println(nextPoint.toString());
 
-		if(rm.getPosition(this).equals(nextPoint) && abandon) {
-			//System.out.println("givin up1 					jfdlqkjf		efqds");
-			intPath = new LinkedList<>();
-			previousPoint = nextPoint;
-			isBackFlagDropped = false;
-			isFrontFlagRaised = false;
-			abandon = false;
-		}
 		// If no pack in target
 		if (!curr.isPresent()) {
-			if(abandon) {
-				//System.out.println("givin up2				fdjqfil	f		fjdqil");
-				if (!isFrontFlagRaised) {
-					intAntFront = new IntentionAnt(getRoadModel(), truckID, nextPoint);
-					isFrontFlagRaised = intAntFront.askFlag();
-				}
-				if (isFrontFlagRaised) {
-					rm.moveTo(this, nextPoint, time);
-					if (!isBackFlagDropped) {
-						intAntBack = new IntentionAnt(getRoadModel(), truckID, previousPoint);
-						if (!previousPoint.equals(nextPoint))
-							isBackFlagDropped = intAntBack.dropFlag();
-					}
-					previousPoint = nextPoint;
-					isBackFlagDropped = false;
-					isFrontFlagRaised = false;
-				}
-
-			}
-			else {
 				Set<RoadSign> rs = rm.getObjectsAt((RoadUser) this, RoadSign.class);
 				Set<Pack> ps = rm.getObjectsAt((RoadUser) this, Pack.class);
 				// If no pack on us
-				nextPoint = rm.getPosition(this);
 				if(ps.isEmpty()) {
 					waitingPath = selectPackPath(rs, time);
 					if (!waitingPath.isEmpty()) {
@@ -225,7 +194,7 @@ public class Truck extends Vehicle {
 				// A pack is on us
 				else {
 					for(Pack p : ps) {
-						//System.out.println("Ouch, a Pack just landed on me!");
+						System.out.println("Ouch, a Pack just landed on me!");
 						curr = Optional.fromNullable(p);
 						intPath = getCorrespondingDestPath(rs,
 								curr.get().getPackID());
@@ -244,19 +213,16 @@ public class Truck extends Vehicle {
 					pm.pickup(this, curr.get(), time);
 					curr.get().setCarried(true);
 				}
-			}
+
 		}
 
 		// If we have a pack in target
-		if(curr.isPresent()) {
+		if(curr.isPresent() && !mustAfterTick) {
 			final boolean inCargo = pm.containerContains(this, curr.get());
 
 			// Sanity check
 			if (!inCargo && !rm.containsObject(curr.get())) {
 				curr = Optional.absent();
-				//System.out.print(this.truckID);
-				//System.out.println(" abandoning!!!!!");
-				abandon = true;
 			}
 
 			// We have the pack and we will deliver it

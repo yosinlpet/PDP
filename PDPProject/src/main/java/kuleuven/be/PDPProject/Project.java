@@ -92,7 +92,8 @@ public final class Project {
   private static final int TEST_SPEED_UP = 64;
   
   private static final int factor = 100;
-  private static final long seed = 4L;
+  private static final long END = 3600;
+  private static final long seed = 13L;
 
   public Project() {}
 
@@ -102,8 +103,8 @@ public final class Project {
    *          simulation.
    */
   public static void main(@Nullable String[] args) {
-    final long endTime = args != null && args.length >= 1 ? Long
-      .parseLong(args[0]) : Long.MAX_VALUE;
+    //final long endTime = args != null && args.length >= 1 ? Long.parseLong(args[0]) : Long.MAX_VALUE;
+      final long endTime = END;
 
     final String graphFile = args != null && args.length >= 2 ? args[1]
       : MAP_FILE;
@@ -162,7 +163,7 @@ public final class Project {
         else {
             do
                 position = roadModel.getRandomPosition(rng);
-            while (position.equals(positions.element()));
+            while (positions.contains(position));
             positions.addLast(position);
         }
     	simulator.register(new Truck(position,1,Integer.toString(i)));
@@ -185,7 +186,6 @@ public final class Project {
 				distanceShortestPath/1*Math.round(Math.abs(rng.nextGaussian())*factor);
 
 		TimeWindow tw = TimeWindow.create(0, maxDeliveryTime);
-		
     	simulator.register(new Pack(
     				Parcel.builder(departure, destination)
     					.deliveryTimeWindow(tw)

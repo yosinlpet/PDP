@@ -135,6 +135,7 @@ public class FeasabilityAnt extends Ant implements Cloneable{
                 c.addToPath(p2);
 				if(!c.getHashMap().containsKey(p2.toString())) {	
 					clones.add(c);
+					roadModel.addObjectAt(c, p2);
 					c.getHashMap().put(p2.toString(),p2);
 				}
 				

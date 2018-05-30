@@ -163,12 +163,15 @@ public class Pack extends Parcel implements TickListener{
 		if (candidates.size() > 0)
 		{
 			this.truckID = selectTruck();
-			System.out.println("Pack ticks too!");
             this.candidates = new LinkedHashMap<>();
             FeasabilityAnt ant = new FeasabilityAnt(this, departure, deliveryTW, sim, false);
             ant.updateTruckID(ant.getClones(), truckID);
             this.isBestTruckKnown = true;
         }
+		System.out.print("Pack ");
+		System.out.print(this.packID);
+		System.out.print(" has candidate: ");
+		System.out.println(this.truckID);
 		if(isCritical(timeLapse)) {
 			this.isCritical = true;
 		}

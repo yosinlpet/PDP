@@ -27,7 +27,7 @@ public class RoadSign implements RoadUser, TickListener {
     private int cost;
     private TimeWindow timeWindow;
     
-    private String agentID;
+    private String truckID;
     private String packID;
     private long until;
     private TimeWindow twIntention;
@@ -43,7 +43,7 @@ public class RoadSign implements RoadUser, TickListener {
     public RoadSign() {}
     
     public RoadSign(Pack pack, LinkedList<Point> path,
-    		TimeWindow timeWindow, boolean indicateDest, LinkedList<Long> distList){
+    		TimeWindow timeWindow, boolean indicateDest, LinkedList<Long> distList, String truckID){
         this.timeWindow = timeWindow;
         this.pack = pack;
         this.distList = distList;
@@ -57,6 +57,7 @@ public class RoadSign implements RoadUser, TickListener {
         intentionGiven = false;
         tlSet = false;
         this.indicateDest = indicateDest;
+        this.truckID = truckID;
     }
 
     @Override
@@ -64,10 +65,8 @@ public class RoadSign implements RoadUser, TickListener {
         roadModel = (GraphRoadModel) model;
     }
     
-    public void setIntention(String agentID, long until, TimeLapse timeLapse) {
-    	twIntention = TimeWindow.create(timeLapse.getTime(), timeLapse.getTime()+until);
-    	intentionGiven = true;
-    	intentionGivenToID = agentID;
+    public void setTruckID(String truckID) {
+    	intentionGivenToID = truckID;
     }
     
     public String getPackID() {

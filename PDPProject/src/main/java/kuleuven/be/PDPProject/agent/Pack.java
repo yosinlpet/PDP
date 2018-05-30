@@ -10,10 +10,13 @@ import com.github.rinde.rinsim.core.model.time.TickListener;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.geom.Point;
 import com.github.rinde.rinsim.util.TimeWindow;
-
+import java.util.LinkedHashMap;
+import java.util.Map;
 import com.google.common.base.Optional;
 import org.apache.commons.math3.random.RandomGenerator;
 import kuleuven.be.PDPProject.agent.FeasabilityAnt;
+
+import java.util.Map;
 
 
 public class Pack extends Parcel implements TickListener{
@@ -28,6 +31,7 @@ public class Pack extends Parcel implements TickListener{
 	private boolean fragile;
 	private boolean timeIsOver;
 	private boolean isCritical;
+	private boolean isBestTruckKnown;
 
 	// Positions
 	private Point departure;
@@ -37,8 +41,10 @@ public class Pack extends Parcel implements TickListener{
 	private RoadModel roadModel;
 	private PDPModel pdpModel;
 	private TimeWindow deliveryTW;
+	private String truckID;
 	
 	private Simulator sim;
+	private Map<String, Double> candidates;
 	
 	private RoadModel rm;
 	ParcelDTO dto; 
@@ -57,9 +63,11 @@ public class Pack extends Parcel implements TickListener{
 		this.carried = false;
 		this.deposited = false;
 		this.fragile = rng.nextDouble() > 0.5;
-		
-		this.timeIsOver = false;
 
+		this.isBestTruckKnown = false;
+		this.timeIsOver = false;
+		this.candidates = new LinkedHashMap<>();
+		this.truckID = new String("nobody");
 		this.deliveryTW = dto.getDeliveryTimeWindow();
 		
 		this.sim = sim;
@@ -123,9 +131,36 @@ public class Pack extends Parcel implements TickListener{
 	public TimeWindow getTimeWindow() {
 		return dto.getDeliveryTimeWindow();
 	}
-	
+
+	public String selectTruck() {
+    	double minCost = Double.MAX_VALUE;
+    	String minKey = new String("nobody");
+       for (String key: candidates.keySet())
+	   {
+	   		double val = candidates.get(key);
+	   		if (val < minCost) {
+				minKey = key;
+				minCost = val;
+			}
+	   }
+	   return minKey;
+	}
+
+	public void setCandidate(String truckID, double cost) {
+        if (!this.isBestTruckKnown)
+            this.candidates.put(truckID, cost);
+	}
+
 	@Override
 	public void tick(TimeLapse timeLapse) {
+		if (candidates.size() > 0)
+		{
+			this.truckID = selectTruck();
+            this.candidates = new LinkedHashMap<>();
+            FeasabilityAnt ant = new FeasabilityAnt(this, departure, deliveryTW, sim, false);
+            ant.updateTruckID(ant.getClones(), truckID);
+            this.isBestTruckKnown = true;
+        }
 		if(isCritical(timeLapse)) {
 			this.isCritical = true;
 		}

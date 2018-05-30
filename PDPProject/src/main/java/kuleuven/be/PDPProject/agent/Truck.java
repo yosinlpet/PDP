@@ -25,7 +25,7 @@ import sun.awt.image.ImageWatched;
  * @author Rinde van Lon
  */
 public class Truck extends Vehicle {
-	private static final double SPEED = 0.5;
+	private static final double SPEED = 1;
 	private Optional<Pack> curr;
 
 	private IntentionAnt intAntFront;
@@ -171,7 +171,24 @@ public class Truck extends Vehicle {
 				Set<Pack> ps = rm.getObjectsAt((RoadUser) this, Pack.class);
 				// If no pack on us
 				if(ps.isEmpty()) {
-					intPath =  selectPackPath(rs, time);
+				    LinkedList<Point> trialPath = selectPackPath(rs, time);
+				    if (!trialPath.isEmpty()) {
+						Pack pack = null;
+						double cost = Double.MAX_VALUE;
+						for (RoadSign r : rs) {
+							if (r.getPath().equals(trialPath)) {
+								pack = r.getPack();
+								cost = r.getCost();
+							}
+						}
+						IntentionAnt applicationAnt = new IntentionAnt(getRoadModel(), truckID, trialPath.getFirst());
+						applicationAnt.sendTruckID(truckID, pack, (double) cost);
+						boolean isAllowed = applicationAnt.isSameTruckID(truckID, pack);
+						if (isAllowed)
+							intPath = selectPackPath(rs, time);
+						else
+							System.out.println("not selected...");
+					}
 					//System.out.print(" for truck ");
 					//System.out.println(this.truckID);
 					if(!intPath.isEmpty()) {
@@ -279,5 +296,4 @@ public class Truck extends Vehicle {
 			}
 		}
 	}
-
 }

@@ -37,16 +37,13 @@ public class IntentionAnt extends Ant{
 	static int intentionAntCounter = 0;
 
 	public IntentionAnt() {
-		
+
 	}
 	/**
 	* Constructor
-	* @param packID {@link Pack} sending the {@link FeasabilityAnt}.
-	* @param indicateDest flag to know if the road sign si for deliveryRoadSign or PackRoadSign
-    * @param arrivalTime list of forecast arrival times
     **/
 	public IntentionAnt(RoadModel roadModel, String truckID, Point node) {
-		
+
 			this.node = node;
 			super.roadModel = (GraphRoadModel) roadModel;
 			super.roadModel.addObjectAt(this, node);
@@ -68,7 +65,7 @@ public class IntentionAnt extends Ant{
 		 */
 		public boolean askFlag() {
 			Set<Flag> flag = roadModel.getObjectsAt((RoadUser) this, Flag.class);
-			
+
 			// If no flag yet
 			if(flag.size()==0) {
 				Flag f = new Flag(truckID);
@@ -92,7 +89,7 @@ public class IntentionAnt extends Ant{
 				}else return false;
 			}
 		}
-		
+
 		public boolean dropFlag() {
 			Set<Flag> flagSet = roadModel.getObjectsAt((RoadUser) this, Flag.class);
 			if(flagSet.size()==0) {
@@ -107,6 +104,23 @@ public class IntentionAnt extends Ant{
 				//System.out.print(" at ");
 				//System.out.println(node);
 			}
+		}
+
+		public void sendTruckID(String truckID, Pack pack, double cost) {
+			Set<Pack> packSet = this.roadModel.getObjectsAt(this, Pack.class);
+			for (Pack p : packSet) {
+				if (p.equals(pack))
+					pack.setCandidate(truckID, cost);
+			}
+		}
+
+		public boolean isSameTruckID(String TruckID, Pack pack) {
+			Set<Pack> packSet = this.roadModel.getObjectsAt(this, Pack.class);
+			for (Pack p : packSet) {
+				if (p.equals(pack))
+					return (truckID.equals(pack.selectTruck()));
+			}
+			return false;
 		}
 	}
 

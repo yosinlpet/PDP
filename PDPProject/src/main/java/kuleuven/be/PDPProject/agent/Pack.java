@@ -140,7 +140,8 @@ public class Pack extends Parcel implements TickListener{
 	   {
 	   		double val = candidates.get(key);
 	   		if (val < minCost) {
-	   			System.out.println("key = " + key);
+	   			System.out.print("key = " + key + " val = ");
+	   			System.out.println(val);
 				minKey = key;
 				minCost = val;
 			}
@@ -153,11 +154,16 @@ public class Pack extends Parcel implements TickListener{
             this.candidates.put(truckID, cost);
 	}
 
+	public String getTruckID() {
+    	return this.truckID;
+	}
+
 	@Override
 	public void tick(TimeLapse timeLapse) {
 		if (candidates.size() > 0)
 		{
 			this.truckID = selectTruck();
+			System.out.println("Pack ticks too!");
             this.candidates = new LinkedHashMap<>();
             FeasabilityAnt ant = new FeasabilityAnt(this, departure, deliveryTW, sim, false);
             ant.updateTruckID(ant.getClones(), truckID);

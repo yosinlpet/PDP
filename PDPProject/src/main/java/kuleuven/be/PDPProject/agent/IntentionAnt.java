@@ -152,7 +152,7 @@ public class IntentionAnt extends Ant{
 				if (t.getIntPath().size() == 0 && !t.isCarrying()) {		//candidate can't carry anything and must be aimless
 					t.setNextPoint(myPath.getFirst());
 					t.setCurr(truck.getCurr());
-					System.out.println(t.getTruckID() + " gets pack of " + truck.getTruckID());
+					System.out.println(t.getTruckID() + " gets pack of " + truck.getTruckID()+" _1_");
 					truck.setIntPath(new LinkedList<Point>());				//I give up everything
 					truck.setCurr(Optional.<Pack>absent());
 					truck.setNextPoint(roadModel.getPosition(truck));
@@ -168,7 +168,7 @@ public class IntentionAnt extends Ant{
 				if (t.getIntPath().size() == 0 && !t.isCarrying()) {
 					t.setCurr(truck.getCurr());
 					t.setIntPath(myPath);
-					System.out.println(t.getTruckID() + " gets pack of " + truck.getTruckID());
+					System.out.println(t.getTruckID() + " gets pack of " + truck.getTruckID() + " _2_");
 					truck.setIntPath(new LinkedList<Point>());
 					truck.setCurr(Optional.<Pack>absent());
 					return true;

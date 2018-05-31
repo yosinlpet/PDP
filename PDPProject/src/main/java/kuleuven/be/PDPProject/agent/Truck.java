@@ -21,10 +21,12 @@ import sun.awt.image.ImageWatched;
 
 
 /**
- * Implementation of a very simple taxi agent. It moves to the closest customer,
- * picks it up, then delivers it, repeat.
- *
- * @author Rinde van Lon
+ * Taxi agent for DelegateMAS
+ * TODO Has to avoid collisions and deadlocks
+ * TODO Need to get critical {@link Pack}s first
+ * TODO DEPENDENT VARIABLES
+ * @author Denis Dumoulin
+ * @author Remi Chauvenne
  */
 public class Truck extends Vehicle {
 	private Optional<Pack> curr;
@@ -42,6 +44,7 @@ public class Truck extends Vehicle {
 	private boolean isFrontFlagRaised;
 	private boolean mustMove;
 	private boolean mustAfterTick;
+	private boolean isTrapped;
 
 	RandomGenerator rng;
 
@@ -72,6 +75,7 @@ public class Truck extends Vehicle {
 		isFrontFlagRaised = false;
 		waitingCost = Double.MAX_VALUE;
 		waitingPack = null;
+		isTrapped = false;
 	}
 
 	public void initRoadPDP(RoadModel pRoadModel, PDPModel pPdpModel) {
@@ -107,6 +111,11 @@ public class Truck extends Vehicle {
 	public void setNextPoint(Point nextPoint) {
 		this.nextPoint = nextPoint;
 	}
+
+	public boolean isCarrying() {
+            return (curr.isPresent() && this.getPDPModel().containerContains(this, curr.get()));
+	}
+
 
 	// Return the path (without the first node!) to a pack that is the closest to the truck
 	public LinkedList<Point> selectPackPath(Set<RoadSign> rsSet, TimeLapse time) {
@@ -171,19 +180,7 @@ public class Truck extends Vehicle {
 	protected void tickImpl(TimeLapse time) {
 		final RoadModel rm = getRoadModel();
 		final PDPModel pm = getPDPModel();
-		//System.out.print(truckID);
-		//System.out.print(" has back flag dropped ? ");
-		//System.out.print(isBackFlagDropped);
-		//System.out.print(" has front flag raised ? ");
-		//System.out.println(isFrontFlagRaised);
-		//System.out.print(" has targeted object ? ");
-		//System.out.println(curr.isPresent());
-		//System.out.print("intention path: ");
-		//System.out.print(intPath.toString());
-		//System.out.print(" -- currPoint: ");
-		//System.out.print(rm.getPosition(this).toString());
-		//System.out.print(" -- prevPoint: ");
-		//System.out.print(previousPoint.toString());
+		
 		// compute next and previous point
 		if (!intPath.isEmpty()) {
 				if (rm.getPosition(this).equals(nextPoint)) {
@@ -198,21 +195,29 @@ public class Truck extends Vehicle {
 				}
 			}
 		if (this.mustMove && intPath.isEmpty()) {
+		    System.out.println(this.getTruckID()+" must move!");
+		   	if (this.previousLoc.equals(getRoadModel().getPosition(this)))
+		   		isTrapped = true;
 			if (rm.getPosition(this).equals(this.previousLoc)) {
-						//if (!intPath.isEmpty())
-                            //System.out.println("truck "+this.getTruckID()+" says: i'm stuck milhouse ... :'( need to go to " + intPath.getFirst().toString());
 						urgentAnt = new IntentionAnt(getRoadModel(), truckID, nextPoint);
 						urgentAnt.setEmergency();
-					}
-		    if (nextPoint.equals(previousPoint)) {
+            }
+
+		    if (nextPoint.equals(previousPoint) || (isTrapped && rm.getPosition(this).equals(previousPoint))) {
 				Collection<Point> pointCollection = ((GraphRoadModel) getRoadModel()).getGraph()
 						.getOutgoingConnections(getRoadModel().getPosition(this));
 				LinkedList<Point> points = new LinkedList<>();
 				points.addAll(pointCollection);
+				System.out.println("size:"+Integer.toString(points.size()));
+				System.out.println(this.getTruckID()+ " is at "+rm.getPosition(this));
+				System.out.println("prev: "+previousPoint.toString());
+				System.out.println("next:"+nextPoint.toString());
 				int randI = rng.nextInt(points.size());
 				Point point = points.get(randI);
-				previousPoint = nextPoint;
+				//previousPoint = nextPoint;
+				System.out.println(this.getTruckID()+" changes next point to " + point.toString());
 				nextPoint = point;
+				System.out.println("new next:"+nextPoint.toString());
 			}
 			else if (rm.getPosition(this).equals(nextPoint)) {
 		    	this.mustMove = false;
@@ -234,9 +239,14 @@ public class Truck extends Vehicle {
 				}
 			}
 		}
-		else {
-
-
+		//if (!(mustMove && intPath.isEmpty()) || isTrapped)
+		else
+		{
+			//if (getRoadModel().getPosition(this).equals(this.nextPoint)) {
+				//isTrapped = false;
+				//mustMove = false;
+				//previousPoint = rm.getPosition(this);
+			//}
 			//System.out.print(" -- nextPoint: ");
 			//if (nextPoint != null)
 			//System.out.println(nextPoint.toString());
@@ -260,9 +270,9 @@ public class Truck extends Vehicle {
 						applicationAnt = new IntentionAnt(getRoadModel(), truckID, waitingPath.getFirst());
 						applicationAnt.sendTruckID(truckID, waitingPack, (double) waitingCost);
 						mustAfterTick = true;
+						System.out.print(waitingPack.getPackID() + " for ");
+						System.out.println(this.truckID);
 					}
-					//System.out.print(" for truck ");
-					//System.out.println(this.truckID);
 
 					if (this.previousPoint.equals(getRoadModel().getPosition(this))) {
 						isFrontFlagRaised = false;
@@ -329,8 +339,8 @@ public class Truck extends Vehicle {
 				// We have the pack and we will deliver it
 				else if (inCargo) {
 					if (rm.getPosition(this).equals(this.previousLoc)) {
-						//if (!intPath.isEmpty())
-                            //System.out.println("Truck "+this.getTruckID()+" says: I'm stuck Milhouse ... :'( need to go to " + intPath.getFirst().toString());
+						if (!intPath.isEmpty())
+                            System.out.println(this.getTruckID()+" says: I'm stuck Milhouse ... :'( need to go to " + intPath.getFirst().toString());
 						urgentAnt = new IntentionAnt(getRoadModel(), truckID, nextPoint);
 						urgentAnt.setEmergency();
 					}
@@ -358,10 +368,11 @@ public class Truck extends Vehicle {
 				}
 				// We dont have yet the pack : go for it
 				else {
+				    System.out.println(this.getTruckID() + " starts to get " + this.curr.get().getPackID() + " at " + getRoadModel().getPosition(curr.get()));
 				    boolean hasNegotiated = false;
 					if (getRoadModel().getPosition(this).equals(this.previousLoc)){
-						//if (!intPath.isEmpty())
-                            //System.out.println("Truck "+this.getTruckID()+" says: I'm stuck Milhouse ... :'( -- Must get Pack at "+ intPath.getFirst().toString());
+						if (!intPath.isEmpty())
+                            System.out.println(this.getTruckID()+" says: I'm stuck Milhouse ... :'( -- Must get Pack at "+ intPath.getFirst().toString());
 						urgentAnt = new IntentionAnt(getRoadModel(), truckID, nextPoint);
 						hasNegotiated = urgentAnt.negotiate(this);
 					}

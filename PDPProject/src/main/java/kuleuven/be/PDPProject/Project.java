@@ -81,7 +81,7 @@ public final class Project {
   private static final int DEPOT_CAPACITY = 100;
 
   private static final int SPEED_UP = 1;
-  private static final int MAX_CAPACITY = 3;
+  private static final int MAX_CAPACITY = 1;
   private static final double NEW_CUSTOMER_PROB = .015;
 
   private static final String MAP_FILE = "/testGraph.dot";
@@ -93,7 +93,7 @@ public final class Project {
   
   private static final int factor = 100;
   private static final long END = 3600;
-  private static final long seed = 1L;
+  private static final long seed = 7L;
 
   public Project() {}
 

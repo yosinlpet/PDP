@@ -59,7 +59,7 @@ public class Pack extends Parcel implements TickListener{
         rng = r;
         this.departure = dto.getPickupLocation();
         this.destination = dto.getDeliveryLocation();
-        System.out.println("Pack created!");
+        //System.out.println("Pack created!");
         
 		this.carried = false;
 		this.deposited = false;
@@ -140,8 +140,8 @@ public class Pack extends Parcel implements TickListener{
 	   {
 	   		double val = candidates.get(key);
 	   		if (val < minCost) {
-	   			System.out.print("key = " + key + " val = ");
-	   			System.out.println(val);
+	   			//System.out.print("key = " + key + " val = ");
+	   			//System.out.println(val);
 				minKey = key;
 				minCost = val;
 			}
@@ -168,10 +168,10 @@ public class Pack extends Parcel implements TickListener{
             ant.updateTruckID(ant.getClones(), truckID);
             this.isBestTruckKnown = true;
         }
-		System.out.print("Pack ");
-		System.out.print(this.packID);
-		System.out.print(" has candidate: ");
-		System.out.println(this.truckID);
+		//System.out.print("Pack ");
+		//System.out.print(this.packID);
+		//System.out.print(" has candidate: ");
+		//System.out.println(this.truckID);
 		if(isCritical(timeLapse)) {
 			this.isCritical = true;
 		}

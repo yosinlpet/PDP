@@ -29,7 +29,7 @@ import com.google.common.base.Optional;
 import sun.awt.image.ImageWatched;
 
 import kuleuven.be.PDPProject.agent.*;
-	
+
 public class IntentionAnt extends Ant{
 
 	Point node;
@@ -40,87 +40,121 @@ public class IntentionAnt extends Ant{
 
 	}
 	/**
-	* Constructor
-    **/
+	 * Constructor
+	 **/
 	public IntentionAnt(RoadModel roadModel, String truckID, Point node) {
 
-			this.node = node;
-			super.roadModel = (GraphRoadModel) roadModel;
-			super.roadModel.addObjectAt(this, node);
-			this.truckID = truckID;
-			intentionAntCounter++;
-			if(intentionAntCounter%100==0) {
-				System.out.print("Number of intention ants already created : ");
-				System.out.println(intentionAntCounter);
-			}
-		}
-	
-
-		@Override
-		public void initRoadUser(RoadModel model) {
-		}
-
-		/**
-		 * Leaves road signs on the {@link RoadModel}.
-		 */
-		public boolean askFlag() {
-			Set<Flag> flag = roadModel.getObjectsAt((RoadUser) this, Flag.class);
-
-			// If no flag yet
-			if(flag.size()==0) {
-				Flag f = new Flag(truckID);
-				roadModel.addObjectAt(f, node);
-				//System.out.print("Flag created by ");
-				//System.out.print(truckID);
-				//System.out.print(" at ");
-				//System.out.println(node);
-				return true;
-			}
-			// If flag : try to change the name
-			else {
-				Flag f = new Flag();
-				for(Flag f2 : flag) {f=f2;}
-				if(f.raiseFlag(truckID)) {
-					//System.out.print("Flag raised by ");
-					//System.out.print(truckID);
-					//System.out.print(" at ");
-					//System.out.println(node);
-					return true;
-				}else return false;
-			}
-		}
-
-		public boolean dropFlag() {
-			Set<Flag> flagSet = roadModel.getObjectsAt((RoadUser) this, Flag.class);
-			if(flagSet.size()==0) {
-				return false;
-			}
-			else {
-				Flag flag = new Flag();
-				for(Flag f2 : flagSet) {flag=f2;}
-				return flag.dropFlag(truckID);
-				//System.out.print("Flag dropped by ");
-				//System.out.print(truckID);
-				//System.out.print(" at ");
-				//System.out.println(node);
-			}
-		}
-
-		public void sendTruckID(String truckID, Pack pack, double cost) {
-			Set<Pack> packSet = this.roadModel.getObjectsAt(this, Pack.class);
-			for (Pack p : packSet) {
-				System.out.println(pack.toString() +" and " +p.toString() + "should be the same to candidate");
-				if (p.equals(pack))
-					pack.setCandidate(truckID, cost);
-			}
-		}
-
-		public void setEmergency() {
-			Set<Truck> truckSet = this.roadModel.getObjectsAt(this, Truck.class);
-			for (Truck t : truckSet) {
-			    System.out.println("Truck found: "+ t.getTruckID());
-				t.setEmergencyMove(true);
-			}
+		this.node = node;
+		super.roadModel = (GraphRoadModel) roadModel;
+		super.roadModel.addObjectAt(this, node);
+		this.truckID = truckID;
+		intentionAntCounter++;
+		if(intentionAntCounter%100==0) {
+			System.out.print("Number of intention ants already created : ");
+			System.out.println(intentionAntCounter);
 		}
 	}
 
+
+	@Override
+	public void initRoadUser(RoadModel model) {
+	}
+
+	/**
+	 * Leaves road signs on the {@link RoadModel}.
+	 */
+	public boolean askFlag() {
+		Set<Flag> flag = roadModel.getObjectsAt((RoadUser) this, Flag.class);
+
+		// If no flag yet
+		if(flag.size()==0) {
+			Flag f = new Flag(truckID);
+			roadModel.addObjectAt(f, node);
+			//System.out.print("Flag created by ");
+			//System.out.print(truckID);
+			//System.out.print(" at ");
+			//System.out.println(node);
+			return true;
+		}
+		// If flag : try to change the name
+		else {
+			Flag f = new Flag();
+			for(Flag f2 : flag) {f=f2;}
+			if(f.raiseFlag(truckID)) {
+				//System.out.print("Flag raised by ");
+				//System.out.print(truckID);
+				//System.out.print(" at ");
+				// System.out.println(node);
+				return true;
+			}else return false;
+		}
+	}
+
+	public boolean dropFlag() {
+		Set<Flag> flagSet = roadModel.getObjectsAt((RoadUser) this, Flag.class);
+		if(flagSet.size()==0) {
+			return false;
+		}
+		else {
+			Flag flag = new Flag();
+			for(Flag f2 : flagSet) {flag=f2;}
+			//System.out.print("Flag dropped by ");
+			//System.out.print(truckID);
+			//System.out.print(" at ");
+			//System.out.println(node);
+			return flag.dropFlag(truckID);
+		}
+	}
+
+	public void sendTruckID(String truckID, Pack pack, double cost) {
+		Set<Pack> packSet = this.roadModel.getObjectsAt(this, Pack.class);
+		for (Pack p : packSet) {
+			//System.out.println(pack.toString() +" and " +p.toString() + "should be the same to candidate");
+			if (p.equals(pack))
+				pack.setCandidate(truckID, cost);
+		}
+	}
+
+	public void setEmergency() {
+		Set<Truck> truckSet = this.roadModel.getObjectsAt(this, Truck.class);
+		for (Truck t : truckSet) {
+			//System.out.println("Truck found: "+ t.getTruckID());
+			t.setEmergencyMove(true);
+		}
+	}
+
+	public boolean negotiate(Truck truck){
+		LinkedList<Point> myPath = new LinkedList<>(truck.getIntPath());
+		if (myPath.isEmpty())
+			return false;
+		else if (myPath.size() == 1) {
+			Set<Truck> truckSet = this.roadModel.getObjectsAt(this, Truck.class);
+			for (Truck t : truckSet) {
+				if (t.getIntPath().size() == 0) {
+					t.setNextPoint(myPath.getFirst());
+					t.setCurr(truck.getCurr());
+					truck.setIntPath(new LinkedList<Point>());
+					truck.setCurr(Optional.<Pack>absent());
+					truck.setNextPoint(roadModel.getPosition(truck));
+					return true;
+				}
+			}
+		}
+		else
+		{
+			Set<Truck> truckSet = this.roadModel.getObjectsAt(this, Truck.class);
+			myPath.removeLast();
+			for (Truck t : truckSet) {
+				if (t.getIntPath().size() == 0) {
+					t.setCurr(truck.getCurr());
+					t.setIntPath(myPath);
+					System.out.println(t.getTruckID() + " gets pack of " + truck.getTruckID());
+					truck.setIntPath(new LinkedList<Point>());
+					truck.setCurr(Optional.<Pack>absent());
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+}

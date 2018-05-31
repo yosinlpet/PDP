@@ -35,11 +35,14 @@ public class Truck extends Vehicle {
 	private IntentionAnt urgentAnt;
 	private Point nextPoint;
 	private Point previousPoint;
+	private Point currLoc;
+	private Point previousLoc;
 
 	private boolean isBackFlagDropped;
 	private boolean isFrontFlagRaised;
 	private boolean mustMove;
 	private boolean mustAfterTick;
+
 
 	private Pack waitingPack;
 	private double waitingCost;
@@ -58,6 +61,9 @@ public class Truck extends Vehicle {
 		this.truckID = truckID;
 		curr = Optional.absent();
 		previousPoint = getStartPosition();
+		nextPoint = getStartPosition();
+		previousLoc = new Point(-Double.MAX_VALUE, -Double.MAX_VALUE);
+		currLoc = getStartPosition();
 		intPath = new LinkedList<>();
 		waitingPath = new LinkedList<>();
 		isBackFlagDropped = true;
@@ -78,6 +84,26 @@ public class Truck extends Vehicle {
 
 	public String getTruckID() {
 		return truckID;
+	}
+
+	public void setIntPath(LinkedList<Point> path) {
+		this.intPath = path;
+	}
+
+	public Optional<Pack> getCurr() {
+		return curr;
+	}
+
+	public void setCurr(Optional<Pack> curr) {
+		this.curr = curr;
+	}
+
+	public LinkedList<Point> getIntPath() {
+		return intPath;
+	}
+
+	public void setNextPoint(Point nextPoint) {
+		this.nextPoint = nextPoint;
 	}
 
 	// Return the path (without the first node!) to a pack that is the closest to the truck
@@ -129,6 +155,7 @@ public class Truck extends Vehicle {
 
 			if (isAllowed) {
 				intPath = waitingPath;
+				this.previousLoc = new Point(-Double.MAX_VALUE,-Double.MAX_VALUE);
 				nextPoint = intPath.getLast();
 				curr = Optional.fromNullable(waitingPack);
 			}
@@ -156,7 +183,25 @@ public class Truck extends Vehicle {
 		//System.out.print(" -- prevPoint: ");
 		//System.out.print(previousPoint.toString());
 		// compute next and previous point
+		if (!intPath.isEmpty()) {
+				if (rm.getPosition(this).equals(nextPoint)) {
+
+					//System.out.print("Change in previous and next node for truck nb : ");
+					//System.out.println(truckID);
+					isFrontFlagRaised = false;
+					isBackFlagDropped = false;
+					previousPoint = nextPoint;
+					nextPoint = intPath.removeLast();
+					this.previousLoc = new Point(-Double.MAX_VALUE,-Double.MAX_VALUE);
+				}
+			}
 		if (this.mustMove && intPath.isEmpty()) {
+			if (rm.getPosition(this).equals(this.previousLoc)) {
+						//if (!intPath.isEmpty())
+                            //System.out.println("truck "+this.getTruckID()+" says: i'm stuck milhouse ... :'( need to go to " + intPath.getFirst().toString());
+						urgentAnt = new IntentionAnt(getRoadModel(), truckID, nextPoint);
+						urgentAnt.setEmergency();
+					}
 		    if (nextPoint.equals(previousPoint)) {
 				Collection<Point> pointCollection = ((GraphRoadModel) getRoadModel()).getGraph()
 						.getOutgoingConnections(getRoadModel().getPosition(this));
@@ -187,17 +232,7 @@ public class Truck extends Vehicle {
 			}
 		}
 		else {
-			if (!intPath.isEmpty()) {
-				if (rm.getPosition(this).equals(nextPoint)) {
 
-					//System.out.print("Change in previous and next node for truck nb : ");
-					//System.out.println(truckID);
-					isFrontFlagRaised = false;
-					isBackFlagDropped = false;
-					previousPoint = nextPoint;
-					nextPoint = intPath.removeLast();
-				}
-			}
 
 			//System.out.print(" -- nextPoint: ");
 			//if (nextPoint != null)
@@ -226,18 +261,26 @@ public class Truck extends Vehicle {
 					//System.out.print(" for truck ");
 					//System.out.println(this.truckID);
 
-					//IMPORTANT in order to go to the end of your path under any circumstance !
-					if (!intPath.isEmpty()) {
-						if (!isFrontFlagRaised) {
-							intAntFront = new IntentionAnt(getRoadModel(), truckID, nextPoint);
-							isFrontFlagRaised = intAntFront.askFlag();
-						}
-						if (isFrontFlagRaised) {
-							rm.moveTo(this, nextPoint, time);
-							if (!isBackFlagDropped) {
-								intAntBack = new IntentionAnt(getRoadModel(), truckID, previousPoint);
-								if (!previousPoint.equals(nextPoint))
-									isBackFlagDropped = intAntBack.dropFlag();
+					if (this.previousPoint.equals(getRoadModel().getPosition(this))) {
+						isFrontFlagRaised = false;
+						isBackFlagDropped = false;
+					}
+					else {
+						System.out.println("[WARNING] -- No targeted Pack and still Truck not on GraphNode...");
+						//IMPORTANT in order to go to the end of your path under any circumstance !
+						if (!intPath.isEmpty()) {
+							System.out.println("[WARNING] -- No targeted Pack and still intention Path not empty...");
+							if (!isFrontFlagRaised) {
+								intAntFront = new IntentionAnt(getRoadModel(), truckID, nextPoint);
+								isFrontFlagRaised = intAntFront.askFlag();
+							}
+							if (isFrontFlagRaised) {
+								rm.moveTo(this, nextPoint, time);
+								if (!isBackFlagDropped) {
+									intAntBack = new IntentionAnt(getRoadModel(), truckID, previousPoint);
+									if (!previousPoint.equals(nextPoint))
+										isBackFlagDropped = intAntBack.dropFlag();
+								}
 							}
 						}
 					}
@@ -245,7 +288,7 @@ public class Truck extends Vehicle {
 				// A pack is on us
 				else {
 					for (Pack p : ps) {
-						System.out.println("Ouch, a Pack just landed on me!");
+						//System.out.println("Ouch, a Pack just landed on me!");
 						applicationAnt = new IntentionAnt(getRoadModel(), truckID, rm.getPosition(this));
 						applicationAnt.sendTruckID(truckID, p, 0.);
 
@@ -262,6 +305,7 @@ public class Truck extends Vehicle {
 						nextPoint = intPath.removeLast();
 						isBackFlagDropped = false;
 						isFrontFlagRaised = false;
+						this.previousLoc = new Point(-Double.MAX_VALUE,-Double.MAX_VALUE);
 						break;
 					}
 					pm.pickup(this, curr.get(), time);
@@ -281,7 +325,9 @@ public class Truck extends Vehicle {
 
 				// We have the pack and we will deliver it
 				else if (inCargo) {
-					if (previousPoint.equals(this.previousPoint)) {
+					if (rm.getPosition(this).equals(this.previousLoc)) {
+						//if (!intPath.isEmpty())
+                            //System.out.println("Truck "+this.getTruckID()+" says: I'm stuck Milhouse ... :'( need to go to " + intPath.getFirst().toString());
 						urgentAnt = new IntentionAnt(getRoadModel(), truckID, nextPoint);
 						urgentAnt.setEmergency();
 					}
@@ -309,33 +355,46 @@ public class Truck extends Vehicle {
 				}
 				// We dont have yet the pack : go for it
 				else {
-
-					if (!isFrontFlagRaised) {
-						intAntFront = new IntentionAnt(getRoadModel(), truckID, nextPoint);
-						isFrontFlagRaised = intAntFront.askFlag();
+				    boolean hasNegotiated = false;
+					if (getRoadModel().getPosition(this).equals(this.previousLoc)){
+						//if (!intPath.isEmpty())
+                            //System.out.println("Truck "+this.getTruckID()+" says: I'm stuck Milhouse ... :'( -- Must get Pack at "+ intPath.getFirst().toString());
+						urgentAnt = new IntentionAnt(getRoadModel(), truckID, nextPoint);
+						hasNegotiated = urgentAnt.negotiate(this);
 					}
-					if (isFrontFlagRaised) {
-						rm.moveTo(this, nextPoint, time);
-						intAntBack = new IntentionAnt(getRoadModel(), truckID, previousPoint);
-						if (!isBackFlagDropped) {
-							if (!previousPoint.equals(nextPoint))
-								isBackFlagDropped = intAntBack.dropFlag();
+					if (!hasNegotiated) {
+						if (!intPath.isEmpty())
+							System.out.println("Truck " + this.getTruckID() + " is getting this pack at " + this.getIntPath().getFirst());
+						if (!isFrontFlagRaised) {
+							intAntFront = new IntentionAnt(getRoadModel(), truckID, nextPoint);
+							isFrontFlagRaised = intAntFront.askFlag();
 						}
+						if (isFrontFlagRaised) {
+							rm.moveTo(this, nextPoint, time);
+							intAntBack = new IntentionAnt(getRoadModel(), truckID, previousPoint);
+							if (!isBackFlagDropped) {
+								if (!previousPoint.equals(nextPoint))
+									isBackFlagDropped = intAntBack.dropFlag();
+							}
 
-						if (rm.equalPosition(this, curr.get())) {
-							pm.pickup(this, curr.get(), time);
-							curr.get().setCarried(true);
-							previousPoint = nextPoint;
-							isBackFlagDropped = false;
-							isFrontFlagRaised = false;
-							Set<RoadSign> rs = rm.getObjectsAt((RoadUser) this, RoadSign.class);
-							intPath = getCorrespondingDestPath(rs, curr.get().getPackID());
-							//System.out.print(" for truck ");
-							//System.out.println(this.truckID);
+							if (rm.equalPosition(this, curr.get())) {
+								pm.pickup(this, curr.get(), time);
+								curr.get().setCarried(true);
+								previousPoint = nextPoint;
+								isBackFlagDropped = false;
+								isFrontFlagRaised = false;
+								Set<RoadSign> rs = rm.getObjectsAt((RoadUser) this, RoadSign.class);
+								intPath = getCorrespondingDestPath(rs, curr.get().getPackID());
+								//System.out.print(" for truck ");
+								//System.out.println(this.truckID);
+							}
 						}
 					}
 				}
 			}
 		}
+		this.previousLoc = this.currLoc;
+		this.currLoc = rm.getPosition(this);
 	}
+
 }

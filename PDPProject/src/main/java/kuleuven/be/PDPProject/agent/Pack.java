@@ -59,8 +59,8 @@ public class Pack extends Parcel implements TickListener{
         rng = r;
         this.departure = dto.getPickupLocation();
         this.destination = dto.getDeliveryLocation();
-        //System.out.println("Pack created!");
-        
+
+		System.out.println(packID);
 		this.carried = false;
 		this.deposited = false;
 		this.fragile = rng.nextDouble() > 0.5;

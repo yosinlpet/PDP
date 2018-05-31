@@ -88,8 +88,8 @@ public class FeasabilityAnt extends Ant implements Cloneable{
 	@Override
 	public void initRoadUser(RoadModel model) {
 	  //  roadModel = Optional.of((CollisionGraphRoadModelImpl) model);
-    } 
-//TODO: make sure runAnt(clones) is a breadth-first algorithm.
+    }
+
 	public void runAnt(LinkedList<FeasabilityAnt> clones){
 	    if (clones.size() >0) {
 			LinkedList<FeasabilityAnt> newClones = new LinkedList<>(clones);
@@ -152,8 +152,8 @@ public class FeasabilityAnt extends Ant implements Cloneable{
 	 */
 	public void dropSigns() {
 			RoadSign roadSign = new RoadSign(pckg, path, roadSignsTimeWindow, indicateDest, getDistList(), "nobody");
-			sim.register(roadSign);
-			roadModel.addObjectAt(roadSign, path.getLast());	
+			roadModel.addObjectAt(roadSign, path.getLast());
+            sim.register(roadSign);
 	}
 	
 

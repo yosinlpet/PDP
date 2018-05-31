@@ -16,6 +16,7 @@ import com.github.rinde.rinsim.core.model.road.RoadUser;
 import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.geom.Point;
 import com.google.common.base.Optional;
+import org.apache.commons.math3.random.RandomGenerator;
 import sun.awt.image.ImageWatched;
 
 
@@ -26,7 +27,6 @@ import sun.awt.image.ImageWatched;
  * @author Rinde van Lon
  */
 public class Truck extends Vehicle {
-	private static final double SPEED = 1;
 	private Optional<Pack> curr;
 
 	private IntentionAnt intAntFront;
@@ -43,6 +43,7 @@ public class Truck extends Vehicle {
 	private boolean mustMove;
 	private boolean mustAfterTick;
 
+	RandomGenerator rng;
 
 	private Pack waitingPack;
 	private double waitingCost;
@@ -52,12 +53,13 @@ public class Truck extends Vehicle {
 
 	private LinkedList<Point> intPath;
 
-	public Truck(Point startPosition, int capacity, String truckID) {
+	public Truck(Point startPosition, int capacity, double speed, String truckID, RandomGenerator rng) {
 		super(VehicleDTO.builder()
 				.capacity(capacity)
 				.startPosition(startPosition)
-				.speed(SPEED)
+				.speed(speed)
 				.build());
+		this.rng = rng;
 		this.truckID = truckID;
 		curr = Optional.absent();
 		previousPoint = getStartPosition();
@@ -108,7 +110,7 @@ public class Truck extends Vehicle {
 
 	// Return the path (without the first node!) to a pack that is the closest to the truck
 	public LinkedList<Point> selectPackPath(Set<RoadSign> rsSet, TimeLapse time) {
-		int minCost=Integer.MAX_VALUE;
+		double minCost=Double.MAX_VALUE;
 		LinkedList<Point> minPath = new LinkedList<>();
 		for(RoadSign rs : rsSet) {
 			if(!rs.indicateDest()) {
@@ -207,7 +209,8 @@ public class Truck extends Vehicle {
 						.getOutgoingConnections(getRoadModel().getPosition(this));
 				LinkedList<Point> points = new LinkedList<>();
 				points.addAll(pointCollection);
-				Point point = points.getFirst();
+				int randI = rng.nextInt(points.size());
+				Point point = points.get(randI);
 				previousPoint = nextPoint;
 				nextPoint = point;
 			}
@@ -363,8 +366,8 @@ public class Truck extends Vehicle {
 						hasNegotiated = urgentAnt.negotiate(this);
 					}
 					if (!hasNegotiated) {
-						if (!intPath.isEmpty())
-							System.out.println("Truck " + this.getTruckID() + " is getting this pack at " + this.getIntPath().getFirst());
+						//if (!intPath.isEmpty())
+							//System.out.println("Truck " + this.getTruckID() + " is getting this pack at " + this.getIntPath().getFirst());
 						if (!isFrontFlagRaised) {
 							intAntFront = new IntentionAnt(getRoadModel(), truckID, nextPoint);
 							isFrontFlagRaised = intAntFront.askFlag();

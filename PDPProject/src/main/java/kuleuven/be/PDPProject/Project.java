@@ -72,19 +72,17 @@ import com.github.rinde.rinsim.util.TimeWindow;
 public final class Project {
 
   private static final int NUM_DEPOTS = 1;
-  private static final int NUM_AGVS = 3;
+  private static final int NUM_AGVS = 4;
   private static final int NUM_PCKGS = 0;
 
   // time in ms
   private static final long SERVICE_DURATION = 60000;
-  private static final int TAXI_CAPACITY = 10;
   private static final int DEPOT_CAPACITY = 100;
 
   private static final int SPEED_UP = 1;
-  private static final int MAX_CAPACITY = 1;
-  private static final double NEW_CUSTOMER_PROB = .015;
+  private static final double NEW_CUSTOMER_PROB = .025;
 
-  private static final String MAP_FILE = "/testGraph.dot";
+  private static final String MAP_FILE = "/largerGraph.dot";
   private static final Map<String, Graph<MultiAttributeData>> GRAPH_CACHE =
     newHashMap();
 
@@ -94,6 +92,9 @@ public final class Project {
   private static final int factor = 100;
   private static final long END = 3600;
   private static final long seed = 7L;
+
+  private static final double AGV_SPEED = 1d;
+  private static final int AGV_CAPACITY = 1;
 
   public Project() {}
 
@@ -166,7 +167,7 @@ public final class Project {
             while (positions.contains(position));
             positions.addLast(position);
         }
-    	simulator.register(new Truck(position,1,Integer.toString(i)));
+    	simulator.register(new Truck(position,AGV_CAPACITY, AGV_SPEED,"Truck-"+String.format("%03d", i), rng));
     }
     
  
@@ -183,13 +184,13 @@ public final class Project {
 		long distanceShortestPath = (long) md.doubleValue(md.getUnit());
 
 		long maxDeliveryTime =
-				distanceShortestPath/1*Math.round(Math.abs(rng.nextGaussian())*factor);
+				distanceShortestPath/Math.round(Math.abs(rng.nextGaussian())*factor*AGV_SPEED);
 
 		TimeWindow tw = TimeWindow.create(0, maxDeliveryTime);
     	simulator.register(new Pack(
     				Parcel.builder(departure, destination)
     					.deliveryTimeWindow(tw)
-    					.buildDTO(), rng,Integer.toString(packID),simulator));
+    					.buildDTO(), rng,"Pack-"+ String.format("%03d", packID),simulator));
     	packID++;
     }
 
@@ -215,7 +216,7 @@ public final class Project {
     		long distanceShortestPath = (long) md.doubleValue(md.getUnit());
 
     		long maxDeliveryTime =
-    			distanceShortestPath/1*Math.round(Math.abs(rng.nextGaussian())*factor);
+    			distanceShortestPath/Math.round(Math.abs(rng.nextGaussian())*factor*AGV_SPEED);
     		
     		TimeWindow tw = TimeWindow.create(time.getStartTime(), 
     						time.getStartTime()+maxDeliveryTime);
@@ -223,7 +224,7 @@ public final class Project {
         	simulator.register(new Pack(
     				Parcel.builder(departure, destination)
     					.deliveryTimeWindow(tw)
-    					.buildDTO(), rng,Integer.toString(packID),simulator));
+    					.buildDTO(), rng,"Pack-"+ String.format("%03d",packID),simulator));
         	packID++;
         }
       }

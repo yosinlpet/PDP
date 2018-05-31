@@ -8,7 +8,10 @@ import com.github.rinde.rinsim.core.model.road.CollisionGraphRoadModelImpl;
 import com.github.rinde.rinsim.core.model.road.RoadUser;
 import com.github.rinde.rinsim.util.TimeWindow;
 import com.google.common.base.Optional;
+import sun.security.util.Length;
 
+import javax.measure.Measure;
+import java.util.Collections;
 import java.util.LinkedList;
 
 //TODO: implement the danger zone;
@@ -24,7 +27,7 @@ public class RoadSign implements RoadUser, TickListener {
 	private GraphRoadModel roadModel;
     private Pack pack;
     private Point next;
-    private int cost;
+    private double cost;
     private TimeWindow timeWindow;
     
     private String truckID;
@@ -50,7 +53,6 @@ public class RoadSign implements RoadUser, TickListener {
         this.isOver = false;
         LinkedList<Point> path_ = new LinkedList<>(path);
         this.path = new LinkedList<>(path);
-        cost = path.size();
         path_.removeLast();
         next = path_.getLast();
         this.packID = pack.getPackID();
@@ -63,6 +65,9 @@ public class RoadSign implements RoadUser, TickListener {
     @Override
     public void initRoadUser(RoadModel model){
         roadModel = (GraphRoadModel) model;
+        LinkedList<Point> path_ = new LinkedList<>(path);
+        Collections.reverse(path_);
+        this.cost = roadModel.getDistanceOfPath(path_).doubleValue(roadModel.getDistanceOfPath(path_).getUnit());
     }
     
     public void setTruckID(String truckID) {
@@ -97,7 +102,7 @@ public class RoadSign implements RoadUser, TickListener {
         return path;
     }
     
-    public int getCost(){
+    public double getCost(){
         return cost;
     }
 

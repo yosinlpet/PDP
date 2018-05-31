@@ -14,13 +14,14 @@ import javax.measure.Measure;
 import java.util.Collections;
 import java.util.LinkedList;
 
-//TODO: implement the danger zone;
-//TODO: edit the cost metric (total arc length);
+//TODO: implement the danger zone or path breaking...;
 
 /**
  * RoadSigns are information dropped by {@link FeasabilityAnt}s; each sign carries
  * info about where to go to find a {@link Pack} and when it expires.
- * It has to die after a few ticks
+ * It dies when the {@link Pack} is either carried (if <code>indicateDest</code>) or delivered.
+ * @author Denis Dumoulin
+ * @author Remi Chauvenne
  */
 public class RoadSign implements RoadUser, TickListener {
     
@@ -28,36 +29,23 @@ public class RoadSign implements RoadUser, TickListener {
     private Pack pack;
     private Point next;
     private double cost;
-    private TimeWindow timeWindow;
-    
+
     private String truckID;
     private String packID;
-    private long until;
-    private TimeWindow twIntention;
-    private boolean intentionGiven; 
-    private String intentionGivenToID;
-    private TimeLapse timeLapse;
-    private boolean tlSet;
     private LinkedList<Point> path;
     private boolean isOver;
     private boolean indicateDest;
-    private LinkedList<Long> distList;
 
-    public RoadSign() {}
-    
+
     public RoadSign(Pack pack, LinkedList<Point> path,
-    		TimeWindow timeWindow, boolean indicateDest, LinkedList<Long> distList, String truckID){
-        this.timeWindow = timeWindow;
+    		TimeWindow timeWindow, boolean indicateDest, String truckID){
         this.pack = pack;
-        this.distList = distList;
         this.isOver = false;
         LinkedList<Point> path_ = new LinkedList<>(path);
         this.path = new LinkedList<>(path);
         path_.removeLast();
         next = path_.getLast();
         this.packID = pack.getPackID();
-        intentionGiven = false;
-        tlSet = false;
         this.indicateDest = indicateDest;
         this.truckID = truckID;
     }
@@ -82,14 +70,6 @@ public class RoadSign implements RoadUser, TickListener {
     	return packID;
     }
     
-    public String intentionGivenTo() {
-    	return intentionGivenToID;
-    }
-    
-    public boolean isIntentionGiven() {
-    	return intentionGiven;
-    }
-
     public Pack getPack() {
         return pack;
     }
@@ -114,33 +94,17 @@ public class RoadSign implements RoadUser, TickListener {
     	return indicateDest;
     }
 
-    public LinkedList<Long> getDistList() {
-        return distList;
-    }
-    
     @Override
     public void tick(TimeLapse timeLapse)
     {
-        //System.out.print("pack ");
-        //System.out.print(this.packID);
-        //System.out.print(" is Carried ?");
-        //System.out.println(this.pack.isCarried());
-    	if(!tlSet) {
-    		this.timeLapse = timeLapse;
-    		tlSet = true;
-    	}
        if (this.pack.isDeposited() || (!this.indicateDest && this.pack.isCarried())) {
            if (!this.isOver) {
                roadModel.removeObject(this);
                this.isOver = true;
            }
        }
-              
-       // If intention expired
-       //if(!twIntention.isIn(timeLapse.getTime())){
-    	//   intentionGiven = false;
-       //}
     }
+
     @Override
     public void afterTick(TimeLapse timeLapse){}
 

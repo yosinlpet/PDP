@@ -91,7 +91,7 @@ public final class Project {
   
   private static final int factor = 100;
   private static final long END = 3600;
-  private static final long seed = 7L;
+  private static final long seed = 8L;
 
   private static final double AGV_SPEED = 1d;
   private static final int AGV_CAPACITY = 1;
@@ -184,7 +184,7 @@ public final class Project {
 		long distanceShortestPath = (long) md.doubleValue(md.getUnit());
 
 		long maxDeliveryTime =
-				distanceShortestPath/Math.round(Math.abs(rng.nextGaussian())*factor*AGV_SPEED);
+				distanceShortestPath/Math.round(Math.abs(rng.nextGaussian())*factor*AGV_SPEED+1);
 
 		TimeWindow tw = TimeWindow.create(0, maxDeliveryTime);
     	simulator.register(new Pack(
@@ -216,7 +216,7 @@ public final class Project {
     		long distanceShortestPath = (long) md.doubleValue(md.getUnit());
 
     		long maxDeliveryTime =
-    			distanceShortestPath/Math.round(Math.abs(rng.nextGaussian())*factor*AGV_SPEED);
+    			distanceShortestPath/Math.round(Math.abs(rng.nextGaussian())*factor*AGV_SPEED+1);
     		
     		TimeWindow tw = TimeWindow.create(time.getStartTime(), 
     						time.getStartTime()+maxDeliveryTime);

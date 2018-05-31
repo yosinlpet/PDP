@@ -14,25 +14,17 @@ import java.util.Set;
 
 // import sun.management.Agent;
 
-/*
-* Implements the abstract class of ants, i.e. delegate MAS
-* c.f. Hanif, Holvoet, Rinde  2011: Delegate MAS for Large Scale and Dynamic PDP: A Case Study
-*/
-
+/**
+ * Implements the abstract class of ants, i.e. delegate MAS
+ * c.f. Hanif, Holvoet, Rinde  2011: Delegate MAS for Large Scale and Dynamic PDP: A Case Study
+ * @author Denis Dumoulin
+ * @author Remi Chauvenne
+ */
 public abstract class Ant implements RoadUser{
-        protected LinkedList<Point> path;
-        protected GraphRoadModel roadModel;
+    protected LinkedList<Point> path;
+    protected GraphRoadModel roadModel;
 
-        protected Ant() {
-            path = new LinkedList<>();
-        }
-
-    /**
-     * Collects information at position <code>p</code>.
-     */
-    public Set<RoadSign> collectInfo(){
-        Set<RoadSign> roadUserSet = roadModel.getObjectsAt((RoadUser) this, RoadSign.class);
-        return roadUserSet;
+    protected Ant() {
+        path = new LinkedList<>();
     }
-    public void runAnt(){}
 }

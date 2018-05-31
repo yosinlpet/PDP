@@ -30,15 +30,17 @@ import sun.awt.image.ImageWatched;
 
 import kuleuven.be.PDPProject.agent.*;
 
+/**
+ * Ants sent by {@link Truck}s for expressing their wishes.
+ * @author Denis Dumoulin
+ * @author Remi Chauvenne
+ */
 public class IntentionAnt extends Ant{
 
 	Point node;
 	String truckID;
 	static int intentionAntCounter = 0;
 
-	public IntentionAnt() {
-
-	}
 	/**
 	 * Constructor
 	 **/
@@ -61,7 +63,7 @@ public class IntentionAnt extends Ant{
 	}
 
 	/**
-	 * Leaves road signs on the {@link RoadModel}.
+	 * Raise a flag is no {@link Truck} claims the position
 	 */
 	public boolean askFlag() {
 		Set<Flag> flag = roadModel.getObjectsAt((RoadUser) this, Flag.class);
@@ -90,6 +92,11 @@ public class IntentionAnt extends Ant{
 		}
 	}
 
+
+	/**
+	 * Removes the flag
+	 * @return the success or failure of the operation
+	 */
 	public boolean dropFlag() {
 		Set<Flag> flagSet = roadModel.getObjectsAt((RoadUser) this, Flag.class);
 		if(flagSet.size()==0) {
@@ -106,34 +113,47 @@ public class IntentionAnt extends Ant{
 		}
 	}
 
+	/**
+	 * Sends the <code>truckID</code> of the {@link Truck} to the closest {@link Pack}.
+	 * @param truckID the ID
+	 * @param pack the {@link Pack} we candidate for
+	 * @param cost the cost
+	 */
 	public void sendTruckID(String truckID, Pack pack, double cost) {
 		Set<Pack> packSet = this.roadModel.getObjectsAt(this, Pack.class);
 		for (Pack p : packSet) {
-			//System.out.println(pack.toString() +" and " +p.toString() + "should be the same to candidate");
 			if (p.equals(pack))
 				pack.setCandidate(truckID, cost);
 		}
 	}
 
+	/**
+	 * Tells the {@link Truck} in front of us that we are in a hurry...
+	 */
 	public void setEmergency() {
 		Set<Truck> truckSet = this.roadModel.getObjectsAt(this, Truck.class);
 		for (Truck t : truckSet) {
-			//System.out.println("Truck found: "+ t.getTruckID());
 			t.setEmergencyMove(true);
 		}
 	}
 
+	/**
+	 * Gives the {@link Truck} in front of us the {@link Pack} we have to go get.
+	 * @param truck ourselves
+	 * @return the success or failure of the operation
+	 */
 	public boolean negotiate(Truck truck){
 		LinkedList<Point> myPath = new LinkedList<>(truck.getIntPath());
-		if (myPath.isEmpty())
+		if (myPath.isEmpty())								//then my target is on the next node, it should not happen: a truck is there too already.
 			return false;
-		else if (myPath.size() == 1) {
-			Set<Truck> truckSet = this.roadModel.getObjectsAt(this, Truck.class);
+		else if (myPath.size() == 1) {						//I can't remove the only object of my path or I'll get lost...
+			Set<Truck> truckSet = this.roadModel.getObjectsAt(this, Truck.class); //and the candidate can't have an empty path
 			for (Truck t : truckSet) {
-				if (t.getIntPath().size() == 0) {
+				if (t.getIntPath().size() == 0 && !t.isCarrying()) {		//candidate can't carry anything and must be aimless
 					t.setNextPoint(myPath.getFirst());
 					t.setCurr(truck.getCurr());
-					truck.setIntPath(new LinkedList<Point>());
+					System.out.println(t.getTruckID() + " gets pack of " + truck.getTruckID());
+					truck.setIntPath(new LinkedList<Point>());				//I give up everything
 					truck.setCurr(Optional.<Pack>absent());
 					truck.setNextPoint(roadModel.getPosition(truck));
 					return true;
@@ -143,9 +163,9 @@ public class IntentionAnt extends Ant{
 		else
 		{
 			Set<Truck> truckSet = this.roadModel.getObjectsAt(this, Truck.class);
-			myPath.removeLast();
+            myPath.removeLast();											//We can remove the candidate's position from the path
 			for (Truck t : truckSet) {
-				if (t.getIntPath().size() == 0) {
+				if (t.getIntPath().size() == 0 && !t.isCarrying()) {
 					t.setCurr(truck.getCurr());
 					t.setIntPath(myPath);
 					System.out.println(t.getTruckID() + " gets pack of " + truck.getTruckID());

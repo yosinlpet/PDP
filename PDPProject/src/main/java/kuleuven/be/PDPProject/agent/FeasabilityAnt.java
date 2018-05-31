@@ -24,6 +24,12 @@ import sun.awt.image.ImageWatched;
 
 import javax.measure.Measure;
 
+/**
+ * Ants in order to send information from {@link Pack}s and Customers to the environment.
+ * The information is dropped by means of {@link RoadSign}s.
+ * @author Denis Dumoulin
+ * @author Remi Chauvenne
+ */
 public class FeasabilityAnt extends Ant implements Cloneable{
 	private Pack pckg;
 	private TimeWindow roadSignsTimeWindow;
@@ -47,7 +53,7 @@ public class FeasabilityAnt extends Ant implements Cloneable{
 		hashMap.put(p.toString(),p);
 		this.pckg = pckg;
 		roadSignsTimeWindow = timeWindow;
-		roadModel = (GraphRoadModel) pckg.getRM();
+		roadModel = (GraphRoadModel) pckg.getRoadModel();
 		roadModel.addObjectAt(this, p);
 		this.sim = sim;
 		this.indicateDest = indicateDest;
@@ -78,6 +84,7 @@ public class FeasabilityAnt extends Ant implements Cloneable{
 		}
 	}
 
+
 	public FeasabilityAnt clone(FeasabilityAnt cloner) throws CloneNotSupportedException{
 		if (!( cloner instanceof Cloneable))
 		throw new CloneNotSupportedException("Invalid Cloning");
@@ -90,26 +97,43 @@ public class FeasabilityAnt extends Ant implements Cloneable{
 	  //  roadModel = Optional.of((CollisionGraphRoadModelImpl) model);
     }
 
+	public LinkedList<Point> getPath() {
+		return this.path;
+	}
+
+	public Map<String,Point> getHashMap() {
+		return hashMap;
+	}
+
+	/**
+	 * Tells the Feasibility Ant to place {@link RoadSign}s on the map.
+	 * @param clones list of the other created ants for the breadth-first algorithm of placing new {@link RoadSign}s.
+	 */
 	public void runAnt(LinkedList<FeasabilityAnt> clones){
-	    if (clones.size() >0) {
+	    if (clones.size() > 0) {
 			LinkedList<FeasabilityAnt> newClones = new LinkedList<>(clones);
-			FeasabilityAnt clone = newClones.removeFirst();
-			clone.dropSigns();
+			FeasabilityAnt clone = newClones.removeFirst();								//BreadthFirst: remove element at beginning
+			clone.dropSigns();															//Actual dropping of the signs
 			for (FeasabilityAnt c : clone.getClones())
-				newClones.addLast(c);
-			runAnt(newClones);
+				newClones.addLast(c);													//BreadthFirst: add children at rear of the queue
+			runAnt(newClones);															//BreadthFirst: and run the code with the new queue
 		}
 	}
-	
+
+	/**
+	 * In the same fashion as <code>runAnt</code>, edit the truckID on the {@link RoadSign}s.
+	 * @param clones list of clones for breadth-first editing
+	 * @param truckID the <code>truckID</code> to write on the {@link RoadSign}
+	 */
 	public void updateTruckID(LinkedList<FeasabilityAnt> clones, String truckID) {
 		if (clones.size() >0) {
 			LinkedList<FeasabilityAnt> newClones = new LinkedList<>(clones);
 			FeasabilityAnt clone = newClones.removeFirst();
 
-			Set<RoadSign> roadSignSet = this.roadModel.getObjectsAt(clone, RoadSign.class);
+			Set<RoadSign> roadSignSet = this.roadModel.getObjectsAt(clone, RoadSign.class); //Collect the RoadSigns at this position
 			for (RoadSign rs : roadSignSet) {
-				if (!rs.indicateDest() && rs.getPack().equals(this.pckg))
-					rs.setTruckID(truckID);
+				if (!rs.indicateDest() && rs.getPack().equals(this.pckg))					//Make sure it indicates the Pack
+					rs.setTruckID(truckID);													//Do the job & edit truckID
 			}
 			for (FeasabilityAnt c : clone.getClones())
 				newClones.addLast(c);
@@ -119,11 +143,10 @@ public class FeasabilityAnt extends Ant implements Cloneable{
 	
 	/**
 	 * Clones this {@link FeasabilityAnt} as many times as there are incoming nodes and moves them to these nodes.
-	 * @return 	The collection of new {@link FeasabilityAnt}s on the incoming nodes, they carry the same info as the
-	 * 			initial one.
+	 * @return  the list of clones
 	 */
 	public LinkedList<FeasabilityAnt> getClones() {
-		Point p = path.getLast();
+		Point p = path.getLast();												//current position is last in path
 		Graph<?> graph = roadModel.getGraph();
 		Collection<Point> pointsCollection = graph.getIncomingConnections(p);
 		LinkedList<FeasabilityAnt> clones = new LinkedList<>();
@@ -131,12 +154,12 @@ public class FeasabilityAnt extends Ant implements Cloneable{
 		for(Point p2 : pointsCollection){
 			FeasabilityAnt c;
 			try {
-                c = clone(this);
-                c.addToPath(p2);
-				if(!c.getHashMap().containsKey(p2.toString())) {	
+                c = clone(this);												//clone the ant and...
+                c.addToPath(p2);												//add put it on position p
+				if(!c.getHashMap().containsKey(p2.toString())) {				//can't exist already
 					clones.add(c);
-					roadModel.addObjectAt(c, p2);
-					c.getHashMap().put(p2.toString(),p2);
+					roadModel.addObjectAt(c, p2);								//then we seriously create it
+					c.getHashMap().put(p2.toString(),p2);						//and memorize we just did it
 				}
 				
 			}
@@ -151,7 +174,7 @@ public class FeasabilityAnt extends Ant implements Cloneable{
 	 * Leaves road signs on the {@link RoadModel}.
 	 */
 	public void dropSigns() {
-			RoadSign roadSign = new RoadSign(pckg, path, roadSignsTimeWindow, indicateDest, getDistList(), "nobody");
+			RoadSign roadSign = new RoadSign(pckg, path, roadSignsTimeWindow, indicateDest, "nobody");
 			roadModel.addObjectAt(roadSign, path.getLast());
             sim.register(roadSign);
 	}
@@ -164,30 +187,4 @@ public class FeasabilityAnt extends Ant implements Cloneable{
     public void addToPath(Point p) {
         path.add(p);
     }
-
-	public LinkedList<Point> getPath() {
-		return this.path;
-	}
-	
-
-	public Map<String,Point> getHashMap() {
-		return hashMap;
-	}
-
-	public LinkedList<Long> getDistList() {
-    	LinkedList<Long> dl = new LinkedList<>();
-    	LinkedList<Point> p = new LinkedList<>(path);
-		LinkedList<Point> p2 = new LinkedList<>(path);
-		p2.removeLast();
-    	while (p.size()> 1) {
-    		LinkedList<Point> a = new LinkedList<Point>();
-    		a.addLast(p.getLast());
-    		a.addLast(p2.getLast());
-			Measure<Double, Length> md = roadModel.getDistanceOfPath(a);
-			dl.addLast((long) md.doubleValue(md.getUnit()));
-			p2.removeLast();
-			p.removeLast();
-		}
-		return dl;
-	}
 }

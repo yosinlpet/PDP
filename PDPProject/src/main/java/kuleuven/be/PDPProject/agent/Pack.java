@@ -18,7 +18,11 @@ import kuleuven.be.PDPProject.agent.FeasabilityAnt;
 
 import java.util.Map;
 
-
+/**
+ * Actual packages to be delivered to Customers
+ * @author Denis Dumoulin
+ * @author Remi Chauvenne
+ */
 public class Pack extends Parcel implements TickListener{
 
 	public String packID;
@@ -29,24 +33,21 @@ public class Pack extends Parcel implements TickListener{
 	private boolean carried;
 	private boolean deposited;
 	private boolean fragile;
-	private boolean timeIsOver;
-	private boolean isCritical;
 	private boolean isBestTruckKnown;
+	private boolean isCritical;
+	private boolean timeIsOver;
 
 	// Positions
 	private Point departure;
-	private Point position; 
 	private Point destination;
 
-	private RoadModel roadModel;
-	private PDPModel pdpModel;
 	private TimeWindow deliveryTW;
 	private String truckID;
 	
 	private Simulator sim;
 	private Map<String, Double> candidates;
 	
-	private RoadModel rm;
+	private RoadModel roadModel;
 	ParcelDTO dto; 
 	
 	private FeasabilityAnt fAntDeparture;
@@ -60,13 +61,13 @@ public class Pack extends Parcel implements TickListener{
         this.departure = dto.getPickupLocation();
         this.destination = dto.getDeliveryLocation();
 
-		System.out.println(packID);
 		this.carried = false;
 		this.deposited = false;
 		this.fragile = rng.nextDouble() > 0.5;
 
 		this.isBestTruckKnown = false;
 		this.timeIsOver = false;
+		this.isCritical = false;
 		this.candidates = new LinkedHashMap<>();
 		this.truckID = new String("nobody");
 		this.deliveryTW = dto.getDeliveryTimeWindow();
@@ -77,19 +78,17 @@ public class Pack extends Parcel implements TickListener{
     
     @Override
     public void initRoadPDP(RoadModel pRoadModel, PDPModel pPdpModel) {
-    	this.rm = pRoadModel;
-    	
+    	this.roadModel = pRoadModel;
+
+    	//create feasibility ants leaving dropsigns to the pack
     	fAntDeparture = new FeasabilityAnt(this, departure, deliveryTW, sim,false);
     	fAntDeparture.runAnt(fAntDeparture.getClones());
-    	
+
+		//create feasibility ants leaving dropsigns to the Customer
     	fAntDestination = new FeasabilityAnt(this, destination, deliveryTW, sim,true);
     	fAntDestination.runAnt(fAntDestination.getClones());
     }
    
-    public RoadModel getRM() {
-    	return rm;
-    }
-	
 	public boolean isCarried() {
 		return carried;
 	}
@@ -133,15 +132,17 @@ public class Pack extends Parcel implements TickListener{
 		return dto.getDeliveryTimeWindow();
 	}
 
+	/**
+	 * Selects the closest {@link Truck} for delivery
+	 * @return the <code>truckID</code> of the {@link Truck}
+	 */
 	public String selectTruck() {
     	double minCost = Double.MAX_VALUE;
     	String minKey = new String("nobody");
        for (String key: candidates.keySet())
 	   {
-	   		double val = candidates.get(key);
+	   		double val = candidates.get(key);						//computes the candidate with the smallest cost
 	   		if (val < minCost) {
-	   			//System.out.print("key = " + key + " val = ");
-	   			//System.out.println(val);
 				minKey = key;
 				minCost = val;
 			}
@@ -149,6 +150,11 @@ public class Pack extends Parcel implements TickListener{
 	   return minKey;
 	}
 
+	/**
+	 * Adds a candidate to the candidate list
+	 * @param truckID ID of the candidate
+	 * @param cost cost of the candidate
+	 */
 	public void setCandidate(String truckID, double cost) {
         if (!this.isBestTruckKnown)
             this.candidates.put(truckID, cost);
@@ -168,10 +174,6 @@ public class Pack extends Parcel implements TickListener{
             ant.updateTruckID(ant.getClones(), truckID);
             this.isBestTruckKnown = true;
         }
-		//System.out.print("Pack ");
-		//System.out.print(this.packID);
-		//System.out.print(" has candidate: ");
-		//System.out.println(this.truckID);
 		if(isCritical(timeLapse)) {
 			this.isCritical = true;
 		}

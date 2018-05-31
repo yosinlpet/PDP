@@ -4,6 +4,11 @@ import com.github.rinde.rinsim.core.model.road.GraphRoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadUser;
 
+/**
+ * The flags to claim a position on a {@link Node} and hence avoid collisions.
+ * @author Denis Dumoulin
+ * @author Remi Chauvenne
+ */
 public class Flag implements RoadUser{
 	
 	private GraphRoadModel roadModel;

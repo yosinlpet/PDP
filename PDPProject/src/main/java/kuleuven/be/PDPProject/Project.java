@@ -68,7 +68,7 @@ import com.github.rinde.rinsim.util.TimeWindow;
  */
 public final class Project {
 
-  private static final int NUM_AGVS = 5;
+  private static final int NUM_AGVS = 3;
   private static final int NUM_PCKGS = 0;
 
   private static final int SPEED_UP = 1;

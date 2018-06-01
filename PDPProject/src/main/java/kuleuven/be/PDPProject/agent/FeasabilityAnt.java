@@ -38,7 +38,7 @@ public class FeasabilityAnt extends Ant implements Cloneable{
 
 	private boolean indicateDest;
 	
-	private static int feasabilityAntCounter = 0;
+	public static int feasabilityAntCounter = 0;
 
 	private Map<String,Point> hashMap = new HashMap<String,Point>(); 
 	/**

@@ -32,6 +32,10 @@ public class StatCollector {
     private long totalDelay;
     private double totalDist;
 
+    private int feasAnt;
+    private int intAnt;
+    private int totalAnt;
+
     private long seed;
     private int nAGVs;
     private double proba;
@@ -39,6 +43,10 @@ public class StatCollector {
     public StatCollector(RoadModel roadModel, String fileName, int nAGVs, long seed, double proba) {
         this.fileName = fileName;
         this.roadModel = (GraphRoadModel) roadModel;
+
+        this.feasAnt  = 0;
+        this.intAnt   = 0;
+        this.totalAnt = 0;
 
         this.truckIDs = new LinkedList<>();
         this.truckDists = new LinkedList<>();
@@ -73,6 +81,11 @@ public class StatCollector {
             this.totalDelay += t.getAccumulatedDelay();
             this.totalDist  += t.getAccumulatedDist();
         }
+
+        this.feasAnt  = FeasabilityAnt.feasabilityAntCounter;
+        this.intAnt   = IntentionAnt.intentionAntCounter;
+        this.totalAnt = this.feasAnt + this.intAnt;
+
         try {
             PrintWriter printer = new PrintWriter(fileName, "UTF-8");
             printer.println("========================================================================================================");
@@ -103,11 +116,17 @@ public class StatCollector {
             printer.println();
             printer.println("AGV_avgDelay  : " + this.truckAverageDelay.toString());
             printer.println();
+            printer.println("FeasAnts used : " + Integer.toString(this.feasAnt));
+            printer.println();
+            printer.println("IntAnts used  : " + Integer.toString(this.intAnt));
+            printer.println();
             printer.println("========================================================================================================");
             printer.println();
             printer.println("Total Delay: " + Long.toString(this.totalDelay));
             printer.println();
             printer.println("Total Dist : " + String.format("%5.3f", this.totalDist));
+            printer.println();
+            printer.println("Total Ants : " + Integer.toString(this.totalAnt));
             printer.close();
         }
         catch (IOException e) {

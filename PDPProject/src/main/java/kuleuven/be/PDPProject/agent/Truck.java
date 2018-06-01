@@ -308,12 +308,18 @@ public class Truck extends Vehicle {
 					System.out.println(this.getTruckID() + " mustn't move from " + roadModel.getPosition(this).toString());
 					System.out.println("prev point:"+ this.previousPoint.toString() + " -- next point: "+ this.nextPoint.toString());
 					if (curr.isPresent())
-						System.out.println("curr is present? "+curr.get().getPackID());
-					System.out.println("must check for me? "+Boolean.toString(checkPackIsForMe));
+						System.out.println(this.getTruckID() + "curr is present? "+curr.get().getPackID());
+					System.out.println(this.getTruckID() + "must check for me? "+Boolean.toString(checkPackIsForMe));
+					System.out.println(this.getTruckID() + "int path has length "+Integer.toString(intPath.size()));
 				}
-				else
+				else {
 					System.out.println(this.getTruckID() + " must move from " + roadModel.getPosition(this).toString());
-
+					System.out.println("prev point:"+ this.previousPoint.toString() + " -- next point: "+ this.nextPoint.toString());
+					if (curr.isPresent())
+						System.out.println(this.getTruckID() + "curr is present? "+curr.get().getPackID());
+					System.out.println(this.getTruckID() + "must check for me? "+Boolean.toString(checkPackIsForMe));
+					System.out.println(this.getTruckID() + "int path has length "+Integer.toString(intPath.size()));
+				}
 				// If no pack in target
 				if (!curr.isPresent()) {
 
@@ -341,12 +347,14 @@ public class Truck extends Vehicle {
 					// A pack is on us
 					else {
 						for (Pack p : packSet) {
-							packAppearedOnUs = true;
-							checkPackIsForMe = true;
-							sendMyIntention(roadModel, roadModel.getPosition(this), p, 0d);
-							tmpPath = getCorrespondingDestPath(roadSignSet, p.getPackID());
-							tmpPack = p;
-							break;
+							if(p.getTruckID().equals("nobody")) {
+								packAppearedOnUs = true;
+								checkPackIsForMe = true;
+								sendMyIntention(roadModel, roadModel.getPosition(this), p, 0d);
+								tmpPath = getCorrespondingDestPath(roadSignSet, p.getPackID());
+								tmpPack = p;
+								break;
+							}
 						}
 					}
 				}
@@ -354,6 +362,7 @@ public class Truck extends Vehicle {
 				//TODO check why we need to move to nextPoint when intentionPath but no curr....
 				// If we have a pack in target
 				if (curr.isPresent() && !checkPackIsForMe) {
+				    this.mustMove = false;
 					final boolean inCargo = pdpModel.containerContains(this, curr.get());
 
 					// Sanity check

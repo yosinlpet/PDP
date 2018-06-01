@@ -39,7 +39,7 @@ public class IntentionAnt extends Ant{
 
 	Point node;
 	String truckID;
-	static int intentionAntCounter = 0;
+	public static int intentionAntCounter = 0;
 
 	/**
 	 * Constructor
@@ -56,7 +56,6 @@ public class IntentionAnt extends Ant{
 			System.out.println(intentionAntCounter);
 		}
 	}
-
 
 	@Override
 	public void initRoadUser(RoadModel model) {
@@ -134,8 +133,10 @@ public class IntentionAnt extends Ant{
 	public boolean setEmergency() {
 		Set<Truck> truckSet = this.roadModel.getObjectsAt(this, Truck.class);
 		for (Truck t : truckSet) {
-			t.setEmergencyMove();
-			return t.getTrapped();
+			if (t.getIntPath().size() == 0) {
+				t.setEmergencyMove();
+				return t.getTrapped();
+			}
 		}
 		return false;
 	}

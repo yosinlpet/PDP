@@ -68,7 +68,7 @@ import com.github.rinde.rinsim.util.TimeWindow;
  */
 public final class Project {
 
-  private static final int NUM_AGVS = 4;
+  private static final int NUM_AGVS = 3;
   private static final int NUM_PCKGS = 0;
 
   private static final int SPEED_UP = 1;
@@ -80,14 +80,14 @@ public final class Project {
   private static final long TEST_STOP_TIME = 20 * 60 * 1000;
   private static final int TEST_SPEED_UP = 64;
   
-  private static final int factor = 100;
+  private static final int factor = 6;
   private static final long END = 1000;
-  private static final long SEED = 9L;
+  private static final long SEED = 10L;
 
-  private static final double AGV_SPEED = 1d;
+  private static final double AGV_SPEED = .1d;
   private static final int AGV_CAPACITY = 1;
 
-  private static final String OUTPUT_FILE = "/log_"+String.format("%02d", NUM_AGVS)+"_"+String.format("%02d", SEED)+".out";
+  private static final String OUTPUT_FILE = ".logfiles/run_nAGV"+String.format("%02d", NUM_AGVS)+"_seed"+String.format("%02d", SEED)+".log";
 
   public Project() {}
 
@@ -178,7 +178,7 @@ public final class Project {
 		long distanceShortestPath = (long) md.doubleValue(md.getUnit());
 
 		long maxDeliveryTime =
-				distanceShortestPath/Math.round(Math.abs(rng.nextGaussian())*factor*AGV_SPEED+1);
+				Math.round(distanceShortestPath*factor/AGV_SPEED);
 
 		TimeWindow tw = TimeWindow.create(0, maxDeliveryTime);
     	simulator.register(new Pack(
@@ -192,8 +192,8 @@ public final class Project {
     int packID = NUM_PCKGS;
       @Override
       public void tick(TimeLapse time) {
-        if (time.getStartTime() > endTime) {
-            statCollector.runStats();
+        if (time.getStartTime() >= endTime) {
+            statCollector.runStats(time);
             simulator.stop();
         } else if (rng.nextDouble() < NEW_CUSTOMER_PROB) {
 
@@ -211,8 +211,8 @@ public final class Project {
     		long distanceShortestPath = (long) md.doubleValue(md.getUnit());
 
     		long maxDeliveryTime =
-    			distanceShortestPath/Math.round(Math.abs(rng.nextGaussian())*factor*AGV_SPEED+1);
-    		
+                    Math.round(distanceShortestPath*factor/AGV_SPEED);
+            System.out.println("DeliveryTime = "+Long.toString(maxDeliveryTime));
     		TimeWindow tw = TimeWindow.create(time.getStartTime(), 
     						time.getStartTime()+maxDeliveryTime);
         		 		

@@ -50,6 +50,7 @@ public class Truck extends Vehicle {
 	private int hasDelivered;
 	private int hasCarried;
 	private long accumulatedDelay;
+	private double accumulatedDist;
 
 	RandomGenerator rng;
 
@@ -73,6 +74,7 @@ public class Truck extends Vehicle {
 		hasCarried = 0;
 		hasDelivered = 0;
 		accumulatedDelay = 0L;
+		accumulatedDist = 0d;
 		previousPoint = getStartPosition();
 		nextPoint = getStartPosition();
 		previousLoc = new Point(-Double.MAX_VALUE, -Double.MAX_VALUE);
@@ -141,6 +143,10 @@ public class Truck extends Vehicle {
 		return this.accumulatedDelay;
 	}
 
+	public double getAccumulatedDist() {
+		return accumulatedDist;
+	}
+
 	public int getHasDelivered() {
 		return this.hasDelivered;
 	}
@@ -201,7 +207,10 @@ public class Truck extends Vehicle {
 			isFrontFlagRaised = intAntFront.askFlag();
 		}
 		if (isFrontFlagRaised) { // We can move
+			Point p1 = rm.getPosition(this);
 			rm.moveTo(this, nextPoint, time);
+			Point p2 = rm.getPosition(this);
+			this.accumulatedDist += Math.sqrt(Math.pow(p1.x - p2.x, 2.) + Math.pow(p1.y - p2.y, 2.));
 			if (!isBackFlagDropped) {
 				intAntBack = new IntentionAnt(getRoadModel(), truckID, previousPoint);
 				if (!rm.getPosition(this).equals(nextPoint))

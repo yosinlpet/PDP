@@ -8,9 +8,13 @@ import javax.sql.rowset.Predicate;
 import java.util.LinkedList;
 import java.util.Set;
 
+import static java.lang.Double.isNaN;
+
 
 /**
  * Collects info on the roadModel
+ * @needs the tick length to be 1!!
+ * @needs the distances and node positions have to match !
  */
 public class StatCollector {
     private GraphRoadModel roadModel;
@@ -23,6 +27,7 @@ public class StatCollector {
     private LinkedList<Double> truckAverageDelay;
     private LinkedList<Integer> truckDelivered;
     private long totalDelay;
+    private double totalDist;
 
     private long seed;
     private int nAGVs;
@@ -40,6 +45,7 @@ public class StatCollector {
         this.truckAverageDelay = new LinkedList<>();
 
         this.totalDelay = 0L;
+        this.totalDist = 0d;
         this.seed = seed;
         this.nAGVs = nAGVs;
         this.proba = proba;
@@ -54,13 +60,15 @@ public class StatCollector {
 
         for (Truck t : truckSet) {
             this.truckIDs.addLast(t.getTruckID());
-            //this.truckDists.addLast(t.getDist());
+            this.truckDists.addLast(t.getAccumulatedDist());
             this.truckCarried.addLast(t.getHasCarried());
             this.truckDelivered.addLast(t.getHasDelivered());
             this.truckAccumulatedDelay.addLast(t.getAccumulatedDelay());
-            this.truckAverageDelay.addLast(((double) t.getAccumulatedDelay())/((double) t.getHasDelivered()));
+            double a = ((double) t.getAccumulatedDelay())/((double) t.getHasDelivered());
+            this.truckAverageDelay.addLast(Double.isNaN(a) ? 0. : a);
 
             this.totalDelay += t.getAccumulatedDelay();
+            this.totalDist  += t.getAccumulatedDist();
         }
         System.out.println();
         System.out.println("========================================================================================================");
@@ -77,19 +85,23 @@ public class StatCollector {
         System.out.println();
         System.out.println("========================================================================================================");
         System.out.println();
-        System.out.println("AGV_IDs      : "+this.truckIDs.toString());
+        System.out.println("AGV_IDs       : "+this.truckIDs.toString());
         System.out.println();
-        System.out.println("AGV_Carried  : "+this.truckCarried.toString());
+        System.out.println("AGV_TravelDist: "+this.truckDists.toString());
         System.out.println();
-        System.out.println("AGV_Delivered: "+this.truckDelivered.toString());
+        System.out.println("AGV_Carried   : "+this.truckCarried.toString());
         System.out.println();
-        System.out.println("AGV_Delays   : "+this.truckAccumulatedDelay.toString());
+        System.out.println("AGV_Delivered : "+this.truckDelivered.toString());
         System.out.println();
-        System.out.println("AGV_avgDelay : "+this.truckAverageDelay.toString());
+        System.out.println("AGV_Delays    : "+this.truckAccumulatedDelay.toString());
+        System.out.println();
+        System.out.println("AGV_avgDelay  : "+this.truckAverageDelay.toString());
         System.out.println();
         System.out.println("========================================================================================================");
         System.out.println();
-        System.out.println("Total Delay: "+Long.toString(this.totalDelay));
+        System.out.println("Total Delay: "+ Long.toString(this.totalDelay));
+        System.out.println();
+        System.out.println("Total Dist : "+ String.format("%5.3f", this.totalDist));
 
         //print objects to fileName
     }

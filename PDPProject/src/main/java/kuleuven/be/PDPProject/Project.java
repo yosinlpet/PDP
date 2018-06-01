@@ -68,7 +68,7 @@ import com.github.rinde.rinsim.util.TimeWindow;
  */
 public final class Project {
 
-  private static final int NUM_AGVS = 4;
+  private static final int NUM_AGVS = 5;
   private static final int NUM_PCKGS = 0;
 
   private static final int SPEED_UP = 1;
@@ -81,10 +81,10 @@ public final class Project {
   private static final int TEST_SPEED_UP = 64;
   
   private static final int factor = 100;
-  private static final long END = 1000;
+  private static final long END = 301;
   private static final long SEED = 9L;
 
-  private static final double AGV_SPEED = 1d;
+  private static final double AGV_SPEED = .1d;
   private static final int AGV_CAPACITY = 1;
 
   private static final String OUTPUT_FILE = "/log_"+String.format("%02d", NUM_AGVS)+"_"+String.format("%02d", SEED)+".out";
@@ -192,7 +192,7 @@ public final class Project {
     int packID = NUM_PCKGS;
       @Override
       public void tick(TimeLapse time) {
-        if (time.getStartTime() > endTime) {
+        if (time.getStartTime() >= endTime) {
             statCollector.runStats();
             simulator.stop();
         } else if (rng.nextDouble() < NEW_CUSTOMER_PROB) {

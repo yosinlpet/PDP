@@ -3,8 +3,11 @@ package kuleuven.be.PDPProject.agent;
 
 import com.github.rinde.rinsim.core.model.road.GraphRoadModel;
 import com.github.rinde.rinsim.core.model.road.RoadModel;
+import com.github.rinde.rinsim.core.model.time.TimeLapse;
 
 import javax.sql.rowset.Predicate;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.LinkedList;
 import java.util.Set;
 
@@ -55,7 +58,7 @@ public class StatCollector {
         this.totalDelay += delay;
     }
 
-    public void runStats() {
+    public void runStats(TimeLapse timeLapse) {
         Set<Truck> truckSet = this.roadModel.getObjectsOfType(Truck.class);
 
         for (Truck t : truckSet) {
@@ -70,39 +73,46 @@ public class StatCollector {
             this.totalDelay += t.getAccumulatedDelay();
             this.totalDist  += t.getAccumulatedDist();
         }
-        System.out.println();
-        System.out.println("========================================================================================================");
-        System.out.println();
-        System.out.println("-- END OF SIMULATION -- STATISTICS --");
-        System.out.println();
-        System.out.println("========================================================================================================");
-        System.out.println();
-        System.out.println("Number of AGVs: "+Integer.toString(this.nAGVs));
-        System.out.println();
-        System.out.println("Seed          : "+Long.toString(this.seed));
-        System.out.println();
-        System.out.println("Request proba : "+Double.toString(this.proba));
-        System.out.println();
-        System.out.println("========================================================================================================");
-        System.out.println();
-        System.out.println("AGV_IDs       : "+this.truckIDs.toString());
-        System.out.println();
-        System.out.println("AGV_TravelDist: "+this.truckDists.toString());
-        System.out.println();
-        System.out.println("AGV_Carried   : "+this.truckCarried.toString());
-        System.out.println();
-        System.out.println("AGV_Delivered : "+this.truckDelivered.toString());
-        System.out.println();
-        System.out.println("AGV_Delays    : "+this.truckAccumulatedDelay.toString());
-        System.out.println();
-        System.out.println("AGV_avgDelay  : "+this.truckAverageDelay.toString());
-        System.out.println();
-        System.out.println("========================================================================================================");
-        System.out.println();
-        System.out.println("Total Delay: "+ Long.toString(this.totalDelay));
-        System.out.println();
-        System.out.println("Total Dist : "+ String.format("%5.3f", this.totalDist));
-
+        try {
+            PrintWriter printer = new PrintWriter(fileName, "UTF-8");
+            printer.println("========================================================================================================");
+            printer.println();
+            printer.println("-- END OF SIMULATION -- STATISTICS --");
+            printer.println();
+            printer.println("========================================================================================================");
+            printer.println();
+            printer.println("Number of AGVs: " + Integer.toString(this.nAGVs));
+            printer.println();
+            printer.println("Seed          : " + Long.toString(this.seed));
+            printer.println();
+            printer.println("Request proba : " + Double.toString(this.proba));
+            printer.println();
+            printer.println("Stopped at T  = " + Long.toString(timeLapse.getTime()));
+            printer.println();
+            printer.println("========================================================================================================");
+            printer.println();
+            printer.println("AGV_IDs       : " + this.truckIDs.toString());
+            printer.println();
+            printer.println("AGV_TravelDist: " + this.truckDists.toString());
+            printer.println();
+            printer.println("AGV_Carried   : " + this.truckCarried.toString());
+            printer.println();
+            printer.println("AGV_Delivered : " + this.truckDelivered.toString());
+            printer.println();
+            printer.println("AGV_Delays    : " + this.truckAccumulatedDelay.toString());
+            printer.println();
+            printer.println("AGV_avgDelay  : " + this.truckAverageDelay.toString());
+            printer.println();
+            printer.println("========================================================================================================");
+            printer.println();
+            printer.println("Total Delay: " + Long.toString(this.totalDelay));
+            printer.println();
+            printer.println("Total Dist : " + String.format("%5.3f", this.totalDist));
+            printer.close();
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
         //print objects to fileName
     }
 }

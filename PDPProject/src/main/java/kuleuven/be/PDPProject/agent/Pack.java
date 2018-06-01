@@ -27,7 +27,7 @@ public class Pack extends Parcel implements TickListener{
 
 	public String packID;
 	private final RandomGenerator rng;
-	private final double CRITIC = 0.8;
+	private final double CRITIC = 0.5;
 
 	// States
 	private boolean carried;
@@ -36,6 +36,9 @@ public class Pack extends Parcel implements TickListener{
 	private boolean isBestTruckKnown;
 	private boolean isCritical;
 	private boolean timeIsOver;
+
+	private long endTime;
+	private StatCollector statCollector;
 
 	// Positions
 	private Point departure;
@@ -46,14 +49,15 @@ public class Pack extends Parcel implements TickListener{
 	
 	private Simulator sim;
 	private Map<String, Double> candidates;
-	
+
+	private PDPModel pdpModel;
 	private RoadModel roadModel;
 	ParcelDTO dto; 
 	
 	private FeasabilityAnt fAntDeparture;
 	private FeasabilityAnt fAntDestination;
 	
-    public Pack(ParcelDTO dto, RandomGenerator r, String packID, Simulator sim) {
+    public Pack(ParcelDTO dto, RandomGenerator r, String packID, Simulator sim, long endTime, StatCollector statCollector) {
         super(dto,packID);
         this.packID = packID;
 
@@ -71,15 +75,16 @@ public class Pack extends Parcel implements TickListener{
 		this.candidates = new LinkedHashMap<>();
 		this.truckID = new String("nobody");
 		this.deliveryTW = dto.getDeliveryTimeWindow();
-		
 		this.sim = sim;
+		this.endTime = endTime;
+		this.statCollector = statCollector;
 		
     }
     
     @Override
     public void initRoadPDP(RoadModel pRoadModel, PDPModel pPdpModel) {
     	this.roadModel = pRoadModel;
-
+    	this.pdpModel = pPdpModel;
     	//create feasibility ants leaving dropsigns to the pack
     	fAntDeparture = new FeasabilityAnt(this, departure, deliveryTW, sim,false);
     	fAntDeparture.runAnt(fAntDeparture.getClones());
@@ -88,7 +93,10 @@ public class Pack extends Parcel implements TickListener{
     	fAntDestination = new FeasabilityAnt(this, destination, deliveryTW, sim,true);
     	fAntDestination.runAnt(fAntDestination.getClones());
     }
-   
+
+	@Override
+	public RoadModel getRoadModel() {return roadModel;}
+
 	public boolean isCarried() {
 		return carried;
 	}
@@ -127,7 +135,11 @@ public class Pack extends Parcel implements TickListener{
 		}
 		return false;
 	}
-	
+
+	public boolean isCritical() {
+    	return isCritical;
+	}
+
 	public TimeWindow getTimeWindow() {
 		return dto.getDeliveryTimeWindow();
 	}
@@ -164,21 +176,27 @@ public class Pack extends Parcel implements TickListener{
     	return this.truckID;
 	}
 
+	public long getDelay(TimeLapse timeLapse) {
+		return Math.max(timeLapse.getTime() - this.deliveryTW.end(), 0L);
+	}
+
 	@Override
 	public void tick(TimeLapse timeLapse) {
-		if (candidates.size() > 0)
-		{
+		if (candidates.size() > 0 && !isBestTruckKnown) {
 			this.truckID = selectTruck();
             this.candidates = new LinkedHashMap<>();
             FeasabilityAnt ant = new FeasabilityAnt(this, departure, deliveryTW, sim, false);
             ant.updateTruckID(ant.getClones(), truckID);
             this.isBestTruckKnown = true;
         }
-		if(isCritical(timeLapse)) {
-			this.isCritical = true;
-		}
-		if(isTimeOver(timeLapse)) {
-			this.timeIsOver = true;
+
+		if (!isCritical)
+			this.isCritical = isCritical(timeLapse);
+
+		if (timeLapse.getTime() == this.endTime - 1 && !pdpModel.getParcelState(this).equals(PDPModel.ParcelState.DELIVERED)) {
+			long delay = Math.max(0L, timeLapse.getTime() - this.deliveryTW.end());
+			System.out.println(this.packID + " sends its delay: "+Long.toString(delay));
+			statCollector.setPackDelay(delay);
 		}
 	}
 	
@@ -186,7 +204,4 @@ public class Pack extends Parcel implements TickListener{
 	public void afterTick(TimeLapse timeLapse) {
 		  
 	}
-
-	@Override
-	public RoadModel getRoadModel() {return roadModel;}
 }

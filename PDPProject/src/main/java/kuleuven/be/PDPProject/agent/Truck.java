@@ -24,7 +24,6 @@ import sun.awt.image.ImageWatched;
  * Taxi agent for DelegateMAS
  * TODO Has to avoid collisions and deadlocks
  * TODO Need to get critical {@link Pack}s first
- * TODO DEPENDENT VARIABLES
  * @author Denis Dumoulin
  * @author Remi Chauvenne
  */
@@ -46,6 +45,10 @@ public class Truck extends Vehicle {
 	private boolean mustAfterTick;
 	private boolean isTrapped;
 
+	private int hasDelivered;
+	private int hasCarried;
+	private long accumulatedDelay;
+
 	RandomGenerator rng;
 
 	private Pack waitingPack;
@@ -65,6 +68,9 @@ public class Truck extends Vehicle {
 		this.rng = rng;
 		this.truckID = truckID;
 		curr = Optional.absent();
+		hasCarried = 0;
+		hasDelivered = 0;
+		accumulatedDelay = 0L;
 		previousPoint = getStartPosition();
 		nextPoint = getStartPosition();
 		previousLoc = new Point(-Double.MAX_VALUE, -Double.MAX_VALUE);
@@ -84,8 +90,8 @@ public class Truck extends Vehicle {
 		isBackFlagDropped = !intAntBack.askFlag();
 	}
 
-	public void setEmergencyMove(boolean emergencyMove){
-		this.mustMove = emergencyMove;
+	public void setEmergencyMove(){
+		this.mustMove = true;
 	}
 
 	public String getTruckID() {
@@ -116,6 +122,25 @@ public class Truck extends Vehicle {
             return (curr.isPresent() && this.getPDPModel().containerContains(this, curr.get()));
 	}
 
+	public boolean isCarrying(Pack pckg) {
+		return this.getPDPModel().containerContains(this, pckg);
+	}
+
+	public boolean getTrapped() {
+		return this.isTrapped;
+	}
+
+	public int getHasCarried() {
+		return this.hasCarried;
+	}
+
+	public long getAccumulatedDelay() {
+		return this.accumulatedDelay;
+	}
+
+	public int getHasDelivered() {
+		return this.hasDelivered;
+	}
 
 	// Return the path (without the first node!) to a pack that is the closest to the truck
 	public LinkedList<Point> selectPackPath(Set<RoadSign> rsSet, TimeLapse time) {
@@ -180,30 +205,28 @@ public class Truck extends Vehicle {
 	protected void tickImpl(TimeLapse time) {
 		final RoadModel rm = getRoadModel();
 		final PDPModel pm = getPDPModel();
-		
+
 		// compute next and previous point
 		if (!intPath.isEmpty()) {
-				if (rm.getPosition(this).equals(nextPoint)) {
+			if (rm.getPosition(this).equals(nextPoint)) {
 
-					//System.out.print("Change in previous and next node for truck nb : ");
-					//System.out.println(truckID);
-					isFrontFlagRaised = false;
-					isBackFlagDropped = false;
-					previousPoint = nextPoint;
-					nextPoint = intPath.removeLast();
-					this.previousLoc = new Point(-Double.MAX_VALUE,-Double.MAX_VALUE);
-				}
+				//System.out.print("Change in previous and next node for truck nb : ");
+				//System.out.println(truckID);
+				isFrontFlagRaised = false;
+				isBackFlagDropped = false;
+				previousPoint = nextPoint;
+				nextPoint = intPath.removeLast();
+				this.previousLoc = new Point(-Double.MAX_VALUE,-Double.MAX_VALUE);
 			}
+		}
 		if (this.mustMove && intPath.isEmpty()) {
 		    System.out.println(this.getTruckID()+" must move!");
-		   	if (this.previousLoc.equals(getRoadModel().getPosition(this)))
-		   		isTrapped = true;
 			if (rm.getPosition(this).equals(this.previousLoc)) {
 						urgentAnt = new IntentionAnt(getRoadModel(), truckID, nextPoint);
-						urgentAnt.setEmergency();
+						isTrapped = !urgentAnt.setEmergency();
             }
 
-		    if (nextPoint.equals(previousPoint) || (isTrapped && rm.getPosition(this).equals(previousPoint))) {
+		    if (nextPoint.equals(previousPoint)){ //|| (isTrapped && rm.getPosition(this).equals(previousPoint))) {
 				Collection<Point> pointCollection = ((GraphRoadModel) getRoadModel()).getGraph()
 						.getOutgoingConnections(getRoadModel().getPosition(this));
 				LinkedList<Point> points = new LinkedList<>();
@@ -306,8 +329,7 @@ public class Truck extends Vehicle {
 						applicationAnt.sendTruckID(truckID, p, 0.);
 
 						curr = Optional.fromNullable(p);
-						intPath = getCorrespondingDestPath(rs,
-								curr.get().getPackID());
+						intPath = getCorrespondingDestPath(rs, curr.get().getPackID());
 						//System.out.print(" for truck ");
 						//System.out.println(this.truckID);
 
@@ -322,6 +344,7 @@ public class Truck extends Vehicle {
 						break;
 					}
 					pm.pickup(this, curr.get(), time);
+					++this.hasCarried;
 					curr.get().setCarried(true);
 				}
 
@@ -358,6 +381,8 @@ public class Truck extends Vehicle {
 						if (rm.getPosition(this).equals(curr.get().getDeliveryLocation())) {
 							// deliver when we arrive
 							pm.deliver(this, curr.get(), time);
+							this.accumulatedDelay += curr.get().getDelay(time);
+							++this.hasDelivered;
 							curr.get().setDeposited();
 							previousPoint = rm.getPosition(this);
 							isBackFlagDropped = false;
@@ -378,7 +403,7 @@ public class Truck extends Vehicle {
 					}
 					if (!hasNegotiated) {
 						//if (!intPath.isEmpty())
-							//System.out.println("Truck " + this.getTruckID() + " is getting this pack at " + this.getIntPath().getFirst());
+							//System.out.println( this.getTruckID() + " is getting this pack at " + this.getIntPath().getFirst());
 						if (!isFrontFlagRaised) {
 							intAntFront = new IntentionAnt(getRoadModel(), truckID, nextPoint);
 							isFrontFlagRaised = intAntFront.askFlag();
@@ -393,6 +418,7 @@ public class Truck extends Vehicle {
 
 							if (rm.equalPosition(this, curr.get())) {
 								pm.pickup(this, curr.get(), time);
+								++this.hasCarried;
 								curr.get().setCarried(true);
 								previousPoint = nextPoint;
 								isBackFlagDropped = false;

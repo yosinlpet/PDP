@@ -62,39 +62,32 @@ import com.github.rinde.rinsim.util.TimeWindow;
 
 
 /**
- * Example showing a fleet of taxis that have to pickup and transport customers
- * around the city of Leuven.
- * <p>
- * If this class is run on MacOS it might be necessary to use
- * -XstartOnFirstThread as a VM argument.
- * @author Rinde van Lon
+ * Pick-up and Delivery Problem with DelegateMAS
+ * @author Denis Dumoulin
+ * @author Remi Chauvenne
  */
 public final class Project {
 
-  private static final int NUM_DEPOTS = 1;
   private static final int NUM_AGVS = 4;
   private static final int NUM_PCKGS = 0;
-
-  // time in ms
-  private static final long SERVICE_DURATION = 60000;
-  private static final int DEPOT_CAPACITY = 100;
 
   private static final int SPEED_UP = 1;
   private static final double NEW_CUSTOMER_PROB = .025;
 
   private static final String MAP_FILE = "/largerGraph.dot";
-  private static final Map<String, Graph<MultiAttributeData>> GRAPH_CACHE =
-    newHashMap();
+  private static final Map<String, Graph<MultiAttributeData>> GRAPH_CACHE = newHashMap();
 
   private static final long TEST_STOP_TIME = 20 * 60 * 1000;
   private static final int TEST_SPEED_UP = 64;
   
   private static final int factor = 100;
-  private static final long END = 3600;
-  private static final long seed = 8L;
+  private static final long END = 1000;
+  private static final long SEED = 9L;
 
   private static final double AGV_SPEED = 1d;
   private static final int AGV_CAPACITY = 1;
+
+  private static final String OUTPUT_FILE = "/log_"+String.format("%02d", NUM_AGVS)+"_"+String.format("%02d", SEED)+".out";
 
   public Project() {}
 
@@ -104,12 +97,13 @@ public final class Project {
    *          simulation.
    */
   public static void main(@Nullable String[] args) {
-    //final long endTime = args != null && args.length >= 1 ? Long.parseLong(args[0]) : Long.MAX_VALUE;
-      final long endTime = END;
+    final long endTime = args != null && args.length >= 1 ? Long.parseLong(args[0]) : END;
 
-    final String graphFile = args != null && args.length >= 2 ? args[1]
-      : MAP_FILE;
-    run(false, endTime, graphFile, null /* new Display() */, null, null);
+    final String graphFile = args != null && args.length >= 2 ? args[1] : MAP_FILE;
+
+    final long seed = args != null && args.length >= 3 ? Long.parseLong(args[2]) : SEED;
+
+    run(false, endTime, graphFile, null /* new Display() */, null, null, seed);
   }
 
   /**
@@ -117,7 +111,7 @@ public final class Project {
    * @param testing If <code>true</code> enables the test mode.
    */
   public static void run(boolean testing) {
-    run(testing, Long.MAX_VALUE, MAP_FILE, null, null, null);
+    run(testing, Long.MAX_VALUE, MAP_FILE, null, null, null, SEED);
   }
 
   /**
@@ -132,13 +126,12 @@ public final class Project {
    */
   public static Simulator run(boolean testing, final long endTime,
       String graphFile,
-      @Nullable Display display, @Nullable Monitor m, @Nullable Listener list) {
+      @Nullable Display display, @Nullable Monitor m, @Nullable Listener list, long seed) {
 	  
 	  int packID = 0;
 
     final View.Builder view = createGui(testing, display, m, list);
 
-    // use map of leuven
     final Simulator simulator = Simulator.builder()
       .addModel(RoadModelBuilders.staticGraph(loadGraph(graphFile)).withDistanceUnit(SI.METER).withSpeedUnit(SI.METERS_PER_SECOND))
       .addModel(DefaultPDPModel.builder())
@@ -151,8 +144,9 @@ public final class Project {
 
     final RoadModel roadModel = simulator.getModelProvider().getModel(
       RoadModel.class);
-    
-    
+
+    final StatCollector statCollector = new StatCollector(roadModel, OUTPUT_FILE, NUM_AGVS, SEED, NEW_CUSTOMER_PROB);
+
     // add depots, taxis and parcels to simulator
       LinkedList<Point> positions = new LinkedList<>();
     for (int i = 0; i < NUM_AGVS; i++) {
@@ -190,7 +184,7 @@ public final class Project {
     	simulator.register(new Pack(
     				Parcel.builder(departure, destination)
     					.deliveryTimeWindow(tw)
-    					.buildDTO(), rng,"Pack-"+ String.format("%03d", packID),simulator));
+    					.buildDTO(), rng,"Pack-"+ String.format("%03d", packID),simulator, endTime, statCollector));
     	packID++;
     }
 
@@ -199,7 +193,8 @@ public final class Project {
       @Override
       public void tick(TimeLapse time) {
         if (time.getStartTime() > endTime) {
-          simulator.stop();
+            statCollector.runStats();
+            simulator.stop();
         } else if (rng.nextDouble() < NEW_CUSTOMER_PROB) {
 
             Point destination;
@@ -224,7 +219,7 @@ public final class Project {
         	simulator.register(new Pack(
     				Parcel.builder(departure, destination)
     					.deliveryTimeWindow(tw)
-    					.buildDTO(), rng,"Pack-"+ String.format("%03d",packID),simulator));
+    					.buildDTO(), rng,"Pack-"+ String.format("%03d",packID),simulator, endTime, statCollector));
         	packID++;
         }
       }
@@ -289,5 +284,4 @@ public final class Project {
       throw new IllegalStateException(e);
     }
   }
-
 }

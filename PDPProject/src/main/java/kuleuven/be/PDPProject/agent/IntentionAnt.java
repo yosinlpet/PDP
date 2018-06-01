@@ -129,12 +129,15 @@ public class IntentionAnt extends Ant{
 
 	/**
 	 * Tells the {@link Truck} in front of us that we are in a hurry...
+     * @return true if the {@link Truck} blocking us can move
 	 */
-	public void setEmergency() {
+	public boolean setEmergency() {
 		Set<Truck> truckSet = this.roadModel.getObjectsAt(this, Truck.class);
 		for (Truck t : truckSet) {
-			t.setEmergencyMove(true);
+			t.setEmergencyMove();
+			return t.getTrapped();
 		}
+		return false;
 	}
 
 	/**
@@ -144,22 +147,23 @@ public class IntentionAnt extends Ant{
 	 */
 	public boolean negotiate(Truck truck){
 		LinkedList<Point> myPath = new LinkedList<>(truck.getIntPath());
-		if (myPath.isEmpty())								//then my target is on the next node, it should not happen: a truck is there too already.
+		//if (myPath.isEmpty())								//then my target is on the next node, it should not happen: a truck is there too already.
+		if (myPath.size() < 2)
 			return false;
-		else if (myPath.size() == 1) {						//I can't remove the only object of my path or I'll get lost...
-			Set<Truck> truckSet = this.roadModel.getObjectsAt(this, Truck.class); //and the candidate can't have an empty path
-			for (Truck t : truckSet) {
-				if (t.getIntPath().size() == 0 && !t.isCarrying()) {		//candidate can't carry anything and must be aimless
-					t.setNextPoint(myPath.getFirst());
-					t.setCurr(truck.getCurr());
-					System.out.println(t.getTruckID() + " gets pack of " + truck.getTruckID()+" _1_");
-					truck.setIntPath(new LinkedList<Point>());				//I give up everything
-					truck.setCurr(Optional.<Pack>absent());
-					truck.setNextPoint(roadModel.getPosition(truck));
-					return true;
-				}
-			}
-		}
+//		else if (myPath.size() == 1) {						//I can't remove the only object of my path or I'll get lost...
+//			Set<Truck> truckSet = this.roadModel.getObjectsAt(this, Truck.class); //and the candidate can't have an empty path
+//			for (Truck t : truckSet) {
+//				if (t.getIntPath().size() == 0 && !t.isCarrying()) {		//candidate can't carry anything and must be aimless
+//					t.setNextPoint(myPath.getFirst());
+//					t.setCurr(truck.getCurr());
+//					System.out.println(t.getTruckID() + " gets pack of " + truck.getTruckID()+" _1_");
+//					truck.setIntPath(new LinkedList<Point>());				//I give up everything
+//					truck.setCurr(Optional.<Pack>absent());
+//					truck.setNextPoint(roadModel.getPosition(truck));
+//					return true;
+//				}
+//			}
+//		}
 		else
 		{
 			Set<Truck> truckSet = this.roadModel.getObjectsAt(this, Truck.class);

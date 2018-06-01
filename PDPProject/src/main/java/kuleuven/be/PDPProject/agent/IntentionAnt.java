@@ -51,10 +51,6 @@ public class IntentionAnt extends Ant{
 		super.roadModel.addObjectAt(this, node);
 		this.truckID = truckID;
 		intentionAntCounter++;
-		if(intentionAntCounter%100==0) {
-			System.out.print("Number of intention ants already created : ");
-			System.out.println(intentionAntCounter);
-		}
 	}
 
 	@Override
@@ -133,7 +129,7 @@ public class IntentionAnt extends Ant{
 	public boolean setEmergency() {
 		Set<Truck> truckSet = this.roadModel.getObjectsAt(this, Truck.class);
 		for (Truck t : truckSet) {
-			if (t.getIntPath().size() == 0) {
+			if (t.getIntPath().size() == 0 && roadModel.getPosition(t).equals(t.getNextPoint())) {
 				t.setEmergencyMove();
 				return t.getTrapped();
 			}

@@ -189,6 +189,8 @@ public class Pack extends Parcel implements TickListener{
             ant.updateTruckID(ant.getClones(), truckID);
             this.isBestTruckKnown = true;
         }
+        if (timeLapse.getTime()%10 == 0 && pdpModel.getParcelState(this).equals(PDPModel.ParcelState.AVAILABLE))
+        	System.out.println(this.truckID + " must grab " + this.packID + " at position "+ this.getPickupLocation().toString());
 
 		if (!isCritical)
 			this.isCritical = isCritical(timeLapse);

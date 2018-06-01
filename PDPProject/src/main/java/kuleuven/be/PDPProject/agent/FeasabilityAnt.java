@@ -58,10 +58,6 @@ public class FeasabilityAnt extends Ant implements Cloneable{
 		this.sim = sim;
 		this.indicateDest = indicateDest;
 		feasabilityAntCounter++;
-		if(feasabilityAntCounter%100==0) {
-			System.out.print("Number of feasability ants already created : ");
-			System.out.println(feasabilityAntCounter);
-		}
 	}
 
 	//  Constructor used for George cloning

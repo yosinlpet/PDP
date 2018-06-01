@@ -100,7 +100,7 @@ public class Truck extends Vehicle {
 	}
 
 	public void setEmergencyMove(){
-		this.mustMove = true;
+		this.mustMove = !this.curr.isPresent();
 	}
 
 	public String getTruckID() {

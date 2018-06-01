@@ -129,7 +129,7 @@ public class IntentionAnt extends Ant{
 	public boolean setEmergency() {
 		Set<Truck> truckSet = this.roadModel.getObjectsAt(this, Truck.class);
 		for (Truck t : truckSet) {
-			if (t.getIntPath().size() == 0 && roadModel.getPosition(t).equals(t.getNextPoint())) {
+			if (t.getIntPath().size() == 0) {
 				t.setEmergencyMove();
 				return t.getTrapped();
 			}

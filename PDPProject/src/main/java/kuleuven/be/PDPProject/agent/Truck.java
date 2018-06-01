@@ -45,6 +45,7 @@ public class Truck extends Vehicle {
 	private boolean hasChosenNewNode;
 	private boolean checkPackIsForMe;
 	private boolean isTrapped;
+	private boolean packAppearedOnUs;
 
 	private int hasDelivered;
 	private int hasCarried;
@@ -53,7 +54,7 @@ public class Truck extends Vehicle {
 	RandomGenerator rng;
 
 	private Pack tmpPack;
-	private double waitingCost;
+	private double tmpCost;
 	private LinkedList<Point> tmpPath;
 
 	String truckID;
@@ -80,7 +81,7 @@ public class Truck extends Vehicle {
 		tmpPath = new LinkedList<>();
 		isBackFlagDropped = true;
 		isFrontFlagRaised = false;
-		waitingCost = Double.MAX_VALUE;
+		tmpCost = Double.MAX_VALUE;
 		tmpPack = null;
 		isTrapped = false;
 		hasChosenNewNode=false;
@@ -157,8 +158,6 @@ public class Truck extends Vehicle {
 				}
 			}
 		}
-		//System.out.print("Path is ");
-		//System.out.print(minPath.toString());
 		return minPath;
 	}
 
@@ -174,11 +173,28 @@ public class Truck extends Vehicle {
 				}
 			}
 		}
-		//System.out.print("Path is ");
-		//System.out.print(path.toString());
 		return path;
 	}
 	
+	public void updateTargetPoints(RoadModel rm, Point nextPoint) {
+		this.previousPoint = rm.getPosition(this);
+		this.nextPoint = nextPoint;
+		isFrontFlagRaised = false;
+		isBackFlagDropped = false;
+	}
+	
+	public void sendMyIntention(RoadModel rm, Point packetPos, Pack targetPack, double cost) {
+		applicationAnt = new IntentionAnt(rm, this.truckID, packetPos);
+		applicationAnt.sendTruckID(truckID, targetPack, cost);
+	}
+	
+	public void sendEmergency(RoadModel rm) {
+		urgentAnt = new IntentionAnt(rm, this.truckID, this.nextPoint);
+		urgentAnt.setEmergency();
+	}
+	
+	// Return true if we moved
+	// Update next and previous point if we are on a node
 	public boolean tryToMove(RoadModel rm, TimeLapse time) {
 		if (!isFrontFlagRaised) {
 			intAntFront = new IntentionAnt(getRoadModel(), truckID, nextPoint);
@@ -188,20 +204,14 @@ public class Truck extends Vehicle {
 			rm.moveTo(this, nextPoint, time);
 			if (!isBackFlagDropped) {
 				intAntBack = new IntentionAnt(getRoadModel(), truckID, previousPoint);
-				if (!previousPoint.equals(nextPoint))
+				if (!rm.getPosition(this).equals(nextPoint))
 					isBackFlagDropped = intAntBack.dropFlag();
 			}
 			
 			if (rm.getPosition(this).equals(nextPoint)) {
 				if(!intPath.isEmpty()) {
-					previousPoint = rm.getPosition(this);
-					nextPoint = intPath.removeLast();
+					updateTargetPoints(rm, intPath.removeLast());
 				}
-				
-				isFrontFlagRaised = false;
-				isBackFlagDropped = false;
-				
-				this.previousLoc = new Point(-Double.MAX_VALUE,-Double.MAX_VALUE);
 			}
 			return true;
 		} else return false;
@@ -211,21 +221,37 @@ public class Truck extends Vehicle {
 	@Override
 	public void afterTick(TimeLapse timeLapse) {
 		if (checkPackIsForMe) {
+			boolean isAllowed = false;
 			final RoadModel rm = getRoadModel();
-		    boolean isAllowed = false;
-			Set<RoadSign> roadSignSet = getRoadModel().getObjectsAt(this, RoadSign.class);
-			for (RoadSign rs : roadSignSet)	{
-				if (rs.getPack().equals(tmpPack) && !rs.indicateDest()) {
-					isAllowed = (this.truckID == rs.getTruckID());
+			final PDPModel pm = getPDPModel();
+			
+			if(packAppearedOnUs){ // The pack has appeared on us
+				Set<Pack> packSet = rm.getObjectsAt(this, Pack.class);
+				for(Pack p : packSet) {
+					if(p.getTruckID().equals(this.truckID)) {
+						isAllowed = true;
+						pm.pickup(this, p, timeLapse);
+						packAppearedOnUs = false;
+						this.hasCarried++;
+						break;
+					}
 				}
 			}
-
+			else {
+				Set<RoadSign> roadSignSet = getRoadModel().getObjectsAt(this, RoadSign.class);
+				for (RoadSign rs : roadSignSet)	{
+					if (rs.getPack().equals(tmpPack) && !rs.indicateDest()) {
+						isAllowed = (this.truckID == rs.getTruckID());
+					} 
+				}
+			}
+			
+			// Take the pack : its for us !
 			if (isAllowed) {
 				intPath = tmpPath;
-				this.previousLoc = new Point(-Double.MAX_VALUE,-Double.MAX_VALUE);
-				previousPoint = rm.getPosition(this);
-				nextPoint = intPath.getLast();
+				updateTargetPoints(rm,intPath.getLast());
 				curr = Optional.fromNullable(tmpPack);
+				curr.get().setCarried(true);
 			}
 		}
 		checkPackIsForMe = false;
@@ -237,10 +263,11 @@ public class Truck extends Vehicle {
 		final RoadModel rm = getRoadModel();
 		final PDPModel pm = getPDPModel();
 				
-		
+		// If we are waiting and someone want to pass
 		if (this.mustMove && intPath.isEmpty()) {
 		    System.out.println(this.getTruckID()+" must move!");
 		    
+		    // Choose a node where to move
 		    if (!hasChosenNewNode) { //|| (isTrapped && rm.getPosition(this).equals(previousPoint))) {
 				Collection<Point> pointCollection = ((GraphRoadModel) getRoadModel()).getGraph()
 						.getOutgoingConnections(getRoadModel().getPosition(this));
@@ -248,43 +275,28 @@ public class Truck extends Vehicle {
 				points.addAll(pointCollection);
 				int randI = rng.nextInt(points.size());
 				Point point = points.get(randI);
-				//previousPoint = nextPoint;
-				previousPoint = rm.getPosition(this);
-				nextPoint = point;
+				updateTargetPoints(rm,point);
 				hasChosenNewNode = true;
 			}
 		    
 		    if(tryToMove(rm, time)) {
-				if (rm.getPosition(this).equals(nextPoint)) {
+				if (rm.getPosition(this).equals(nextPoint)) { // we have moved to the next node
 			    	this.mustMove = false;
 	                hasChosenNewNode = false;
 				}
 		    } else {
-				isTrapped = true;
-				urgentAnt = new IntentionAnt(getRoadModel(), truckID, nextPoint);
-				urgentAnt.setEmergency();
+		    	sendEmergency(rm);
 		    }
 		    
-			//if (rm.getPosition(this).equals(this.previousLoc)) {
-
-			//}
 		}
-		//if (!(mustMove && intPath.isEmpty()) || isTrapped)
-		else
+		else // We can do our stuff 
 		{
-			//if (getRoadModel().getPosition(this).equals(this.nextPoint)) {
-				//isTrapped = false;
-				//mustMove = false;
-				//previousPoint = rm.getPosition(this);
-			//}
-			//System.out.print(" -- nextPoint: ");
-			//if (nextPoint != null)
-			//System.out.println(nextPoint.toString());
-
 			// If no pack in target
 			if (!curr.isPresent()) {
+				
 				Set<RoadSign> rs = rm.getObjectsAt((RoadUser) this, RoadSign.class);
 				Set<Pack> ps = rm.getObjectsAt((RoadUser) this, Pack.class);
+				
 				// If no pack on us
 				if (ps.isEmpty()) {
 					tmpPath = selectPackPath(rs, time);
@@ -294,57 +306,29 @@ public class Truck extends Vehicle {
 							path.removeLast();
 							if (path.equals(tmpPath)) {
 								tmpPack = r.getPack();
-								waitingCost = r.getCost();
+								tmpCost = r.getCost();
+								break;
 							}
 						}
-						applicationAnt = new IntentionAnt(getRoadModel(), truckID, tmpPath.getFirst());
-						applicationAnt.sendTruckID(truckID, tmpPack, (double) waitingCost);
+						sendMyIntention(rm,tmpPath.getFirst(),tmpPack,tmpCost);
 						checkPackIsForMe = true;
 						System.out.print(tmpPack.getPackID() + " for ");
 						System.out.println(this.truckID);
 					}
-
-					if (this.previousPoint.equals(getRoadModel().getPosition(this))) {
-						isFrontFlagRaised = false;
-						isBackFlagDropped = false;
-					}
-					else {
-						System.out.println("[WARNING] -- No targeted Pack and still Truck not on GraphNode...");
-						//IMPORTANT in order to go to the end of your path under any circumstance !
-						if (!intPath.isEmpty()) {
-							System.out.println("[WARNING] -- No targeted Pack and still intention Path not empty...");
-								
-							tryToMove(rm, time);
-						}
-					}
 				}
+				
 				// A pack is on us
 				else {
 					for (Pack p : ps) {
-						//System.out.println("Ouch, a Pack just landed on me!");
-						applicationAnt = new IntentionAnt(getRoadModel(), truckID, rm.getPosition(this));
-						applicationAnt.sendTruckID(truckID, p, 0.);
-
-						curr = Optional.fromNullable(p);
-						intPath = getCorrespondingDestPath(rs, curr.get().getPackID());
-						//System.out.print(" for truck ");
-						//System.out.println(this.truckID);
-
-						//System.out.print("Change in previous and next node for truck nb : ");
-						//System.out.println(truckID);
-
-						previousPoint = rm.getPosition(this);
-						nextPoint = intPath.removeLast();
-						isBackFlagDropped = false;
-						isFrontFlagRaised = false;
-						this.previousLoc = new Point(-Double.MAX_VALUE,-Double.MAX_VALUE);
+						packAppearedOnUs = true;
+						checkPackIsForMe = true;
+						sendMyIntention(rm,rm.getPosition(this),p,0d);
+						tmpPath = getCorrespondingDestPath(rs, p.getPackID());
+						tmpPack = p;
 						break;
 					}
-					pm.pickup(this, curr.get(), time);
-					++this.hasCarried;
-					curr.get().setCarried(true);
 				}
-
+				
 			}
 
 			// If we have a pack in target
@@ -358,64 +342,43 @@ public class Truck extends Vehicle {
 
 				// We have the pack and we will deliver it
 				else if (inCargo) {
-					if (rm.getPosition(this).equals(this.previousLoc)) {
-						if (!intPath.isEmpty())
-                            System.out.println(this.getTruckID()+" says: I'm stuck Milhouse ... :'( need to go to " + intPath.getFirst().toString());
-						urgentAnt = new IntentionAnt(getRoadModel(), truckID, nextPoint);
-						urgentAnt.setEmergency();
+					if (!tryToMove(rm, time) && !intPath.isEmpty()) {
+                        System.out.println(this.getTruckID()+" says: I'm stuck Milhouse ... :'( need to go to " + intPath.getFirst().toString());
+						sendEmergency(rm);
 					}
-					
-					tryToMove(rm, time);
 					
 					if (rm.getPosition(this).equals(curr.get().getDeliveryLocation())) {
 							// deliver when we arrive
 							pm.deliver(this, curr.get(), time);
-							this.accumulatedDelay += curr.get().getDelay(time);
-							++this.hasDelivered;
+							//this.accumulatedDelay += curr.get().getDelay(time);
+							this.hasDelivered++;
 							curr.get().setDeposited();
-							previousPoint = rm.getPosition(this);
-							isBackFlagDropped = false;
-							isFrontFlagRaised = false;
 							curr = Optional.absent();
+							updateTargetPoints(rm, rm.getPosition(this));
 					}
-					 //else rm.moveTo(this, nextPoint, time);
 				}
+				
 				// We dont have yet the pack : go for it
 				else {
 				    System.out.println(this.getTruckID() + " starts to get " + this.curr.get().getPackID() + " at " + getRoadModel().getPosition(curr.get()));
 				    boolean hasNegotiated = false;
-					if (getRoadModel().getPosition(this).equals(this.previousLoc)){
-						if (!intPath.isEmpty())
-                            System.out.println(this.getTruckID()+" says: I'm stuck Milhouse ... :'( -- Must get Pack at "+ intPath.getFirst().toString());
-						//urgentAnt = new IntentionAnt(getRoadModel(), truckID, nextPoint);
-						//hasNegotiated = urgentAnt.negotiate(this);
+					
+					if(!tryToMove(rm, time) && !intPath.isEmpty()) {
+						 System.out.println(this.getTruckID()+" says: I'm stuck Milhouse ... :'( -- Must get Pack at "+ intPath.getFirst().toString());
+						 sendEmergency(rm);
 					}
-					//if (!hasNegotiated) {
-					if(true) {
-						//if (!intPath.isEmpty())
-							//System.out.println("Truck " + this.getTruckID() + " is getting this pack at " + this.getIntPath().getFirst());
-						
-							tryToMove(rm, time);
-
-							if (rm.equalPosition(this, curr.get())) {
-								pm.pickup(this, curr.get(), time);
-								++this.hasCarried;
-								curr.get().setCarried(true);
-								previousPoint = nextPoint;
-								isBackFlagDropped = false;
-								isFrontFlagRaised = false;
-								Set<RoadSign> rs = rm.getObjectsAt((RoadUser) this, RoadSign.class);
-								intPath = getCorrespondingDestPath(rs, curr.get().getPackID());
-								//System.out.print(" for truck ");
-								//System.out.println(this.truckID);
-							}
-						
-					}
+					
+					if (rm.getPosition(this).equals(curr.get().getPickupLocation())) {
+						pm.pickup(this, curr.get(), time);
+						this.hasCarried++;
+						curr.get().setCarried(true);
+						Set<RoadSign> rs = rm.getObjectsAt((RoadUser) this, RoadSign.class);
+						intPath = getCorrespondingDestPath(rs, curr.get().getPackID());
+						updateTargetPoints(rm, intPath.getLast());
+					}	
 				}
 			}
 		}
-		this.previousLoc = this.currLoc;
-		this.currLoc = rm.getPosition(this);
 	}
 
 }

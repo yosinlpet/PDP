@@ -166,7 +166,7 @@ public class Pack extends Parcel implements TickListener{
 
 	@Override
 	public void tick(TimeLapse timeLapse) {
-		if (candidates.size() > 0)
+		if (candidates.size() > 0 && !this.isBestTruckKnown)
 		{
 			this.truckID = selectTruck();
             this.candidates = new LinkedHashMap<>();

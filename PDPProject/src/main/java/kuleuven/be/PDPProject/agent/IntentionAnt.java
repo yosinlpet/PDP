@@ -133,7 +133,8 @@ public class IntentionAnt extends Ant{
 	public void setEmergency() {
 		Set<Truck> truckSet = this.roadModel.getObjectsAt(this, Truck.class);
 		for (Truck t : truckSet) {
-			t.setEmergencyMove(true);
+			if (t.getIntPath().size() == 0) 
+				t.setEmergencyMove(true);
 		}
 	}
 

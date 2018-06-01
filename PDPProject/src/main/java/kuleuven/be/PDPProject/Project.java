@@ -72,7 +72,7 @@ import com.github.rinde.rinsim.util.TimeWindow;
 public final class Project {
 
   private static final int NUM_DEPOTS = 1;
-  private static final int NUM_AGVS = 4;
+  private static final int NUM_AGVS = 3;
   private static final int NUM_PCKGS = 0;
 
   // time in ms
@@ -91,7 +91,7 @@ public final class Project {
   
   private static final int factor = 100;
   private static final long END = 3600;
-  private static final long seed = 8L;
+  private static final long seed = 1L;
 
   private static final double AGV_SPEED = 1d;
   private static final int AGV_CAPACITY = 1;

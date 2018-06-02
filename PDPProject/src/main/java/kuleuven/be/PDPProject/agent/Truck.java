@@ -104,7 +104,8 @@ public class Truck extends Vehicle {
 		isBackFlagDropped = !intAntBack.askFlag();
 	}
 
-	public void setEmergencyMove(){
+	public void setEmergencyMove(LinkedList<Point> path){
+		this.blockedPath = new LinkedList<>(path);
 		this.mustMove = !this.curr.isPresent();
 	}
 
@@ -226,7 +227,7 @@ public class Truck extends Vehicle {
 	
 	public void sendEmergency(RoadModel rm) {
 		urgentAnt = new IntentionAnt(rm, this.truckID, this.nextPoint);
-		urgentAnt.setEmergency(trucksBehindUs);
+		urgentAnt.setEmergency(this.trucksBehindUs, this.intPath);
 	}
 	
 	public void addToBehindUsList(String truckID) {

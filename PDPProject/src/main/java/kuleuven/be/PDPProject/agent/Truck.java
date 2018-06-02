@@ -46,12 +46,14 @@ public class Truck extends Vehicle {
 	private boolean checkPackIsForMe;
 	private boolean isTrapped;
 	private boolean packAppearedOnUs;
+	private boolean isDeadLocked;
 
 	private int hasDelivered;
 	private int hasCarried;
 	private long accumulatedDelay;
 	private double accumulatedDist;
-
+	private LinkedList<String> trucksBehindUs;
+	
 	RandomGenerator rng;
 	private RoadModel roadModel;
 	private PDPModel pdpModel;
@@ -89,6 +91,7 @@ public class Truck extends Vehicle {
 		tmpPack = null;
 		isTrapped = false;
 		hasChosenNewNode=false;
+		trucksBehindUs = new LinkedList<String>();
 	}
 
 	public void initRoadPDP(RoadModel pRoadModel, PDPModel pPdpModel) {
@@ -174,12 +177,28 @@ public class Truck extends Vehicle {
 		}
 		return minPath;
 	}
+	
+	
 
 	public LinkedList<Point> getCorrespondingDestPath(Set<RoadSign> rsSet,
 													  String packID){
 		LinkedList<Point> path = new LinkedList<>();
 		for(RoadSign rs : rsSet) {
 			if(rs.indicateDest()){
+				if(rs.getPackID().equals(packID)) {
+					path = new LinkedList<>(rs.getPath());
+					path.removeLast();
+					break;
+				}
+			}
+		}
+		return path;
+	}
+	
+	public LinkedList<Point> refindCorrespondingPackPath(Set<RoadSign> rsSet,String packID){
+		LinkedList<Point> path = new LinkedList<>();
+		for(RoadSign rs : rsSet) {
+			if(!rs.indicateDest()){
 				if(rs.getPackID().equals(packID)) {
 					path = new LinkedList<>(rs.getPath());
 					path.removeLast();
@@ -202,9 +221,13 @@ public class Truck extends Vehicle {
 		applicationAnt.sendTruckID(truckID, targetPack, cost);
 	}
 	
-	public void sendEmergency(RoadModel rm) {
+	public void sendEmergency(RoadModel rm, LinkedList<String> trucksBehindUs) {
 		urgentAnt = new IntentionAnt(rm, this.truckID, this.nextPoint);
-		urgentAnt.setEmergency();
+		urgentAnt.setEmergency(trucksBehindUs);
+	}
+	
+	public void addToBehindUsList(String truckID) {
+		trucksBehindUs.add(truckID);
 	}
 	
 	// Return true if we moved
@@ -232,8 +255,20 @@ public class Truck extends Vehicle {
 				else
 					previousPoint = nextPoint;
 			}
+			
+			trucksBehindUs = new LinkedList<String>(); // Reset list of trucks behind us
 			return true;
-		} else return false;
+			
+		} else { 	// We cannot move
+			// Check if deadlock
+			for(String trucks : trucksBehindUs) { 
+				if(trucks.equals(this.truckID)) {
+					isDeadLocked = true;
+					break;
+				}
+			}
+			return false;
+		}
 	}
 
 
@@ -277,8 +312,51 @@ public class Truck extends Vehicle {
 
 	@Override
 	protected void tickImpl(TimeLapse time) {
+			
+				
+			if(isDeadLocked) {
+				
+				// Choose a new node where to move
+				if (!hasChosenNewNode) {
+					Collection<Point> pointCollection = ((GraphRoadModel) roadModel).getGraph()
+							.getOutgoingConnections(roadModel.getPosition(this));
+					LinkedList<Point> points = new LinkedList<>();
+					points.addAll(pointCollection);
+					for(Point p : points) {
+						if(!p.equals(nextPoint)) {
+							updateTargetPoints(roadModel, p);
+							hasChosenNewNode = true;
+							break;
+						}
+					}
+				}
+				
+				// Try to move
+				if (tryToMove(roadModel, time)) {
+					if (roadModel.getPosition(this).equals(nextPoint)) { // we have moved to the next node
+						Set<RoadSign> roadSignSet = roadModel.getObjectsAt((RoadUser) this, RoadSign.class);
+						if(curr.isPresent()) {
+							boolean inCargo = pdpModel.containerContains(this, curr.get());
+							if(!inCargo) {
+								intPath = refindCorrespondingPackPath(roadSignSet,curr.get().getPackID());
+								updateTargetPoints(roadModel, intPath.getLast());
+							}
+							else if (inCargo) {
+								intPath = getCorrespondingDestPath(roadSignSet, curr.get().getPackID());
+								updateTargetPoints(roadModel, intPath.getLast());
+							}						
+							this.mustMove = false;
+							this.hasChosenNewNode = false;
+							this.isDeadLocked = false;
+						}
+					}
+				} else {
+					sendEmergency(roadModel, trucksBehindUs);
+				}
+			}
+			
 			// If we are waiting and someone want to pass
-			if (this.mustMove && intPath.isEmpty()) {
+			else if (this.mustMove && intPath.isEmpty()) {
 				System.out.println(this.getTruckID() + " must move!");
 
 				// Choose a node where to move
@@ -299,11 +377,12 @@ public class Truck extends Vehicle {
 						hasChosenNewNode = false;
 					}
 				} else {
-					sendEmergency(roadModel);
+					sendEmergency(roadModel, trucksBehindUs);
 				}
 
 			} else // We can do our stuff
 			{
+			
 				if (!this.mustMove) {
 					System.out.println(this.getTruckID() + " mustn't move from " + roadModel.getPosition(this).toString());
 					System.out.println("prev point:"+ this.previousPoint.toString() + " -- next point: "+ this.nextPoint.toString());
@@ -323,6 +402,7 @@ public class Truck extends Vehicle {
 				// If no pack in target
 				if (!curr.isPresent()) {
 
+					
 					Set<RoadSign> roadSignSet = roadModel.getObjectsAt((RoadUser) this, RoadSign.class);
 					Set<Pack> packSet = roadModel.getObjectsAt((RoadUser) this, Pack.class);
 
@@ -363,7 +443,7 @@ public class Truck extends Vehicle {
 				// If we have a pack in target
 				if (curr.isPresent() && !checkPackIsForMe) {
 				    this.mustMove = false;
-					final boolean inCargo = pdpModel.containerContains(this, curr.get());
+				    final boolean inCargo = pdpModel.containerContains(this, curr.get());
 
 					// Sanity check
 					if (!inCargo && !roadModel.containsObject(curr.get())) {
@@ -375,7 +455,7 @@ public class Truck extends Vehicle {
 					else if (inCargo) {
 						if (!tryToMove(roadModel, time)) {
 						//	System.out.println(this.getTruckID() + " says: I'm stuck Milhouse ... :'( need to go to " + this.curr.get().getDeliveryLocation());
-							sendEmergency(roadModel);
+							sendEmergency(roadModel, trucksBehindUs);
 						}
 
 						if (roadModel.getPosition(this).equals(curr.get().getDeliveryLocation())) {
@@ -397,7 +477,7 @@ public class Truck extends Vehicle {
 						if (!tryToMove(roadModel, time)) {
 						//	System.out.println(this.getTruckID() + " says: I'm stuck Milhouse ... :'( -- Must get Pack at " + this.curr.get().getPickupLocation());
 							System.out.println("sending emergency.........");
-							sendEmergency(roadModel);
+							sendEmergency(roadModel, trucksBehindUs);
 						}
 						else
 							System.out.println("try to move succeeeded");

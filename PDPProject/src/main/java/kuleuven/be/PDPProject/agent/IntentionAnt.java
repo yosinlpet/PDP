@@ -126,15 +126,16 @@ public class IntentionAnt extends Ant{
 	 * Tells the {@link Truck} in front of us that we are in a hurry...
      * @return true if the {@link Truck} blocking us can move
 	 */
-	public boolean setEmergency() {
+	public void setEmergency(LinkedList<String> trucksBehindUs) {
 		Set<Truck> truckSet = this.roadModel.getObjectsAt(this, Truck.class);
 		for (Truck t : truckSet) {
 			if (t.getIntPath().size() == 0) {
 				t.setEmergencyMove();
-				return t.getTrapped();
+				for(String truckID : trucksBehindUs) {
+					t.addToBehindUsList(truckID);
+				}
 			}
 		}
-		return false;
 	}
 
 	/**

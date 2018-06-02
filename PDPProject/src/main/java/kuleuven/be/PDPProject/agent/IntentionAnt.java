@@ -129,11 +129,14 @@ public class IntentionAnt extends Ant{
 	public void setEmergency(LinkedList<String> trucksBehindUs) {
 		Set<Truck> truckSet = this.roadModel.getObjectsAt(this, Truck.class);
 		for (Truck t : truckSet) {
+			if (!t.getTrucksBehindUs().contains(this.truckID))
+				t.addToBehindUsList(this.truckID);
+			for(String tID : trucksBehindUs) {
+			    if (!t.getTrucksBehindUs().contains(tID))
+				t.addToBehindUsList(tID);
+			}
 			if (t.getIntPath().isEmpty()) {
 				t.setEmergencyMove();
-				for(String truckID : trucksBehindUs) {
-					t.addToBehindUsList(truckID);
-				}
 			}
 		}
 	}

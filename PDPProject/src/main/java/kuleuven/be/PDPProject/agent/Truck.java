@@ -61,6 +61,7 @@ public class Truck extends Vehicle {
 	private Pack tmpPack;
 	private double tmpCost;
 	private LinkedList<Point> tmpPath;
+	private LinkedList<Point> blockedPath;
 
 	String truckID;
 
@@ -91,7 +92,8 @@ public class Truck extends Vehicle {
 		tmpPack = null;
 		isTrapped = false;
 		hasChosenNewNode=false;
-		trucksBehindUs = new LinkedList<String>();
+		trucksBehindUs = new LinkedList<>();
+		blockedPath = new LinkedList<>();
 	}
 
 	public void initRoadPDP(RoadModel pRoadModel, PDPModel pPdpModel) {
@@ -166,6 +168,9 @@ public class Truck extends Vehicle {
 		return curr.isPresent();
 	}
 
+	public LinkedList<String> getTrucksBehindUs() {
+		return trucksBehindUs;
+	}
 
 	/**
 	 * Returns the path (without the first node!) to a pack that is the closest to the truck
@@ -219,13 +224,13 @@ public class Truck extends Vehicle {
 		applicationAnt.sendTruckID(truckID, targetPack, cost);
 	}
 	
-	public void sendEmergency(RoadModel rm, LinkedList<String> trucksBehindUs) {
+	public void sendEmergency(RoadModel rm, LinkedList<String> blockedTrucks) {
 		urgentAnt = new IntentionAnt(rm, this.truckID, this.nextPoint);
-		urgentAnt.setEmergency(trucksBehindUs);
+		urgentAnt.setEmergency(blockedTrucks);
 	}
 	
 	public void addToBehindUsList(String truckID) {
-		trucksBehindUs.add(truckID);
+		trucksBehindUs.addLast(truckID);
 	}
 	
 
@@ -269,6 +274,7 @@ public class Truck extends Vehicle {
 		}
 		else { 	// We cannot move
 			// Check if deadlock
+            System.out.println(truckID+ " pushed by: "+trucksBehindUs.toString());
 			for(String trucks : trucksBehindUs) { 
 				if(trucks.equals(this.truckID)) {
 					isDeadLocked = true;
@@ -323,7 +329,7 @@ public class Truck extends Vehicle {
 			
 				
 			if(isDeadLocked) {
-				
+				System.out.println(this.truckID+" is deadlocked...");
 				// Choose a new node where to move
 				if (!hasChosenNewNode) {
 					Collection<Point> pointCollection = ((GraphRoadModel) roadModel).getGraph()
@@ -346,12 +352,12 @@ public class Truck extends Vehicle {
 						if(curr.isPresent()) {
 							boolean inCargo = pdpModel.containerContains(this, curr.get());
 							if(!inCargo) {
-								intPath = getCorrespondingPath(roadSignSet,curr.get().getPackID(), false);
-								updateTargetPoints(roadModel, intPath.getLast());
+								intPath = getCorrespondingPath(roadSignSet, curr.get().getPackID(), false);
+								updateTargetPoints(roadModel, nextPoint);
 							}
 							else {
 								intPath = getCorrespondingPath(roadSignSet, curr.get().getPackID(), true);
-								updateTargetPoints(roadModel, intPath.getLast());
+								updateTargetPoints(roadModel, nextPoint);
 							}						
 							this.mustMove = false;
 							this.hasChosenNewNode = false;
@@ -365,9 +371,9 @@ public class Truck extends Vehicle {
 					sendEmergency(roadModel, trucksBehindUs);
 				}
 			}
-			// If we are waiting and someone want to pass
+			// If we are waiting and someone wants to pass
 			else if (this.mustMove && intPath.isEmpty()) {
-				System.out.println(this.getTruckID() + " must move!");
+				System.out.println(this.getTruckID() + " must move from " + roadModel.getPosition(this).toString()+" _1_");
 
 				// Choose a node where to move
 				if (!hasChosenNewNode) { //|| (isTrapped && rm.getPosition(this).equals(previousPoint))) {
@@ -375,8 +381,14 @@ public class Truck extends Vehicle {
 							.getOutgoingConnections(roadModel.getPosition(this));
 					LinkedList<Point> points = new LinkedList<>();
 					points.addAll(pointCollection);
-					int randI = rng.nextInt(points.size());
-					Point point = points.get(randI);
+					LinkedList<Point> orderedPoints = new LinkedList<>();
+					for (Point p : points) {
+						if (blockedPath.contains(p))
+							orderedPoints.addLast(p);
+						else
+							orderedPoints.addFirst(p);
+					}
+					Point point = orderedPoints.getFirst();
 					updateTargetPoints(roadModel, point);
 					hasChosenNewNode = true;
 				}
@@ -393,22 +405,17 @@ public class Truck extends Vehicle {
 			} else // We can do our stuff
 			{
 			
-				if (!this.mustMove) {
-					System.out.println(this.getTruckID() + " mustn't move from " + roadModel.getPosition(this).toString());
-					System.out.println("prev point:"+ this.previousPoint.toString() + " -- next point: "+ this.nextPoint.toString());
-					if (curr.isPresent())
-						System.out.println(this.getTruckID() + "curr is present? "+curr.get().getPackID());
-					System.out.println(this.getTruckID() + "must check for me? "+Boolean.toString(checkPackIsForMe));
-					System.out.println(this.getTruckID() + "int path has length "+Integer.toString(intPath.size()));
-				}
-				else {
-					System.out.println(this.getTruckID() + " must move from " + roadModel.getPosition(this).toString());
-					System.out.println("prev point:"+ this.previousPoint.toString() + " -- next point: "+ this.nextPoint.toString());
-					if (curr.isPresent())
-						System.out.println(this.getTruckID() + "curr is present? "+curr.get().getPackID());
-					System.out.println(this.getTruckID() + "must check for me? "+Boolean.toString(checkPackIsForMe));
-					System.out.println(this.getTruckID() + "int path has length "+Integer.toString(intPath.size()));
-				}
+				if (!this.mustMove)
+					System.out.println(this.getTruckID() + " is free on " + roadModel.getPosition(this).toString());
+				else
+					System.out.println(this.getTruckID() + " must move from " + roadModel.getPosition(this).toString()+" _2_");
+
+				System.out.println("prev point:"+ this.previousPoint.toString() + " -- next point: "+ this.nextPoint.toString());
+				if (curr.isPresent())
+					System.out.println(this.getTruckID() + "curr is present? "+curr.get().getPackID());
+				System.out.println(this.getTruckID() + "must check for me? "+Boolean.toString(checkPackIsForMe));
+				System.out.println(this.getTruckID() + "int path has length "+Integer.toString(intPath.size()));
+
 				// If no pack in target
 				if (!curr.isPresent()) {
 

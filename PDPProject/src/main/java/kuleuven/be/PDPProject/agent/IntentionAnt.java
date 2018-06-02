@@ -139,36 +139,36 @@ public class IntentionAnt extends Ant{
 	}
 
 	/**
-	 * Gives the {@link Truck} in front of us the {@link Pack} we have to go get.
+	 * Gives the {@link Truck} in front of us the intention to get {@link Pack} we have to go get.
 	 * @param truck ourselves
 	 * @return the success or failure of the operation
 	 */
 	public boolean negotiate(Truck truck){
 		LinkedList<Point> myPath = new LinkedList<>(truck.getIntPath());
-		//if (myPath.isEmpty())								//then my target is on the next node, it should not happen: a truck is there too already.
-		if (myPath.size() < 2)
-			return false;
-//		else if (myPath.size() == 1) {						//I can't remove the only object of my path or I'll get lost...
-//			Set<Truck> truckSet = this.roadModel.getObjectsAt(this, Truck.class); //and the candidate can't have an empty path
-//			for (Truck t : truckSet) {
-//				if (t.getIntPath().size() == 0 && !t.isCarrying()) {		//candidate can't carry anything and must be aimless
-//					t.setNextPoint(myPath.getFirst());
-//					t.setCurr(truck.getCurr());
-//					System.out.println(t.getTruckID() + " gets pack of " + truck.getTruckID()+" _1_");
-//					truck.setIntPath(new LinkedList<Point>());				//I give up everything
-//					truck.setCurr(Optional.<Pack>absent());
-//					truck.setNextPoint(roadModel.getPosition(truck));
-//					return true;
-//				}
-//			}
-//		}
-		else
-		{
-			Set<Truck> truckSet = this.roadModel.getObjectsAt(this, Truck.class);
+		Set<Truck> truckSet = this.roadModel.getObjectsAt(this, Truck.class);
+		if (myPath.isEmpty()) {
+			// if empty, the truck is on the Pack and will just take it.
+			for (Truck t : truckSet) {
+				if (t.getIntPath().size() == 0 && !t.isCarrying() && !t.hasCurr()) {
+				    t.setCurr(truck.getCurr());
+				    truck.setCurr(Optional.<Pack>absent());
+				    return true;
+                }
+			}
+		}
+		else {
+			//else, we need to do fancy stuff to make sure the former Truck won't be wanting the same Pack as the new Truck.
+			Set<RoadSign> roadSignSet = this.roadModel.getObjectsAt(this, RoadSign.class);
             myPath.removeLast();											//We can remove the candidate's position from the path
 			for (Truck t : truckSet) {
-				if (t.getIntPath().size() == 0 && !t.isCarrying()) {
+				if (t.getIntPath().size() == 0 && !t.isCarrying() && !t.hasCurr()) {
 					t.setCurr(truck.getCurr());
+					Pack pack = truck.getCurr().get();
+					pack.setBestTruckKnown(false);
+					for (RoadSign rs : roadSignSet){
+						if (rs.getPackID() == pack.getPackID() && !rs.indicateDest())
+							t.sendMyIntention(roadModel, pack.getPickupLocation(), pack, rs.getCost());
+					}
 					t.setIntPath(myPath);
 					System.out.println(t.getTruckID() + " gets pack of " + truck.getTruckID() + " _2_");
 					truck.setIntPath(new LinkedList<Point>());

@@ -189,7 +189,7 @@ public class IntentionAnt extends Ant{
 							t.sendMyIntention(roadModel, pack.getPickupLocation(), pack, rs.getCost());
 					}
 					t.setIntPath(myPath);
-					t.setNextPoint(nextPoint);												//We're sure it works with initial myPath of size 1
+					t.updateTargetPoints(roadModel, nextPoint);							//We're sure it works with initial myPath of size 1
 					System.out.println(t.getTruckID() + " gets pack of " + truck.getTruckID() + " _2_");
 					truck.setIntPath(new LinkedList<Point>());
 					truck.setCurr(Optional.<Pack>absent());

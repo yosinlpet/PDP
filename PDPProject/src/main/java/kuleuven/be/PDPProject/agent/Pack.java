@@ -36,7 +36,6 @@ public class Pack extends Parcel implements TickListener{
 	private boolean fragile;
 	private boolean isBestTruckKnown;
 	private boolean isCritical;
-	private boolean timeIsOver;
 
 	private long endTime;
 	private StatCollector statCollector;
@@ -71,7 +70,6 @@ public class Pack extends Parcel implements TickListener{
 		this.fragile = rng.nextDouble() > 0.5;
 
 		this.isBestTruckKnown = false;
-		this.timeIsOver = false;
 		this.isCritical = false;
 		this.candidates = new LinkedHashMap<>();
 		this.truckID = new String("nobody");
@@ -190,7 +188,6 @@ public class Pack extends Parcel implements TickListener{
 	public void tick(TimeLapse timeLapse) {
 		if (candidates.size() > 0 && !isBestTruckKnown) {
 			this.truckID = selectTruck();
-			System.out.println(this.packID + " selects a boooooyyyyyy: " + this.truckID);
             this.candidates = new LinkedHashMap<>();
             FeasabilityAnt ant = new FeasabilityAnt(this, departure, deliveryTW, sim, false);
             ant.updateTruckID(ant.getClones(), truckID);

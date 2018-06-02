@@ -43,6 +43,7 @@ public class Truck extends Vehicle {
 	private boolean isFrontFlagRaised;
 	private boolean mustMove;
 	private boolean hasChosenNewNode;
+	private boolean hasChosenNewNodeDL;
 	private boolean checkPackIsForMe;
 	private boolean isTrapped;
 	private boolean packAppearedOnUs;
@@ -53,7 +54,7 @@ public class Truck extends Vehicle {
 	private long accumulatedDelay;
 	private double accumulatedDist;
 	private LinkedList<String> trucksBehindUs;
-	
+
 	RandomGenerator rng;
 	private RoadModel roadModel;
 	private PDPModel pdpModel;
@@ -92,14 +93,15 @@ public class Truck extends Vehicle {
 		tmpPack = null;
 		isTrapped = false;
 		hasChosenNewNode=false;
+		hasChosenNewNodeDL=false;
 		trucksBehindUs = new LinkedList<>();
 		blockedPath = new LinkedList<>();
 	}
 
 	public void initRoadPDP(RoadModel pRoadModel, PDPModel pPdpModel) {
 		// Set flag under us at the beginning
-        this.roadModel = pRoadModel;
-        this.pdpModel = pPdpModel;
+		this.roadModel = pRoadModel;
+		this.pdpModel = pPdpModel;
 		intAntBack = new IntentionAnt(roadModel, truckID, previousPoint);
 		isBackFlagDropped = !intAntBack.askFlag();
 	}
@@ -134,15 +136,11 @@ public class Truck extends Vehicle {
 	}
 
 	public boolean isCarrying() {
-            return (curr.isPresent() && this.pdpModel.containerContains(this, curr.get()));
+		return (curr.isPresent() && this.pdpModel.containerContains(this, curr.get()));
 	}
 
 	public boolean isCarrying(Pack pckg) {
 		return this.pdpModel.containerContains(this, pckg);
-	}
-
-	public boolean getTrapped() {
-		return this.isTrapped;
 	}
 
 	public int getHasCarried() {
@@ -161,12 +159,26 @@ public class Truck extends Vehicle {
 		return this.hasDelivered;
 	}
 
-	public Point getNextPoint() {
-		return nextPoint;
-	}
-
 	public boolean hasCurr() {
 		return curr.isPresent();
+	}
+
+	protected void deliver(TimeLapse timeLapse) {
+		pdpModel.deliver(this, curr.get(), timeLapse);
+		this.accumulatedDelay += curr.get().getDelay(timeLapse);
+		++this.hasDelivered;
+		curr.get().setDeposited();
+		curr = Optional.absent();
+	}
+
+	protected void pickUp(TimeLapse timeLapse, Pack pack, boolean setPath) {
+		pdpModel.pickup(this, pack, timeLapse);
+		++this.hasCarried;
+		pack.setCarried(true);
+		if (setPath) {
+			Set<RoadSign> rs = roadModel.getObjectsAt((RoadUser) this, RoadSign.class);
+			intPath = getCorrespondingPath(rs, pack.getPackID(), true);
+		}
 	}
 
 	public LinkedList<String> getTrucksBehindUs() {
@@ -212,28 +224,28 @@ public class Truck extends Vehicle {
 		}
 		return path;
 	}
-	
+
 	public void updateTargetPoints(RoadModel rm, Point nextPoint) {
 		this.previousPoint = rm.getPosition(this);
 		this.nextPoint = nextPoint;
 		isFrontFlagRaised = false;
 		isBackFlagDropped = false;
 	}
-	
+
 	public void sendMyIntention(RoadModel rm, Point packetPos, Pack targetPack, double cost) {
 		applicationAnt = new IntentionAnt(rm, this.truckID, packetPos);
 		applicationAnt.sendTruckID(truckID, targetPack, cost);
 	}
-	
+
 	public void sendEmergency(RoadModel rm) {
 		urgentAnt = new IntentionAnt(rm, this.truckID, this.nextPoint);
 		urgentAnt.setEmergency(this.trucksBehindUs, this.intPath);
 	}
-	
+
 	public void addToBehindUsList(String truckID) {
 		trucksBehindUs.addLast(truckID);
 	}
-	
+
 
 	public boolean negotiate(RoadModel rm){
 		urgentAnt = new IntentionAnt(rm, this.truckID, this.nextPoint);
@@ -242,7 +254,7 @@ public class Truck extends Vehicle {
 
 	/**
 	 * Updates previous and next points if on a node
-     * Keeps track of the total distance we ran so far
+	 * Keeps track of the total distance we ran so far
 	 * @return the success of the operation: true if we moved
 	 */
 	public boolean tryToMove(RoadModel rm, TimeLapse time) {
@@ -260,7 +272,7 @@ public class Truck extends Vehicle {
 				if (!rm.getPosition(this).equals(nextPoint))
 					isBackFlagDropped = intAntBack.dropFlag();
 			}
-			
+
 			if (rm.getPosition(this).equals(nextPoint)) {
 				if(!intPath.isEmpty()) {
 					updateTargetPoints(rm, intPath.removeLast());
@@ -268,15 +280,15 @@ public class Truck extends Vehicle {
 				else
 					updateTargetPoints(rm, nextPoint);
 			}
-			
+
 			trucksBehindUs = new LinkedList<>(); // Reset list of trucks behind us
 			return true;
-			
+
 		}
 		else { 	// We cannot move
 			// Check if deadlock
-            System.out.println(truckID+ " pushed by: "+trucksBehindUs.toString());
-			for(String trucks : trucksBehindUs) { 
+			//System.out.println(truckID+ " pushed by: "+trucksBehindUs.toString());
+			for(String trucks : trucksBehindUs) {
 				if(trucks.equals(this.truckID)) {
 					isDeadLocked = true;
 					break;
@@ -297,8 +309,7 @@ public class Truck extends Vehicle {
 				for(Pack p : packSet) {
 					if(p.getTruckID().equals(this.truckID)) {
 						isAllowed = true;
-						pdpModel.pickup(this, p, timeLapse);
-						++this.hasCarried;
+						this.pickUp(timeLapse, p, false);
 						break;
 					}
 				}
@@ -308,13 +319,13 @@ public class Truck extends Vehicle {
 				for (RoadSign rs : roadSignSet)	{
 					if (rs.getPack().equals(tmpPack) && !rs.indicateDest()) {
 						isAllowed = (this.truckID == rs.getTruckID());
-					} 
+					}
 				}
 			}
 
 			// Take the pack : its for us !
 			if (isAllowed) {
-				intPath = tmpPath;
+				intPath = new LinkedList<>(tmpPath);
 				updateTargetPoints(roadModel,intPath.getLast());
 				curr = Optional.fromNullable(tmpPack);
 				curr.get().setCarried(packAppearedOnUs);
@@ -327,199 +338,218 @@ public class Truck extends Vehicle {
 
 	@Override
 	protected void tickImpl(TimeLapse time) {
-			
-				
-			if(isDeadLocked) {
-				System.out.println(this.truckID+" is deadlocked...");
-				// Choose a new node where to move
-				if (!hasChosenNewNode) {
-					Collection<Point> pointCollection = ((GraphRoadModel) roadModel).getGraph()
-							.getOutgoingConnections(roadModel.getPosition(this));
-					LinkedList<Point> points = new LinkedList<>();
-					points.addAll(pointCollection);
-					for(Point p : points) {
-						if(!p.equals(nextPoint)) {
-							updateTargetPoints(roadModel, p);
-							hasChosenNewNode = true;
+		System.out.print(this.truckID + " | " + roadModel.getPosition(this) + " | ");
+
+		if(isDeadLocked) {
+			System.out.print("DL | ");
+			// Choose a new node where to move
+			if (!hasChosenNewNodeDL) {
+				Collection<Point> pointCollection = ((GraphRoadModel) roadModel).getGraph()
+						.getOutgoingConnections(roadModel.getPosition(this));
+				LinkedList<Point> points = new LinkedList<>();
+				points.addAll(pointCollection);
+				for(Point p : points) {
+					if(!p.equals(nextPoint)) {
+						updateTargetPoints(roadModel, p);
+						System.out.print("has "+ p.toString()+" | ");
+						hasChosenNewNodeDL = true;
+						break;
+					}
+					else
+						System.out.print("can't "+p.toString()+ " | ");
+				}
+			}
+
+			// Try to move
+			if (tryToMove(roadModel, time)) {
+				System.out.print("escaping | ");
+				if (roadModel.getPosition(this).equals(nextPoint)) { // we have moved to the next node
+					System.out.print("escaped | ");
+					Set<RoadSign> roadSignSet = roadModel.getObjectsAt((RoadUser) this, RoadSign.class);
+					if(curr.isPresent() && hasChosenNewNodeDL) {
+						boolean inCargo = pdpModel.containerContains(this, curr.get());
+						if(!inCargo) {
+							intPath = getCorrespondingPath(roadSignSet, curr.get().getPackID(), false);
+							if (roadModel.getPosition(this).equals(curr.get().getPickupLocation()))
+								this.pickUp(time, curr.get(), true);
+							updateTargetPoints(roadModel, intPath.getLast());
+						}
+						else {
+							intPath = getCorrespondingPath(roadSignSet, curr.get().getPackID(), true);
+							if (roadModel.getPosition(this).equals(curr.get().getDeliveryLocation())) {
+								this.deliver(time);
+								updateTargetPoints(roadModel, nextPoint);
+							}
+							else
+								updateTargetPoints(roadModel, intPath.getLast());
+						}
+					}
+					else {
+						updateTargetPoints(roadModel, nextPoint);
+						System.out.print("NoCurr or same Path | ");
+					}
+					this.mustMove = false;
+					this.hasChosenNewNodeDL = false;
+					this.isDeadLocked = false;
+				}
+				System.out.print("chosen: "+ Boolean.toString(hasChosenNewNodeDL)+" | ");
+			}
+			else {
+				System.out.print("no Esc | ");
+				if (curr.isPresent() && pdpModel.getParcelState(curr.get()).equals(PDPModel.ParcelState.AVAILABLE))
+					this.negotiate(roadModel);
+				else
+					sendEmergency(roadModel);
+			}
+			System.out.println("pp "+ this.previousPoint.toString() + " -- np "+ this.nextPoint.toString() + " | ");
+		}
+		// If we are waiting and someone wants to pass
+		else if (this.mustMove && intPath.isEmpty()) { // && !curr.isPresent()) {
+			System.out.print("must move  | ");
+
+			// Choose a node where to move
+			if (!hasChosenNewNode) { //|| (isTrapped && rm.getPosition(this).equals(previousPoint))) {
+				Collection<Point> pointCollection = ((GraphRoadModel) roadModel).getGraph()
+						.getOutgoingConnections(roadModel.getPosition(this));
+				LinkedList<Point> points = new LinkedList<>();
+				points.addAll(pointCollection);
+				LinkedList<Point> orderedPoints = new LinkedList<>();
+				for (Point p : points) {
+					if (blockedPath.contains(p))
+						orderedPoints.addLast(p);
+					else
+						orderedPoints.addFirst(p);
+				}
+				Point point = orderedPoints.getFirst();
+				updateTargetPoints(roadModel, point);
+				hasChosenNewNode = true;
+			}
+
+			if (tryToMove(roadModel, time)) {
+				if (roadModel.getPosition(this).equals(nextPoint)) { // we have moved to the next node
+					this.mustMove = false;
+					this.hasChosenNewNode = false;
+				}
+			}
+			else {
+				this.sendEmergency(roadModel);
+			}
+			System.out.println("pp "+ this.previousPoint.toString() + " -- np "+ this.nextPoint.toString() + " | ");
+		}
+		else {
+
+			if (!this.mustMove)
+				System.out.print("is free | ");
+			else
+				System.out.print("must move | ");
+
+			System.out.print("pp "+ this.previousPoint.toString() + " -- np "+ this.nextPoint.toString() + " | ");
+			System.out.print("must check: "+Boolean.toString(checkPackIsForMe)+" | ");
+			System.out.print("path length: "+Integer.toString(intPath.size())+" | ");
+			if (curr.isPresent()) {
+			    boolean inCargo = pdpModel.getParcelState(curr.get()).equals(PDPModel.ParcelState.IN_CARGO);
+				String cargoString = inCargo ? " in cargo" : " in transit";
+				String pointString = inCargo ? curr.get().getDeliveryLocation().toString() : curr.get().getPickupLocation().toString();
+				System.out.println("curr " + curr.get().getPackID() + " at " + pointString + cargoString + " | ");
+			}
+			else
+				System.out.println("");
+
+			// If no pack in target
+			if (!curr.isPresent()) {
+
+
+				Set<RoadSign> roadSignSet = roadModel.getObjectsAt((RoadUser) this, RoadSign.class);
+				Set<Pack> packSet = roadModel.getObjectsAt((RoadUser) this, Pack.class);
+
+				// If no pack on us
+				if (packSet.isEmpty()) {
+					tmpPath = selectPackPath(roadSignSet);
+					if (!tmpPath.isEmpty()) {
+						for (RoadSign r : roadSignSet) {
+							LinkedList<Point> path = new LinkedList<>(r.getPath());
+							path.removeLast();
+							if (path.equals(tmpPath)) {
+								tmpPack = r.getPack();
+								tmpCost = r.getCost();
+								break;
+							}
+						}
+						sendMyIntention(roadModel, tmpPath.getFirst(), tmpPack, tmpCost);
+						checkPackIsForMe = true;
+					}
+				}
+
+				// A pack is on us
+				else {
+					for (Pack p : packSet) {
+						if(p.getTruckID().equals("nobody")) {
+							packAppearedOnUs = true;
+							checkPackIsForMe = true;
+							sendMyIntention(roadModel, roadModel.getPosition(this), p, 0d);
+							tmpPath = getCorrespondingPath(roadSignSet, p.getPackID(), true);
+							tmpPack = p;
 							break;
 						}
 					}
 				}
-				
-				// Try to move
-				if (tryToMove(roadModel, time)) {
-					if (roadModel.getPosition(this).equals(nextPoint)) { // we have moved to the next node
-						Set<RoadSign> roadSignSet = roadModel.getObjectsAt((RoadUser) this, RoadSign.class);
-						if(curr.isPresent()) {
-							boolean inCargo = pdpModel.containerContains(this, curr.get());
-							if(!inCargo) {
-								intPath = getCorrespondingPath(roadSignSet, curr.get().getPackID(), false);
-								updateTargetPoints(roadModel, nextPoint);
-							}
-							else {
-								intPath = getCorrespondingPath(roadSignSet, curr.get().getPackID(), true);
-								updateTargetPoints(roadModel, nextPoint);
-							}						
-							this.mustMove = false;
-							this.hasChosenNewNode = false;
-							this.isDeadLocked = false;
-						}
-						else
-							System.out.println("Deadlocked boy without targeted Pack...");
-					}
-				}
-				else {
-					sendEmergency(roadModel);
-				}
 			}
-			// If we are waiting and someone wants to pass
-			else if (this.mustMove && intPath.isEmpty()) {
-				System.out.println(this.getTruckID() + " must move from " + roadModel.getPosition(this).toString()+" _1_");
 
-				// Choose a node where to move
-				if (!hasChosenNewNode) { //|| (isTrapped && rm.getPosition(this).equals(previousPoint))) {
-					Collection<Point> pointCollection = ((GraphRoadModel) roadModel).getGraph()
-							.getOutgoingConnections(roadModel.getPosition(this));
-					LinkedList<Point> points = new LinkedList<>();
-					points.addAll(pointCollection);
-					LinkedList<Point> orderedPoints = new LinkedList<>();
-					for (Point p : points) {
-						if (blockedPath.contains(p))
-							orderedPoints.addLast(p);
-						else
-							orderedPoints.addFirst(p);
-					}
-					Point point = orderedPoints.getFirst();
-					updateTargetPoints(roadModel, point);
-					hasChosenNewNode = true;
+			// If we have a pack in target
+			if (curr.isPresent() && !checkPackIsForMe) {
+				this.mustMove = false;
+				final boolean inCargo = pdpModel.containerContains(this, curr.get());
+
+				// Sanity check
+				if (!inCargo && !roadModel.containsObject(curr.get())) {
+					System.out.println("[WARNING] -- Sanity Check");
+					curr = Optional.absent();
 				}
 
-				if (tryToMove(roadModel, time)) {
-					if (roadModel.getPosition(this).equals(nextPoint)) { // we have moved to the next node
-						this.mustMove = false;
-						hasChosenNewNode = false;
-					}
-				} else {
-					sendEmergency(roadModel);
-				}
-
-			} else // We can do our stuff
-			{
-			
-				if (!this.mustMove)
-					System.out.println(this.getTruckID() + " is free on " + roadModel.getPosition(this).toString());
-				else
-					System.out.println(this.getTruckID() + " must move from " + roadModel.getPosition(this).toString()+" _2_");
-
-				System.out.println("prev point:"+ this.previousPoint.toString() + " -- next point: "+ this.nextPoint.toString());
-				if (curr.isPresent())
-					System.out.println(this.getTruckID() + "curr is present? "+curr.get().getPackID());
-				System.out.println(this.getTruckID() + "must check for me? "+Boolean.toString(checkPackIsForMe));
-				System.out.println(this.getTruckID() + "int path has length "+Integer.toString(intPath.size()));
-
-				// If no pack in target
-				if (!curr.isPresent()) {
-
-					
-					Set<RoadSign> roadSignSet = roadModel.getObjectsAt((RoadUser) this, RoadSign.class);
-					Set<Pack> packSet = roadModel.getObjectsAt((RoadUser) this, Pack.class);
-
-					// If no pack on us
-					if (packSet.isEmpty()) {
-						tmpPath = selectPackPath(roadSignSet);
-						if (!tmpPath.isEmpty()) {
-							for (RoadSign r : roadSignSet) {
-								LinkedList<Point> path = new LinkedList<>(r.getPath());
-								path.removeLast();
-								if (path.equals(tmpPath)) {
-									tmpPack = r.getPack();
-									tmpCost = r.getCost();
-									break;
-								}
-							}
-							sendMyIntention(roadModel, tmpPath.getFirst(), tmpPack, tmpCost);
-							checkPackIsForMe = true;
-						}
-					}
-
-					// A pack is on us
-					else {
-						for (Pack p : packSet) {
-							if(p.getTruckID().equals("nobody")) {
-								packAppearedOnUs = true;
-								checkPackIsForMe = true;
-								sendMyIntention(roadModel, roadModel.getPosition(this), p, 0d);
-								tmpPath = getCorrespondingPath(roadSignSet, p.getPackID(), true);
-								tmpPack = p;
-								break;
-							}
-						}
-					}
-				}
-
-				// If we have a pack in target
-				if (curr.isPresent() && !checkPackIsForMe) {
-				    this.mustMove = false;
-				    final boolean inCargo = pdpModel.containerContains(this, curr.get());
-
-					// Sanity check
-					if (!inCargo && !roadModel.containsObject(curr.get())) {
-						System.out.println("[WARNING] -- Sanity Check");
-						curr = Optional.absent();
-					}
-
-					// We have the pack and we will deliver it
-					else if (inCargo) {
-						if (!tryToMove(roadModel, time)) {
+				// We have the pack and we will deliver it
+				else if (inCargo) {
+					if (!tryToMove(roadModel, time)) {
 						//	System.out.println(this.getTruckID() + " says: I'm stuck Milhouse ... :'( need to go to " + this.curr.get().getDeliveryLocation());
-							sendEmergency(roadModel);
-						}
-
-						if (roadModel.getPosition(this).equals(curr.get().getDeliveryLocation())) {
-							// deliver when we arrive
-							pdpModel.deliver(this, curr.get(), time);
-							this.accumulatedDelay += curr.get().getDelay(time);
-							++this.hasDelivered;
-							curr.get().setDeposited();
-							curr = Optional.absent();
-							updateTargetPoints(roadModel, roadModel.getPosition(this));
-						}
+						sendEmergency(roadModel);
 					}
 
-					// We dont have yet the pack : go for it
-					else {
-						//System.out.println(this.getTruckID() + " at " + this.roadModel.getPosition(this) + " starts to get " + this.curr.get().getPackID() + " at " + roadModel.getPosition(curr.get()));
-						boolean hasNegotiated = false;
+					if (roadModel.getPosition(this).equals(curr.get().getDeliveryLocation())) {
+						// deliver when we arrive
+                        this.deliver(time);
+						updateTargetPoints(roadModel, roadModel.getPosition(this));
+					}
+				}
 
-						if (!tryToMove(roadModel, time)) {
-							System.out.println(this.getTruckID() + " says: I'm stuck Milhouse ... :'( -- Must get Pack at " + this.curr.get().getPickupLocation());
-							hasNegotiated = negotiate(roadModel);
-						}
-						else
-							System.out.println("try to move succeeeded");
+				// We dont have yet the pack : go for it
+				else {
+					//System.out.println(this.getTruckID() + " at " + this.roadModel.getPosition(this) + " starts to get " + this.curr.get().getPackID() + " at " + roadModel.getPosition(curr.get()));
+					boolean hasNegotiated = false;
+
+					if (!tryToMove(roadModel, time)) {
+						//System.out.println(this.getTruckID() + " says: I'm stuck Milhouse ... :'( -- Must get Pack at " + this.curr.get().getPickupLocation());
+						hasNegotiated = negotiate(roadModel);
+					}
+					else
+						//System.out.println("try to move succeeeded");
 						if (hasNegotiated) {
 							updateTargetPoints(roadModel, roadModel.getPosition(this));
 							//System.out.println(this.truckID + "has negotiated, can rest at "+ roadModel.getPosition(this));
 						}
 						else {
 							if (roadModel.getPosition(this).equals(curr.get().getPickupLocation())) {
-								pdpModel.pickup(this, curr.get(), time);
-								++this.hasCarried;
-								curr.get().setCarried(true);
-								Set<RoadSign> rs = roadModel.getObjectsAt((RoadUser) this, RoadSign.class);
-								intPath = getCorrespondingPath(rs, curr.get().getPackID(), true);
+							    this.pickUp(time, curr.get(), true);
 								updateTargetPoints(roadModel, intPath.getLast());
 							}
 						}
 
-						//SANITY CHECK -- this should never happen in practice, only if there is a bug
-						if (!hasNegotiated && this.intPath.isEmpty() && this.roadModel.getPosition(this) == this.nextPoint) {
-							System.out.println("[WARNING] -- AIMING AT A PACK BUT NO WAY TO GET THERE -- PATH COMPUTATION");
-							Set<RoadSign> roadSignSet = roadModel.getObjectsAt((RoadUser) this, RoadSign.class);
-							getCorrespondingPath(roadSignSet, truckID, inCargo);
-						}
+					//SANITY CHECK -- this should never happen in practice, only if there is a bug
+					if (!hasNegotiated && this.intPath.isEmpty() && this.roadModel.getPosition(this) == this.nextPoint) {
+						System.out.println("[WARNING] -- AIMING AT A PACK BUT NO WAY TO GET THERE -- PATH COMPUTATION");
+						Set<RoadSign> roadSignSet = roadModel.getObjectsAt((RoadUser) this, RoadSign.class);
+						getCorrespondingPath(roadSignSet, truckID, inCargo);
 					}
 				}
 			}
+		}
 	}
 }

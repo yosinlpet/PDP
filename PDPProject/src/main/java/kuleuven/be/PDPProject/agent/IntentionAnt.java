@@ -129,7 +129,7 @@ public class IntentionAnt extends Ant{
 	public void setEmergency(LinkedList<String> trucksBehindUs) {
 		Set<Truck> truckSet = this.roadModel.getObjectsAt(this, Truck.class);
 		for (Truck t : truckSet) {
-			if (t.getIntPath().size() == 0) {
+			if (t.getIntPath().isEmpty()) {
 				t.setEmergencyMove();
 				for(String truckID : trucksBehindUs) {
 					t.addToBehindUsList(truckID);
@@ -151,6 +151,7 @@ public class IntentionAnt extends Ant{
 			for (Truck t : truckSet) {
 				if (t.getIntPath().size() == 0 && !t.isCarrying() && !t.hasCurr()) {
 				    t.setCurr(truck.getCurr());
+					System.out.println(t.getTruckID() + " gets pack of " + truck.getTruckID() + " _0_");
 				    truck.setCurr(Optional.<Pack>absent());
 				    return true;
                 }
@@ -159,7 +160,7 @@ public class IntentionAnt extends Ant{
 		else {
 			//else, we need to do fancy stuff to make sure the former Truck won't be wanting the same Pack as the new Truck.
 			Set<RoadSign> roadSignSet = this.roadModel.getObjectsAt(this, RoadSign.class);
-            myPath.removeLast();											//We can remove the candidate's position from the path
+            Point nextPoint = myPath.removeLast();											//We can remove the candidate's position from the path
 			for (Truck t : truckSet) {
 				if (t.getIntPath().size() == 0 && !t.isCarrying() && !t.hasCurr()) {
 					t.setCurr(truck.getCurr());
@@ -170,6 +171,7 @@ public class IntentionAnt extends Ant{
 							t.sendMyIntention(roadModel, pack.getPickupLocation(), pack, rs.getCost());
 					}
 					t.setIntPath(myPath);
+					t.setNextPoint(nextPoint);
 					System.out.println(t.getTruckID() + " gets pack of " + truck.getTruckID() + " _2_");
 					truck.setIntPath(new LinkedList<Point>());
 					truck.setCurr(Optional.<Pack>absent());

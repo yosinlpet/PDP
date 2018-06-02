@@ -11,6 +11,7 @@ import com.github.rinde.rinsim.core.model.time.TimeLapse;
 import com.github.rinde.rinsim.geom.Point;
 import com.github.rinde.rinsim.util.TimeWindow;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.Map;
 import com.google.common.base.Optional;
 import org.apache.commons.math3.random.RandomGenerator;
@@ -144,6 +145,10 @@ public class Pack extends Parcel implements TickListener{
 		return dto.getDeliveryTimeWindow();
 	}
 
+	public void setBestTruckKnown(boolean bestTruckKnown) {
+		isBestTruckKnown = bestTruckKnown;
+	}
+
 	/**
 	 * Selects the closest {@link Truck} for delivery
 	 * @return the <code>truckID</code> of the {@link Truck}
@@ -157,8 +162,9 @@ public class Pack extends Parcel implements TickListener{
 	   		if (val < minCost) {
 				minKey = key;
 				minCost = val;
-			}
+	   		}
 	   }
+	   System.out.println(minKey + " has cost: " + Double.toString(minCost));
 	   return minKey;
 	}
 
@@ -184,9 +190,11 @@ public class Pack extends Parcel implements TickListener{
 	public void tick(TimeLapse timeLapse) {
 		if (candidates.size() > 0 && !isBestTruckKnown) {
 			this.truckID = selectTruck();
+			System.out.println(this.packID + " selects a boooooyyyyyy: " + this.truckID);
             this.candidates = new LinkedHashMap<>();
             FeasabilityAnt ant = new FeasabilityAnt(this, departure, deliveryTW, sim, false);
             ant.updateTruckID(ant.getClones(), truckID);
+            this.candidates = new LinkedHashMap<>();
             this.isBestTruckKnown = true;
         }
         if (timeLapse.getTime()%5 == 0 && pdpModel.getParcelState(this).equals(PDPModel.ParcelState.AVAILABLE))

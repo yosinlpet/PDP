@@ -159,6 +159,10 @@ public class Truck extends Vehicle {
 		return nextPoint;
 	}
 
+	public boolean hasCurr() {
+		return curr.isPresent();
+	}
+
 	// Return the path (without the first node!) to a pack that is the closest to the truck
 	public LinkedList<Point> selectPackPath(Set<RoadSign> rsSet, TimeLapse time) {
 		double minCost=Double.MAX_VALUE;
@@ -206,7 +210,11 @@ public class Truck extends Vehicle {
 		urgentAnt = new IntentionAnt(rm, this.truckID, this.nextPoint);
 		urgentAnt.setEmergency();
 	}
-	
+
+	public boolean negotiate(RoadModel rm){
+		urgentAnt = new IntentionAnt(rm, this.truckID, this.nextPoint);
+		return urgentAnt.negotiate(this);
+	}
 	// Return true if we moved
 	// Update next and previous point if we are on a node
 	public boolean tryToMove(RoadModel rm, TimeLapse time) {
@@ -359,7 +367,6 @@ public class Truck extends Vehicle {
 					}
 				}
 				//TODO add random hops when IN_CARGO in order to avoid deadlocks.
-				//TODO check why we need to move to nextPoint when intentionPath but no curr....
 				// If we have a pack in target
 				if (curr.isPresent() && !checkPackIsForMe) {
 				    this.mustMove = false;
@@ -381,7 +388,7 @@ public class Truck extends Vehicle {
 						if (roadModel.getPosition(this).equals(curr.get().getDeliveryLocation())) {
 							// deliver when we arrive
 							pdpModel.deliver(this, curr.get(), time);
-							//this.accumulatedDelay += curr.get().getDelay(time);
+							this.accumulatedDelay += curr.get().getDelay(time);
 							++this.hasDelivered;
 							curr.get().setDeposited();
 							curr = Optional.absent();
@@ -395,20 +402,23 @@ public class Truck extends Vehicle {
 						boolean hasNegotiated = false;
 
 						if (!tryToMove(roadModel, time)) {
-						//	System.out.println(this.getTruckID() + " says: I'm stuck Milhouse ... :'( -- Must get Pack at " + this.curr.get().getPickupLocation());
-							System.out.println("sending emergency.........");
-							sendEmergency(roadModel);
-						}
-						else
+							System.out.println(this.getTruckID() + " says: I'm stuck Milhouse ... :'( -- Must get Pack at " + this.curr.get().getPickupLocation());
+							hasNegotiated = negotiate(roadModel);
+						} else
 							System.out.println("try to move succeeeded");
-
-						if (roadModel.getPosition(this).equals(curr.get().getPickupLocation())) {
-							pdpModel.pickup(this, curr.get(), time);
-							++this.hasCarried;
-							curr.get().setCarried(true);
-							Set<RoadSign> rs = roadModel.getObjectsAt((RoadUser) this, RoadSign.class);
-							intPath = getCorrespondingDestPath(rs, curr.get().getPackID());
-							updateTargetPoints(roadModel, intPath.getLast());
+						if (hasNegotiated) {
+							updateTargetPoints(roadModel, roadModel.getPosition(this));
+							//System.out.println(this.truckID + "has negotiated, can rest at "+ roadModel.getPosition(this));
+						}
+						else {
+							if (roadModel.getPosition(this).equals(curr.get().getPickupLocation())) {
+								pdpModel.pickup(this, curr.get(), time);
+								++this.hasCarried;
+								curr.get().setCarried(true);
+								Set<RoadSign> rs = roadModel.getObjectsAt((RoadUser) this, RoadSign.class);
+								intPath = getCorrespondingDestPath(rs, curr.get().getPackID());
+								updateTargetPoints(roadModel, intPath.getLast());
+							}
 						}
 					}
 				}

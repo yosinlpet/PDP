@@ -128,6 +128,8 @@ public class IntentionAnt extends Ant{
 	 */
 	public void setEmergency(LinkedList<String> trucksBehindUs) {
 		Set<Truck> truckSet = this.roadModel.getObjectsAt(this, Truck.class);
+
+		// Tell the next one the queue of waiting dudes...
 		for (Truck t : truckSet) {
 			if (!t.getTrucksBehindUs().contains(this.truckID))
 				t.addToBehindUsList(this.truckID);
@@ -135,6 +137,8 @@ public class IntentionAnt extends Ant{
 			    if (!t.getTrucksBehindUs().contains(tID))
 				t.addToBehindUsList(tID);
 			}
+
+			//Do the actual emergency
 			if (t.getIntPath().isEmpty()) {
 				t.setEmergencyMove();
 			}
@@ -146,15 +150,26 @@ public class IntentionAnt extends Ant{
 	 * @param truck ourselves
 	 * @return the success or failure of the operation
 	 */
-	public boolean negotiate(Truck truck){
+	public boolean negotiate(Truck truck, LinkedList<String> trucksBehindUs){
 		LinkedList<Point> myPath = new LinkedList<>(truck.getIntPath());
 		Set<Truck> truckSet = this.roadModel.getObjectsAt(this, Truck.class);
+
+		// Tell the next one the queue of waiting dudes...
+		for (Truck t : truckSet) {
+			if (!t.getTrucksBehindUs().contains(this.truckID))
+				t.addToBehindUsList(this.truckID);
+			for (String tID : trucksBehindUs) {
+				if (!t.getTrucksBehindUs().contains(tID))
+					t.addToBehindUsList(tID);
+			}
+		}
+
 		if (myPath.isEmpty()) {
 			// if empty, the truck is on the Pack and will just take it.
 			for (Truck t : truckSet) {
 				if (t.getIntPath().size() == 0 && !t.isCarrying() && !t.hasCurr()) {
 				    t.setCurr(truck.getCurr());
-					System.out.println(t.getTruckID() + " gets pack of " + truck.getTruckID() + " _0_");
+					System.out.println(t.getTruckID() + " gets pack of " + truck.getTruckID() + " _1_");
 				    truck.setCurr(Optional.<Pack>absent());
 				    return true;
                 }
@@ -174,7 +189,7 @@ public class IntentionAnt extends Ant{
 							t.sendMyIntention(roadModel, pack.getPickupLocation(), pack, rs.getCost());
 					}
 					t.setIntPath(myPath);
-					t.setNextPoint(nextPoint);
+					t.setNextPoint(nextPoint);												//We're sure it works with initial myPath of size 1
 					System.out.println(t.getTruckID() + " gets pack of " + truck.getTruckID() + " _2_");
 					truck.setIntPath(new LinkedList<Point>());
 					truck.setCurr(Optional.<Pack>absent());

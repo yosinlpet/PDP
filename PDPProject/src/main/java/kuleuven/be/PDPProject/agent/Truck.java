@@ -224,9 +224,9 @@ public class Truck extends Vehicle {
 		applicationAnt.sendTruckID(truckID, targetPack, cost);
 	}
 	
-	public void sendEmergency(RoadModel rm, LinkedList<String> blockedTrucks) {
+	public void sendEmergency(RoadModel rm) {
 		urgentAnt = new IntentionAnt(rm, this.truckID, this.nextPoint);
-		urgentAnt.setEmergency(blockedTrucks);
+		urgentAnt.setEmergency(trucksBehindUs);
 	}
 	
 	public void addToBehindUsList(String truckID) {
@@ -236,7 +236,7 @@ public class Truck extends Vehicle {
 
 	public boolean negotiate(RoadModel rm){
 		urgentAnt = new IntentionAnt(rm, this.truckID, this.nextPoint);
-		return urgentAnt.negotiate(this);
+		return urgentAnt.negotiate(this, trucksBehindUs);
 	}
 
 	/**
@@ -368,7 +368,7 @@ public class Truck extends Vehicle {
 					}
 				}
 				else {
-					sendEmergency(roadModel, trucksBehindUs);
+					sendEmergency(roadModel);
 				}
 			}
 			// If we are waiting and someone wants to pass
@@ -399,7 +399,7 @@ public class Truck extends Vehicle {
 						hasChosenNewNode = false;
 					}
 				} else {
-					sendEmergency(roadModel, trucksBehindUs);
+					sendEmergency(roadModel);
 				}
 
 			} else // We can do our stuff
@@ -471,7 +471,7 @@ public class Truck extends Vehicle {
 					else if (inCargo) {
 						if (!tryToMove(roadModel, time)) {
 						//	System.out.println(this.getTruckID() + " says: I'm stuck Milhouse ... :'( need to go to " + this.curr.get().getDeliveryLocation());
-							sendEmergency(roadModel, trucksBehindUs);
+							sendEmergency(roadModel);
 						}
 
 						if (roadModel.getPosition(this).equals(curr.get().getDeliveryLocation())) {
@@ -513,7 +513,7 @@ public class Truck extends Vehicle {
 
 						//SANITY CHECK -- this should never happen in practice, only if there is a bug
 						if (!hasNegotiated && this.intPath.isEmpty() && this.roadModel.getPosition(this) == this.nextPoint) {
-							System.out.println("[FATAL ERROR] -- AIMING AT A PACK BUT NO WAY TO GET THERE -- PATH COMPUTATION");
+							System.out.println("[WARNING] -- AIMING AT A PACK BUT NO WAY TO GET THERE -- PATH COMPUTATION");
 							Set<RoadSign> roadSignSet = roadModel.getObjectsAt((RoadUser) this, RoadSign.class);
 							getCorrespondingPath(roadSignSet, truckID, inCargo);
 						}
@@ -521,5 +521,4 @@ public class Truck extends Vehicle {
 				}
 			}
 	}
-
 }

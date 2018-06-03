@@ -169,8 +169,7 @@ public class IntentionAnt extends Ant{
 			for (Truck t : truckSet) {
 				if (t.getIntPath().size() == 0 && !t.isCarrying() && !t.hasCurr()) {
 				    t.setCurr(truck.getCurr());
-				    t.getCurr().get().setBestTruckKnown(false);
-					t.sendMyIntention(roadModel, roadModel.getPosition(this), truck.getCurr().get(), 0d);
+				    truck.getCurr().get().kidnapping(t.getTruckID());
 				    t.updateTargetPoints(roadModel, roadModel.getPosition(t), timeLapse);
 					System.out.println(t.getTruckID() + " gets pack of " + truck.getTruckID() + " _1_");
 				    truck.setCurr(Optional.<Pack>absent());
@@ -179,18 +178,11 @@ public class IntentionAnt extends Ant{
 			}
 		}
 		else {
-			//else, we need to do fancy stuff to make sure the former Truck won't be wanting the same Pack as the new Truck.
-			Set<RoadSign> roadSignSet = this.roadModel.getObjectsAt(this, RoadSign.class);
             Point nextPoint = myPath.removeLast();											//We can remove the candidate's position from the path
 			for (Truck t : truckSet) {
 				if (t.getIntPath().size() == 0 && !t.isCarrying() && !t.hasCurr()) {
 					t.setCurr(truck.getCurr());
-					Pack pack = truck.getCurr().get();
-					pack.setBestTruckKnown(false);
-					for (RoadSign rs : roadSignSet){
-						if (rs.getPackID() == pack.getPackID() && !rs.indicateDest())
-							t.sendMyIntention(roadModel, pack.getPickupLocation(), pack, rs.getCost());
-					}
+					truck.getCurr().get().kidnapping(t.getTruckID());
 					t.setIntPath(myPath);
 					t.updateTargetPoints(roadModel, nextPoint, timeLapse);							//We're sure it works with initial myPath of size 1
 					System.out.println(t.getTruckID() + " gets pack of " + truck.getTruckID() + " _2_");

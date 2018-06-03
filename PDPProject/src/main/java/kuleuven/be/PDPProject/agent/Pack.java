@@ -143,10 +143,6 @@ public class Pack extends Parcel implements TickListener{
 		return dto.getDeliveryTimeWindow();
 	}
 
-	public void setBestTruckKnown(boolean bestTruckKnown) {
-		isBestTruckKnown = bestTruckKnown;
-	}
-
 	/**
 	 * Selects the closest {@link Truck} for delivery
 	 * @return the <code>truckID</code> of the {@link Truck}
@@ -182,6 +178,17 @@ public class Pack extends Parcel implements TickListener{
 
 	public long getDelay(TimeLapse timeLapse) {
 		return Math.max(timeLapse.getTime() - this.deliveryTW.end(), 0L);
+	}
+
+	/**
+	 * Sends ants immediately in order to change {@link RoadSign}s' truckID
+	 * @param truckID ID of the kidnapper
+	 */
+	public void kidnapping(String truckID) {
+		FeasabilityAnt ant = new FeasabilityAnt(this, departure, deliveryTW, sim, false);
+		ant.updateTruckID(ant.getClones(), truckID);
+		this.truckID = truckID;
+		this.isBestTruckKnown = true;
 	}
 
 	@Override

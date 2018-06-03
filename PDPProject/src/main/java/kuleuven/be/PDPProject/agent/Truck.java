@@ -323,14 +323,13 @@ public class Truck extends Vehicle {
 						isAllowed = (this.truckID == rs.getTruckID());
 					}
 				}
-			//}
+//			}
 
 			// Take the pack : its for us !
 			if (isAllowed) {
 				intPath = new LinkedList<>(tmpPath);
 				updateTargetPoints(roadModel,intPath.getLast(), timeLapse);
 				curr = Optional.fromNullable(tmpPack);
-				curr.get().setCarried(packAppearedOnUs);
 				packAppearedOnUs = false;
 			}
 		}

@@ -17,7 +17,6 @@ package kuleuven.be.PDPProject;
 import com.github.rinde.rinsim.core.model.road.DynamicGraphRoadModelImpl;
 import com.github.rinde.rinsim.core.model.time.TimeModel;
 import kuleuven.be.PDPProject.agent.*;
-import kuleuven.be.PDPProject.caca.GraphCreator;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Maps.newHashMap;
@@ -76,15 +75,15 @@ import com.google.common.collect.Table;
  */
 public final class Project {
 
-  private static final int NUM_AGVS = 10;
+  private static final int NUM_AGVS = 8;
   private static final int NUM_PCKGS = 0;
 
   private static final int SPEED_UP = 1;
-  private static final double NEW_CUSTOMER_PROB = .02;
+  private static final double NEW_CUSTOMER_PROB = .03;
 
-  private static final String MAP = "largerGraph";
+  //private static final String MAP = "largerGraph";
   //private static String MAP = "largerGraph3";
-  //private static String MAP = "testGraph";
+  private static String MAP = "testGraph";
 
 
   private static final String MAP_FILE = "/" + MAP +".dot";
@@ -95,7 +94,7 @@ public final class Project {
   
   private static final int factor = 5;
   private static final long END = 3600;
-  private static final long SEED = 6L;
+  private static final long SEED = 20L;
 
   private static final double AGV_SPEED = .1d;
   private static final int AGV_CAPACITY = 1;
@@ -153,12 +152,12 @@ public final class Project {
     final View.Builder view = createGui(testing, display, m, list);
 
     final Simulator simulator = Simulator.builder()
-      //.addModel(RoadModelBuilders.staticGraph(loadGraph("/"+graphFile+".dot"))
-    	.addModel( RoadModelBuilders.dynamicGraph(GraphCreator.createSimpleGraph()) 
+      .addModel(RoadModelBuilders.staticGraph(loadGraph("/"+graphFile+".dot"))
+    	//.addModel( RoadModelBuilders.dynamicGraph(GraphCreator.createSimpleGraph())
     			.withDistanceUnit(SI.METER).withSpeedUnit(SI.METERS_PER_SECOND))
       .addModel(DefaultPDPModel.builder())
             .addModel(TimeModel.builder().withTickLength(1).withTimeUnit(SI.SECOND))
-      .addModel(view)
+      //.addModel(view)
       .setRandomSeed(seed)
       .build();
 

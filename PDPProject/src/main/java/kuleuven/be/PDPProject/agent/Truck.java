@@ -338,12 +338,11 @@ public class Truck extends Vehicle {
 
 	@Override
 	protected void tickImpl(TimeLapse time) {
-		System.out.print(this.truckID + " | " + roadModel.getPosition(this) + " | ");
+		System.out.print("Tick: "+ Long.toString(time.getTime())+ " | "+this.truckID + " | " + roadModel.getPosition(this) + " | ");
 
 		if(isDeadLocked) {
 			System.out.print("DL | ");
-			// Choose a new node where to move
-			if (!hasChosenNewNodeDL) {
+			if (!hasChosenNewNodeDL) {																					// Choose a new node where to move
 				Collection<Point> pointCollection = ((GraphRoadModel) roadModel).getGraph()
 						.getOutgoingConnections(roadModel.getPosition(this));
 				LinkedList<Point> points = new LinkedList<>();
@@ -360,10 +359,9 @@ public class Truck extends Vehicle {
 				}
 			}
 
-			// Try to move
-			if (tryToMove(roadModel, time)) {
+			if (tryToMove(roadModel, time)) {																			// Try to move
 				System.out.print("escaping | ");
-				if (roadModel.getPosition(this).equals(nextPoint)) { // we have moved to the next node
+				if (roadModel.getPosition(this).equals(nextPoint)) { 											// we have moved to the next node
 					System.out.print("escaped | ");
 					Set<RoadSign> roadSignSet = roadModel.getObjectsAt((RoadUser) this, RoadSign.class);
 					if(curr.isPresent() && hasChosenNewNodeDL) {
@@ -376,6 +374,8 @@ public class Truck extends Vehicle {
 						}
 						else {
 							intPath = getCorrespondingPath(roadSignSet, curr.get().getPackID(), true);
+							System.out.println();
+							System.out.println(truckID+" has new path: "+intPath.toString());
 							if (roadModel.getPosition(this).equals(curr.get().getDeliveryLocation())) {
 								this.deliver(time);
 								updateTargetPoints(roadModel, nextPoint);
@@ -403,12 +403,10 @@ public class Truck extends Vehicle {
 			}
 			System.out.println("pp "+ this.previousPoint.toString() + " -- np "+ this.nextPoint.toString() + " | ");
 		}
-		// If we are waiting and someone wants to pass
-		else if (this.mustMove && intPath.isEmpty()) { // && !curr.isPresent()) {
+		else if (this.mustMove && intPath.isEmpty()) { // && !curr.isPresent()) {										// If we are waiting and someone wants to pass
 			System.out.print("must move  | ");
 
-			// Choose a node where to move
-			if (!hasChosenNewNode) { //|| (isTrapped && rm.getPosition(this).equals(previousPoint))) {
+			if (!hasChosenNewNode) {																					// Choose a node where to move
 				Collection<Point> pointCollection = ((GraphRoadModel) roadModel).getGraph()
 						.getOutgoingConnections(roadModel.getPosition(this));
 				LinkedList<Point> points = new LinkedList<>();
@@ -426,7 +424,7 @@ public class Truck extends Vehicle {
 			}
 
 			if (tryToMove(roadModel, time)) {
-				if (roadModel.getPosition(this).equals(nextPoint)) { // we have moved to the next node
+				if (roadModel.getPosition(this).equals(nextPoint)) { 											// we have moved to the next node
 					this.mustMove = false;
 					this.hasChosenNewNode = false;
 				}
@@ -455,15 +453,13 @@ public class Truck extends Vehicle {
 			else
 				System.out.println("");
 
-			// If no pack in target
-			if (!curr.isPresent()) {
+			if (!curr.isPresent()) {																					// If no pack in target
 
 
 				Set<RoadSign> roadSignSet = roadModel.getObjectsAt((RoadUser) this, RoadSign.class);
 				Set<Pack> packSet = roadModel.getObjectsAt((RoadUser) this, Pack.class);
 
-				// If no pack on us
-				if (packSet.isEmpty()) {
+				if (packSet.isEmpty()) {																				// If no pack on us
 					tmpPath = selectPackPath(roadSignSet);
 					if (!tmpPath.isEmpty()) {
 						for (RoadSign r : roadSignSet) {
@@ -480,8 +476,7 @@ public class Truck extends Vehicle {
 					}
 				}
 
-				// A pack is on us
-				else {
+				else {																									// A pack is on us
 					for (Pack p : packSet) {
 						if(p.getTruckID().equals("nobody")) {
 							packAppearedOnUs = true;
@@ -495,52 +490,39 @@ public class Truck extends Vehicle {
 				}
 			}
 
-			// If we have a pack in target
-			if (curr.isPresent() && !checkPackIsForMe) {
+			if (curr.isPresent() && !checkPackIsForMe) {																// If we have a pack in target
 				this.mustMove = false;
 				final boolean inCargo = pdpModel.containerContains(this, curr.get());
 
-				// Sanity check
-				if (!inCargo && !roadModel.containsObject(curr.get())) {
+				if (!inCargo && !roadModel.containsObject(curr.get())) {												// Sanity check
 					System.out.println("[WARNING] -- Sanity Check");
 					curr = Optional.absent();
 				}
 
-				// We have the pack and we will deliver it
-				else if (inCargo) {
-					if (!tryToMove(roadModel, time)) {
-						//	System.out.println(this.getTruckID() + " says: I'm stuck Milhouse ... :'( need to go to " + this.curr.get().getDeliveryLocation());
+				else if (inCargo) {																						// We have the pack and we will deliver it
+					if (!tryToMove(roadModel, time))
 						sendEmergency(roadModel);
-					}
 
-					if (roadModel.getPosition(this).equals(curr.get().getDeliveryLocation())) {
-						// deliver when we arrive
+					if (roadModel.getPosition(this).equals(curr.get().getDeliveryLocation())) {                // deliver when we arrive
                         this.deliver(time);
 						updateTargetPoints(roadModel, roadModel.getPosition(this));
 					}
 				}
 
-				// We dont have yet the pack : go for it
-				else {
-					//System.out.println(this.getTruckID() + " at " + this.roadModel.getPosition(this) + " starts to get " + this.curr.get().getPackID() + " at " + roadModel.getPosition(curr.get()));
+				else {																									// We dont have yet the pack : go for it
 					boolean hasNegotiated = false;
 
-					if (!tryToMove(roadModel, time)) {
-						//System.out.println(this.getTruckID() + " says: I'm stuck Milhouse ... :'( -- Must get Pack at " + this.curr.get().getPickupLocation());
+					if (!tryToMove(roadModel, time))
 						hasNegotiated = negotiate(roadModel);
+
+					if (hasNegotiated)
+						updateTargetPoints(roadModel, roadModel.getPosition(this));
+					else {
+						if (roadModel.getPosition(this).equals(curr.get().getPickupLocation())) {               //pick up the thing
+							this.pickUp(time, curr.get(), true);
+							updateTargetPoints(roadModel, intPath.getLast());
+						}
 					}
-					else
-						//System.out.println("try to move succeeeded");
-						if (hasNegotiated) {
-							updateTargetPoints(roadModel, roadModel.getPosition(this));
-							//System.out.println(this.truckID + "has negotiated, can rest at "+ roadModel.getPosition(this));
-						}
-						else {
-							if (roadModel.getPosition(this).equals(curr.get().getPickupLocation())) {
-							    this.pickUp(time, curr.get(), true);
-								updateTargetPoints(roadModel, intPath.getLast());
-							}
-						}
 
 					//SANITY CHECK -- this should never happen in practice, only if there is a bug
 					if (!hasNegotiated && this.intPath.isEmpty() && this.roadModel.getPosition(this) == this.nextPoint) {

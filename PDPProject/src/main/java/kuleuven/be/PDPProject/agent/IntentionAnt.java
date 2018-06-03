@@ -169,6 +169,9 @@ public class IntentionAnt extends Ant{
 			for (Truck t : truckSet) {
 				if (t.getIntPath().size() == 0 && !t.isCarrying() && !t.hasCurr()) {
 				    t.setCurr(truck.getCurr());
+				    t.getCurr().get().setBestTruckKnown(false);
+					t.sendMyIntention(roadModel, roadModel.getPosition(this), truck.getCurr().get(), 0d);
+				    t.updateTargetPoints(roadModel, roadModel.getPosition(t));
 					System.out.println(t.getTruckID() + " gets pack of " + truck.getTruckID() + " _1_");
 				    truck.setCurr(Optional.<Pack>absent());
 				    return true;

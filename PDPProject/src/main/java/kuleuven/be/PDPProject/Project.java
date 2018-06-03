@@ -68,26 +68,30 @@ import com.github.rinde.rinsim.util.TimeWindow;
  */
 public final class Project {
 
-  private static final int NUM_AGVS = 6;
+  private static final int NUM_AGVS = 4;
   private static final int NUM_PCKGS = 0;
 
   private static final int SPEED_UP = 1;
-  private static final double NEW_CUSTOMER_PROB = .06;
+  private static final double NEW_CUSTOMER_PROB = .05;
 
-  private static final String MAP_FILE = "/testGraph.dot";
+  private static final String MAP = "largerGraph";
+  //private static String MAP = "largerGraph3";
+  //private static String MAP = "testGraph";
+
+
+  private static final String MAP_FILE = "/" + MAP +".dot";
   private static final Map<String, Graph<MultiAttributeData>> GRAPH_CACHE = newHashMap();
 
   private static final long TEST_STOP_TIME = 20 * 60 * 1000;
   private static final int TEST_SPEED_UP = 64;
   
   private static final int factor = 5;
-  private static final long END = 2000;
-  private static final long SEED = 0L;
+  private static final long END = 3600;
+  private static final long SEED = 6L;
 
-  private static final double AGV_SPEED = .2d;
+  private static final double AGV_SPEED = .1d;
   private static final int AGV_CAPACITY = 1;
 
-  private static final String OUTPUT_FILE = ".logfiles/run_nAGV"+String.format("%02d", NUM_AGVS)+"_seed"+String.format("%02d", SEED)+".log";
 
   public Project() {}
 
@@ -99,11 +103,19 @@ public final class Project {
   public static void main(@Nullable String[] args) {
     final long endTime = args != null && args.length >= 1 ? Long.parseLong(args[0]) : END;
 
-    final String graphFile = args != null && args.length >= 2 ? args[1] : MAP_FILE;
+    final String graphFile = args != null && args.length >= 2 ? args[1] : MAP;
 
     final long seed = args != null && args.length >= 3 ? Long.parseLong(args[2]) : SEED;
 
-    run(false, endTime, graphFile, null /* new Display() */, null, null, seed);
+    final double proba = args != null && args.length >= 4 ? Double.parseDouble(args[3]) : NEW_CUSTOMER_PROB;
+
+    final int fact = args != null && args.length >= 5 ? Integer.parseInt(args[4]) : factor;
+
+    final int num_agv = args != null && args.length >= 6 ? Integer.parseInt(args[5]) : NUM_AGVS;
+
+    final double agv_speed = args != null && args.length >= 7 ? Double.parseDouble(args[6]) : AGV_SPEED;
+
+    run(false, endTime, graphFile, null /* new Display() */, null, null, seed, num_agv, agv_speed, proba, fact);
   }
 
   /**
@@ -111,7 +123,7 @@ public final class Project {
    * @param testing If <code>true</code> enables the test mode.
    */
   public static void run(boolean testing) {
-    run(testing, Long.MAX_VALUE, MAP_FILE, null, null, null, SEED);
+    run(testing, Long.MAX_VALUE, MAP_FILE, null, null, null, SEED, NUM_AGVS, AGV_SPEED, NEW_CUSTOMER_PROB, factor);
   }
 
   /**
@@ -125,31 +137,38 @@ public final class Project {
    * @return The simulator instance.
    */
   public static Simulator run(boolean testing, final long endTime,
-      String graphFile,
-      @Nullable Display display, @Nullable Monitor m, @Nullable Listener list, long seed) {
+                              String graphFile,
+                              @Nullable Display display, @Nullable Monitor m, @Nullable Listener list, long seed, int num_agv, final double agv_speed, final double proba, final int fact) {
 	  
 	  int packID = 0;
 
     final View.Builder view = createGui(testing, display, m, list);
 
     final Simulator simulator = Simulator.builder()
-      .addModel(RoadModelBuilders.staticGraph(loadGraph(graphFile)).withDistanceUnit(SI.METER).withSpeedUnit(SI.METERS_PER_SECOND))
+      .addModel(RoadModelBuilders.staticGraph(loadGraph("/"+graphFile+".dot")).withDistanceUnit(SI.METER).withSpeedUnit(SI.METERS_PER_SECOND))
       .addModel(DefaultPDPModel.builder())
             .addModel(TimeModel.builder().withTickLength(1).withTimeUnit(SI.SECOND))
-      .addModel(view)
+      //.addModel(view)
       .setRandomSeed(seed)
       .build();
-    
+
+    final String OUTPUT_FILE = ".logfiles/" + graphFile
+            +"/run_nAGV"+String.format("%02d", num_agv)
+            +"_sAGV"+String.format("%02d", (int) Math.round(10*agv_speed))
+            +"_proba"+String.format("%03d", (int) Math.round(100*proba))
+            +"_tw"+String.format("%01d", fact)
+            +"_seed"+String.format("%02d", seed)+".log";
+
     final RandomGenerator rng = simulator.getRandomGenerator();
 
     final RoadModel roadModel = simulator.getModelProvider().getModel(
       RoadModel.class);
 
-    final StatCollector statCollector = new StatCollector(roadModel, OUTPUT_FILE, NUM_AGVS, SEED, NEW_CUSTOMER_PROB);
+    final StatCollector statCollector = new StatCollector(roadModel, OUTPUT_FILE, num_agv, seed, proba, fact, agv_speed);
 
     // add depots, taxis and parcels to simulator
       LinkedList<Point> positions = new LinkedList<>();
-    for (int i = 0; i < NUM_AGVS; i++) {
+    for (int i = 0; i < num_agv; i++) {
         Point position;
         if (positions.isEmpty()) {
             position = roadModel.getRandomPosition(rng);
@@ -161,7 +180,7 @@ public final class Project {
             while (positions.contains(position));
             positions.addLast(position);
         }
-    	simulator.register(new Truck(position,AGV_CAPACITY, AGV_SPEED,"Truck-"+String.format("%03d", i), rng));
+    	simulator.register(new Truck(position, AGV_CAPACITY, agv_speed,"Truck-"+String.format("%03d", i), rng));
     }
     
  
@@ -178,13 +197,13 @@ public final class Project {
 		long distanceShortestPath = (long) md.doubleValue(md.getUnit());
 
 		long maxDeliveryTime =
-				Math.round(distanceShortestPath*factor/AGV_SPEED);
+				Math.round(distanceShortestPath*fact/agv_speed);
 
 		TimeWindow tw = TimeWindow.create(0, maxDeliveryTime);
     	simulator.register(new Pack(
     				Parcel.builder(departure, destination)
     					.deliveryTimeWindow(tw)
-    					.buildDTO(), rng,"Pack-"+ String.format("%03d", packID),simulator, endTime, statCollector));
+    					.buildDTO(), rng,"Pack-"+ String.format("%03d", packID), simulator, endTime, statCollector));
     	packID++;
     }
 
@@ -195,7 +214,7 @@ public final class Project {
         if (time.getStartTime() >= endTime) {
             statCollector.runStats(time);
             simulator.stop();
-        } else if (rng.nextDouble() < NEW_CUSTOMER_PROB) {
+        } else if (rng.nextDouble() < proba) {
 
             Point destination;
         	Point departure = roadModel.getRandomPosition(rng);
@@ -211,7 +230,7 @@ public final class Project {
     		long distanceShortestPath = (long) md.doubleValue(md.getUnit());
 
     		long maxDeliveryTime =
-                    Math.round(distanceShortestPath*factor/AGV_SPEED);
+                    Math.round(distanceShortestPath*fact/agv_speed);
 
     		TimeWindow tw = TimeWindow.create(time.getStartTime(),
     						time.getStartTime()+maxDeliveryTime);
@@ -219,7 +238,7 @@ public final class Project {
         	simulator.register(new Pack(
     				Parcel.builder(departure, destination)
     					.deliveryTimeWindow(tw)
-    					.buildDTO(), rng,"Pack-"+ String.format("%03d",packID),simulator, endTime, statCollector));
+    					.buildDTO(), rng,"Pack-"+ String.format("%03d",packID), simulator, endTime, statCollector));
         	packID++;
         }
       }

@@ -39,8 +39,10 @@ public class StatCollector {
     private long seed;
     private int nAGVs;
     private double proba;
+    private double agv_speed;
+    private int factor;
 
-    public StatCollector(RoadModel roadModel, String fileName, int nAGVs, long seed, double proba) {
+    public StatCollector(RoadModel roadModel, String fileName, int nAGVs, long seed, double proba, int factor, double agv_speed) {
         this.fileName = fileName;
         this.roadModel = (GraphRoadModel) roadModel;
 
@@ -60,6 +62,8 @@ public class StatCollector {
         this.seed = seed;
         this.nAGVs = nAGVs;
         this.proba = proba;
+        this.agv_speed = agv_speed;
+        this.factor = factor;
     }
 
     public void setPackDelay(long delay) {
@@ -94,13 +98,17 @@ public class StatCollector {
             printer.println();
             printer.println("========================================================================================================");
             printer.println();
-            printer.println("Number of AGVs: " + Integer.toString(this.nAGVs));
+            printer.println("Number of AGVs : " + Integer.toString(this.nAGVs));
             printer.println();
-            printer.println("Seed          : " + Long.toString(this.seed));
+            printer.println("Speed of AGVs  : " + Double.toString(this.agv_speed));
             printer.println();
-            printer.println("Request proba : " + Double.toString(this.proba));
+            printer.println("Seed           : " + Long.toString(this.seed));
             printer.println();
-            printer.println("Stopped at T  = " + Long.toString(timeLapse.getTime()));
+            printer.println("Request proba  : " + Double.toString(this.proba));
+            printer.println();
+            printer.println("TimeWindow fact: "+ Integer.toString(this.factor));
+            printer.println();
+            printer.println("Stopped at T   : " + Long.toString(timeLapse.getTime()));
             printer.println();
             printer.println("========================================================================================================");
             printer.println();

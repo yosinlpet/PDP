@@ -306,24 +306,24 @@ public class Truck extends Vehicle {
 		if (checkPackIsForMe) {
 			boolean isAllowed = false;
 
-			if(packAppearedOnUs){ // The pack has appeared on us
-				Set<Pack> packSet = roadModel.getObjectsAt(this, Pack.class);
-				for(Pack p : packSet) {
-					if(p.getTruckID().equals(this.truckID)) {
-						isAllowed = true;
-						this.pickUp(timeLapse, p, false);
-						break;
-					}
-				}
-			}
-			else {
+//			if(packAppearedOnUs){ // The pack has appeared on us
+//				Set<Pack> packSet = roadModel.getObjectsAt(this, Pack.class);
+//				for(Pack p : packSet) {
+//					if(p.getTruckID().equals(this.truckID)) {
+//						isAllowed = true;
+//						this.pickUp(timeLapse, p, false);
+//						break;
+//					}
+//				}
+//			}
+//			else {
 				Set<RoadSign> roadSignSet = roadModel.getObjectsAt(this, RoadSign.class);
 				for (RoadSign rs : roadSignSet)	{
 					if (rs.getPack().equals(tmpPack) && !rs.indicateDest()) {
 						isAllowed = (this.truckID == rs.getTruckID());
 					}
 				}
-			}
+			//}
 
 			// Take the pack : its for us !
 			if (isAllowed) {
@@ -477,8 +477,10 @@ public class Truck extends Vehicle {
 							packAppearedOnUs = true;
 							checkPackIsForMe = true;
 							sendMyIntention(roadModel, roadModel.getPosition(this), p, 0d);
-							tmpPath = getCorrespondingPath(roadSignSet, p.getPackID(), true);
-							tmpPack = p;
+							this.pickUp(time, p, true);
+							curr = Optional.fromNullable(p);
+							//tmpPath = getCorrespondingPath(roadSignSet, p.getPackID(), true);
+							//tmpPack = p;
 							break;
 						}
 					}
@@ -521,9 +523,10 @@ public class Truck extends Vehicle {
 
 					//SANITY CHECK -- this should never happen in practice, only if there is a bug
 					if (!hasNegotiated && this.intPath.isEmpty() && this.roadModel.getPosition(this) == this.nextPoint) {
-						System.out.println("[WARNING] -- AIMING AT A PACK BUT NO WAY TO GET THERE -- PATH COMPUTATION");
 						Set<RoadSign> roadSignSet = roadModel.getObjectsAt((RoadUser) this, RoadSign.class);
-						intPath = getCorrespondingPath(roadSignSet, truckID, inCargo);
+						intPath = getCorrespondingPath(roadSignSet, curr.get().getPackID(), inCargo);
+						System.out.println("[WARNING] -- AIMING AT A PACK BUT NO WAY TO GET THERE -- PATH COMPUTATION" + intPath.toString());
+						System.out.println(curr.get().getPackID() + " is in cargo?"+ Boolean.toString(pdpModel.getParcelState(curr.get()).equals(PDPModel.ParcelState.IN_CARGO)));
 					}
 				}
 			}

@@ -154,42 +154,28 @@ public class IntentionAnt extends Ant{
 		LinkedList<Point> myPath = new LinkedList<>(truck.getIntPath());
 		Set<Truck> truckSet = this.roadModel.getObjectsAt(this, Truck.class);
 
-		// Tell the next one the queue of waiting dudes...
-		for (Truck t : truckSet) {
+		for (Truck t : truckSet) {																			// Tell the next one the queue of waiting dudes...
 			if (!t.getTrucksBehindUs().contains(this.truckID))
 				t.addToBehindUsList(this.truckID);
 			for (String tID : trucksBehindUs) {
 				if (!t.getTrucksBehindUs().contains(tID))
 					t.addToBehindUsList(tID);
 			}
-		}
-
-		if (myPath.isEmpty()) {
-			// if empty, the truck is on the Pack and will just take it.
-			for (Truck t : truckSet) {
-				if (t.getIntPath().size() == 0 && !t.isCarrying() && !t.hasCurr()) {
-				    t.setCurr(truck.getCurr());
-				    truck.getCurr().get().kidnapping(t.getTruckID());
-				    t.updateTargetPoints(roadModel, roadModel.getPosition(t), timeLapse);
-					System.out.println(t.getTruckID() + " gets pack of " + truck.getTruckID() + " _1_");
-				    truck.setCurr(Optional.<Pack>absent());
-				    return true;
-                }
-			}
-		}
-		else {
-            Point nextPoint = myPath.removeLast();											//We can remove the candidate's position from the path
-			for (Truck t : truckSet) {
-				if (t.getIntPath().size() == 0 && !t.isCarrying() && !t.hasCurr()) {
-					t.setCurr(truck.getCurr());
-					truck.getCurr().get().kidnapping(t.getTruckID());
+			if (t.getIntPath().size() == 0 && !t.isCarrying() && !t.hasCurr()) {							//t can get afforded the burden
+				t.setCurr(truck.getCurr());
+				truck.getCurr().get().kidnapping(t.getTruckID());
+				Point nextPoint;
+				if (myPath.isEmpty())																		//t is on the Pack
+					nextPoint = roadModel.getPosition(t);
+				else {
+					nextPoint = myPath.removeLast();
 					t.setIntPath(myPath);
-					t.updateTargetPoints(roadModel, nextPoint, timeLapse);							//We're sure it works with initial myPath of size 1
-					System.out.println(t.getTruckID() + " gets pack of " + truck.getTruckID() + " _2_");
 					truck.setIntPath(new LinkedList<Point>());
-					truck.setCurr(Optional.<Pack>absent());
-					return true;
 				}
+				System.out.println(t.getTruckID() + " gets pack of " + truck.getTruckID());
+				t.updateTargetPoints(roadModel, nextPoint, timeLapse);
+				truck.setCurr(Optional.<Pack>absent());
+				return true;
 			}
 		}
 		return false;

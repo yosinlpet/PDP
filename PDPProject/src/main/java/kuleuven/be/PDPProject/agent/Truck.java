@@ -386,7 +386,7 @@ public class Truck extends Vehicle {
 			}
 			else {
 				System.out.print("no Esc | ");
-				if (curr.isPresent() && pdpModel.getParcelState(curr.get()).equals(PDPModel.ParcelState.AVAILABLE))
+				if (curr.isPresent() && !pdpModel.containerContains(this, curr.get()))
 					this.negotiate(roadModel, time);
 				else
 					sendEmergency(roadModel);
@@ -435,7 +435,7 @@ public class Truck extends Vehicle {
 			System.out.print("must check: "+Boolean.toString(checkPackIsForMe)+" | ");
 			System.out.print("path length: "+Integer.toString(intPath.size())+" | ");
 			if (curr.isPresent()) {
-			    boolean inCargo = pdpModel.getParcelState(curr.get()).equals(PDPModel.ParcelState.IN_CARGO);
+			    boolean inCargo = pdpModel.containerContains(this, curr.get());
 				String cargoString = inCargo ? " in cargo" : " in transit";
 				String pointString = inCargo ? curr.get().getDeliveryLocation().toString() : curr.get().getPickupLocation().toString();
 				System.out.println("curr " + curr.get().getPackID() + " at " + pointString + cargoString + " | ");

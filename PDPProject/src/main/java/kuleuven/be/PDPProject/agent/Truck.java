@@ -113,6 +113,10 @@ public class Truck extends Vehicle {
 		return truckID;
 	}
 
+	public Point getNextPoint() {
+		return nextPoint;
+	}
+
 	public void setIntPath(LinkedList<Point> path) {
 		this.intPath = new LinkedList<>(path);
 	}
@@ -361,6 +365,7 @@ public class Truck extends Vehicle {
 			if (tryToMove(roadModel, time)) {																			// Try to move
 				System.out.print("escaping | ");
 				if (!hasChosenNewNodeDL) {
+				    this.hasChosenNewNode = true;
 					this.isDeadLocked = false;
 					System.out.print("escaped | ");
 				}
@@ -393,7 +398,7 @@ public class Truck extends Vehicle {
 			}
 			System.out.println("pp "+ this.previousPoint.toString() + " -- np "+ this.nextPoint.toString() + " | ");
 		}
-		else if (this.mustMove && intPath.isEmpty()) { // && !curr.isPresent()) {										// If we are waiting and someone wants to pass
+		else if (this.mustMove && intPath.isEmpty() && !curr.isPresent()) {										// If we are waiting and someone wants to pass
 			System.out.print("must move  | ");
 
 			if (!hasChosenNewNode) {																					// Choose a node where to move

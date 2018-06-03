@@ -166,7 +166,7 @@ public class IntentionAnt extends Ant{
 				truck.getCurr().get().kidnapping(t.getTruckID());
 				Point nextPoint;
 				if (myPath.isEmpty())																		//t is on the Pack
-					nextPoint = roadModel.getPosition(t);
+					nextPoint = t.getNextPoint();
 				else {
 					nextPoint = myPath.removeLast();
 					t.setIntPath(myPath);

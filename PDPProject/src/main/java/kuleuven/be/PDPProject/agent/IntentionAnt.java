@@ -150,7 +150,7 @@ public class IntentionAnt extends Ant{
 	 * @param truck ourselves
 	 * @return the success or failure of the operation
 	 */
-	public boolean negotiate(Truck truck, LinkedList<String> trucksBehindUs){
+	public boolean negotiate(Truck truck, LinkedList<String> trucksBehindUs, TimeLapse timeLapse){
 		LinkedList<Point> myPath = new LinkedList<>(truck.getIntPath());
 		Set<Truck> truckSet = this.roadModel.getObjectsAt(this, Truck.class);
 
@@ -171,7 +171,7 @@ public class IntentionAnt extends Ant{
 				    t.setCurr(truck.getCurr());
 				    t.getCurr().get().setBestTruckKnown(false);
 					t.sendMyIntention(roadModel, roadModel.getPosition(this), truck.getCurr().get(), 0d);
-				    t.updateTargetPoints(roadModel, roadModel.getPosition(t));
+				    t.updateTargetPoints(roadModel, roadModel.getPosition(t), timeLapse);
 					System.out.println(t.getTruckID() + " gets pack of " + truck.getTruckID() + " _1_");
 				    truck.setCurr(Optional.<Pack>absent());
 				    return true;
@@ -192,7 +192,7 @@ public class IntentionAnt extends Ant{
 							t.sendMyIntention(roadModel, pack.getPickupLocation(), pack, rs.getCost());
 					}
 					t.setIntPath(myPath);
-					t.updateTargetPoints(roadModel, nextPoint);							//We're sure it works with initial myPath of size 1
+					t.updateTargetPoints(roadModel, nextPoint, timeLapse);							//We're sure it works with initial myPath of size 1
 					System.out.println(t.getTruckID() + " gets pack of " + truck.getTruckID() + " _2_");
 					truck.setIntPath(new LinkedList<Point>());
 					truck.setCurr(Optional.<Pack>absent());

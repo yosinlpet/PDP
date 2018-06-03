@@ -82,7 +82,7 @@ public final class Project {
   
   private static final int factor = 5;
   private static final long END = 2000;
-  private static final long SEED = 2399L;
+  private static final long SEED = 400L;
 
   private static final double AGV_SPEED = .2d;
   private static final int AGV_CAPACITY = 1;

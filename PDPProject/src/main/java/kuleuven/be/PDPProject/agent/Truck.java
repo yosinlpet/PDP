@@ -36,8 +36,6 @@ public class Truck extends Vehicle {
 	private IntentionAnt urgentAnt;
 	private Point nextPoint;
 	private Point previousPoint;
-	private Point currLoc;
-	private Point previousLoc;
 
 	private boolean isBackFlagDropped;
 	private boolean isFrontFlagRaised;
@@ -54,6 +52,7 @@ public class Truck extends Vehicle {
 	private long accumulatedDelay;
 	private double accumulatedDist;
 	private LinkedList<String> trucksBehindUs;
+	private long lastUpdate;
 
 	RandomGenerator rng;
 	private RoadModel roadModel;
@@ -83,8 +82,6 @@ public class Truck extends Vehicle {
 		accumulatedDist = 0d;
 		previousPoint = getStartPosition();
 		nextPoint = getStartPosition();
-		previousLoc = new Point(-Double.MAX_VALUE, -Double.MAX_VALUE);
-		currLoc = getStartPosition();
 		intPath = new LinkedList<>();
 		tmpPath = new LinkedList<>();
 		isBackFlagDropped = true;
@@ -96,6 +93,7 @@ public class Truck extends Vehicle {
 		hasChosenNewNodeDL=false;
 		trucksBehindUs = new LinkedList<>();
 		blockedPath = new LinkedList<>();
+		lastUpdate = 0L;
 	}
 
 	public void initRoadPDP(RoadModel pRoadModel, PDPModel pPdpModel) {
@@ -217,11 +215,12 @@ public class Truck extends Vehicle {
 		return path;
 	}
 
-	public void updateTargetPoints(RoadModel rm, Point nextPoint) {
+	public void updateTargetPoints(RoadModel rm, Point nextPoint, TimeLapse timeLapse) {
 		this.previousPoint = rm.getPosition(this);
 		this.nextPoint = nextPoint;
-		isFrontFlagRaised = false;
-		isBackFlagDropped = false;
+		this.lastUpdate = timeLapse.getTime();
+		this.isFrontFlagRaised = false;
+		this.isBackFlagDropped = false;
 	}
 
 	public void sendMyIntention(RoadModel rm, Point packetPos, Pack targetPack, double cost) {
@@ -239,9 +238,9 @@ public class Truck extends Vehicle {
 	}
 
 
-	public boolean negotiate(RoadModel rm){
+	public boolean negotiate(RoadModel rm, TimeLapse timeLapse){
 		urgentAnt = new IntentionAnt(rm, this.truckID, this.nextPoint);
-		return urgentAnt.negotiate(this, trucksBehindUs);
+		return urgentAnt.negotiate(this, trucksBehindUs, timeLapse);
 	}
 
 	/**
@@ -267,10 +266,10 @@ public class Truck extends Vehicle {
 
 			if (rm.getPosition(this).equals(nextPoint)) {
 				if(!intPath.isEmpty()) {
-					updateTargetPoints(rm, intPath.removeLast());
+					updateTargetPoints(rm, intPath.removeLast(), time);
 				}
 				else
-					updateTargetPoints(rm, nextPoint);
+					updateTargetPoints(rm, nextPoint, time);
 			}
 
 			trucksBehindUs = new LinkedList<>(); // Reset list of trucks behind us
@@ -283,7 +282,14 @@ public class Truck extends Vehicle {
 			for(String trucks : trucksBehindUs) {
 				if(trucks.equals(this.truckID)) {
 					isDeadLocked = true;
+					System.out.println(this.truckID + " is in type 1 deadlock.");
 					break;
+				}
+			}
+			if (!isDeadLocked) {
+				if (time.getTime() - this.lastUpdate > 60) {
+					isDeadLocked = true;
+					System.out.println(this.truckID + " is in type 2 deadlock.");
 				}
 			}
 			return false;
@@ -318,7 +324,7 @@ public class Truck extends Vehicle {
 			// Take the pack : its for us !
 			if (isAllowed) {
 				intPath = new LinkedList<>(tmpPath);
-				updateTargetPoints(roadModel,intPath.getLast());
+				updateTargetPoints(roadModel,intPath.getLast(), timeLapse);
 				curr = Optional.fromNullable(tmpPack);
 				curr.get().setCarried(packAppearedOnUs);
 				packAppearedOnUs = false;
@@ -341,11 +347,10 @@ public class Truck extends Vehicle {
 				points.addAll(pointCollection);
 				for(Point p : points) {
 					if(!p.equals(nextPoint)) {
-						updateTargetPoints(roadModel, p);
+						updateTargetPoints(roadModel, p, time);
 						System.out.print("has "+ p.toString()+" | ");
 						hasChosenNewNodeDL = true;
 						this.intPath = new LinkedList<>();
-						this.intPath.addLast(p);
 						break;
 					}
 					else
@@ -367,10 +372,10 @@ public class Truck extends Vehicle {
 						intPath = getCorrespondingPath(roadSignSet, curr.get().getPackID(), inCargo);
 						System.out.println();
 						System.out.println(truckID + " has new path: " + intPath.toString());
-						updateTargetPoints(roadModel, (intPath.isEmpty()) ? nextPoint : intPath.getLast());
+						updateTargetPoints(roadModel, (intPath.isEmpty()) ? nextPoint : intPath.getLast(), time);
 					}
 					else {
-						updateTargetPoints(roadModel, nextPoint);
+						updateTargetPoints(roadModel, nextPoint, time);
 						System.out.print("NoCurr | ");
 					}
 					this.mustMove = false;
@@ -382,7 +387,7 @@ public class Truck extends Vehicle {
 			else {
 				System.out.print("no Esc | ");
 				if (curr.isPresent() && pdpModel.getParcelState(curr.get()).equals(PDPModel.ParcelState.AVAILABLE))
-					this.negotiate(roadModel);
+					this.negotiate(roadModel, time);
 				else
 					sendEmergency(roadModel);
 			}
@@ -404,7 +409,7 @@ public class Truck extends Vehicle {
 						orderedPoints.addFirst(p);
 				}
 				Point point = orderedPoints.getFirst();
-				updateTargetPoints(roadModel, point);
+				updateTargetPoints(roadModel, point, time);
 				hasChosenNewNode = true;
 			}
 
@@ -490,7 +495,7 @@ public class Truck extends Vehicle {
 
 					if (roadModel.getPosition(this).equals(curr.get().getDeliveryLocation())) {                // deliver when we arrive
                         this.deliver(time);
-						updateTargetPoints(roadModel, roadModel.getPosition(this));
+						updateTargetPoints(roadModel, roadModel.getPosition(this), time);
 					}
 				}
 
@@ -498,14 +503,14 @@ public class Truck extends Vehicle {
 					boolean hasNegotiated = false;
 
 					if (!tryToMove(roadModel, time))
-						hasNegotiated = negotiate(roadModel);
+						hasNegotiated = negotiate(roadModel, time);
 
 					if (hasNegotiated)
-						updateTargetPoints(roadModel, roadModel.getPosition(this));
+						updateTargetPoints(roadModel, roadModel.getPosition(this), time);
 					else {
 						if (roadModel.getPosition(this).equals(curr.get().getPickupLocation())) {               //pick up the thing
 							this.pickUp(time, curr.get(), true);
-							updateTargetPoints(roadModel, intPath.getLast());
+							updateTargetPoints(roadModel, intPath.getLast(), time);
 						}
 					}
 

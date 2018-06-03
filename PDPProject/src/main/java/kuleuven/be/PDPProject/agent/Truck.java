@@ -116,7 +116,7 @@ public class Truck extends Vehicle {
 	}
 
 	public void setIntPath(LinkedList<Point> path) {
-		this.intPath = path;
+		this.intPath = new LinkedList<>(path);
 	}
 
 	public Optional<Pack> getCurr() {
@@ -131,16 +131,8 @@ public class Truck extends Vehicle {
 		return intPath;
 	}
 
-	public void setNextPoint(Point nextPoint) {
-		this.nextPoint = nextPoint;
-	}
-
 	public boolean isCarrying() {
 		return (curr.isPresent() && this.pdpModel.containerContains(this, curr.get()));
-	}
-
-	public boolean isCarrying(Pack pckg) {
-		return this.pdpModel.containerContains(this, pckg);
 	}
 
 	public int getHasCarried() {
@@ -352,6 +344,8 @@ public class Truck extends Vehicle {
 						updateTargetPoints(roadModel, p);
 						System.out.print("has "+ p.toString()+" | ");
 						hasChosenNewNodeDL = true;
+						this.intPath = new LinkedList<>();
+						this.intPath.addLast(p);
 						break;
 					}
 					else
@@ -361,32 +355,23 @@ public class Truck extends Vehicle {
 
 			if (tryToMove(roadModel, time)) {																			// Try to move
 				System.out.print("escaping | ");
-				if (roadModel.getPosition(this).equals(nextPoint)) { 											// we have moved to the next node
+				if (!hasChosenNewNodeDL) {
+					this.isDeadLocked = false;
+					System.out.print("escaped | ");
+				}
+				else if (roadModel.getPosition(this).equals(nextPoint)) { 											// we have moved to the next node
 					System.out.print("escaped | ");
 					Set<RoadSign> roadSignSet = roadModel.getObjectsAt((RoadUser) this, RoadSign.class);
-					if(curr.isPresent() && hasChosenNewNodeDL) {
+					if(curr.isPresent()) {
 						boolean inCargo = pdpModel.containerContains(this, curr.get());
-						if(!inCargo) {
-							intPath = getCorrespondingPath(roadSignSet, curr.get().getPackID(), false);
-							if (roadModel.getPosition(this).equals(curr.get().getPickupLocation()))
-								this.pickUp(time, curr.get(), true);
-							updateTargetPoints(roadModel, intPath.getLast());
-						}
-						else {
-							intPath = getCorrespondingPath(roadSignSet, curr.get().getPackID(), true);
-							System.out.println();
-							System.out.println(truckID+" has new path: "+intPath.toString());
-							if (roadModel.getPosition(this).equals(curr.get().getDeliveryLocation())) {
-								this.deliver(time);
-								updateTargetPoints(roadModel, nextPoint);
-							}
-							else
-								updateTargetPoints(roadModel, intPath.getLast());
-						}
+						intPath = getCorrespondingPath(roadSignSet, curr.get().getPackID(), inCargo);
+						System.out.println();
+						System.out.println(truckID + " has new path: " + intPath.toString());
+						updateTargetPoints(roadModel, (intPath.isEmpty()) ? nextPoint : intPath.getLast());
 					}
 					else {
 						updateTargetPoints(roadModel, nextPoint);
-						System.out.print("NoCurr or same Path | ");
+						System.out.print("NoCurr | ");
 					}
 					this.mustMove = false;
 					this.hasChosenNewNodeDL = false;
@@ -528,7 +513,7 @@ public class Truck extends Vehicle {
 					if (!hasNegotiated && this.intPath.isEmpty() && this.roadModel.getPosition(this) == this.nextPoint) {
 						System.out.println("[WARNING] -- AIMING AT A PACK BUT NO WAY TO GET THERE -- PATH COMPUTATION");
 						Set<RoadSign> roadSignSet = roadModel.getObjectsAt((RoadUser) this, RoadSign.class);
-						getCorrespondingPath(roadSignSet, truckID, inCargo);
+						intPath = getCorrespondingPath(roadSignSet, truckID, inCargo);
 					}
 				}
 			}

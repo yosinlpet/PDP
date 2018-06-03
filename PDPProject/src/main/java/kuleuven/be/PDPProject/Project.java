@@ -72,9 +72,9 @@ public final class Project {
   private static final int NUM_PCKGS = 0;
 
   private static final int SPEED_UP = 1;
-  private static final double NEW_CUSTOMER_PROB = .05;
+  private static final double NEW_CUSTOMER_PROB = .06;
 
-  private static final String MAP_FILE = "/largerGraph.dot";
+  private static final String MAP_FILE = "/testGraph.dot";
   private static final Map<String, Graph<MultiAttributeData>> GRAPH_CACHE = newHashMap();
 
   private static final long TEST_STOP_TIME = 20 * 60 * 1000;

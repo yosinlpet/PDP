@@ -474,7 +474,6 @@ public class Truck extends Vehicle {
 					for (Pack p : packSet) {
 						if(p.getTruckID().equals("nobody")) {
 							packAppearedOnUs = true;
-							checkPackIsForMe = true;
 							sendMyIntention(roadModel, roadModel.getPosition(this), p, 0d);
 							this.pickUp(time, p, true);
 							curr = Optional.fromNullable(p);

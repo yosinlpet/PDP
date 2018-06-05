@@ -16,6 +16,7 @@
 package kuleuven.be.PDPProject;
 import com.github.rinde.rinsim.core.model.road.DynamicGraphRoadModelImpl;
 import com.github.rinde.rinsim.core.model.time.TimeModel;
+import com.github.rinde.rinsim.geom.io.AbstractGraphIO;
 import kuleuven.be.PDPProject.agent.*;
 
 import static com.google.common.collect.Lists.newArrayList;
@@ -23,6 +24,7 @@ import static com.google.common.collect.Maps.newHashMap;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.LinkedList;
 import java.util.Map;
 
@@ -148,18 +150,17 @@ public final class Project {
    * @return The simulator instance.
    */
   public static Simulator run(boolean testing, final long endTime,
-                              String graphFile,
+                              final String graphFile,
                               @Nullable Display display, @Nullable Monitor m, @Nullable Listener list, long seed, int num_agv,
                               final double agv_speed, final double proba, final int fact, final boolean visual) {
 	  
 	  int packID = 0;
 
-    final View.Builder view = createGui(testing, display, m, list);
+      final View.Builder view = createGui(testing, display, m, list);
 
-    final Simulator simulator;
-
+      final Simulator simulator;
     if (visual) {
-        if (graphFile == "warehouse") {
+        if (graphFile.equals("warehouse")) {
             simulator = Simulator.builder()
                     .addModel(RoadModelBuilders.dynamicGraph(GraphCreator.createSimpleGraph())
                             .withDistanceUnit(SI.METER).withSpeedUnit(SI.METERS_PER_SECOND))
@@ -181,7 +182,7 @@ public final class Project {
         }
     }
     else {
-        if (graphFile == "warehouse") {
+        if (graphFile.equals("warehouse")) {
             simulator = Simulator.builder()
                     .addModel(RoadModelBuilders.dynamicGraph(GraphCreator.createSimpleGraph())
                             .withDistanceUnit(SI.METER).withSpeedUnit(SI.METERS_PER_SECOND))
@@ -344,6 +345,7 @@ public final class Project {
           Filters.selfCycleFilter())
         .read(
           Project.class.getResourceAsStream(name));
+
       GRAPH_CACHE.put(name, g);
       return g;
     } catch (final FileNotFoundException e) {
@@ -353,7 +355,7 @@ public final class Project {
     }
   }
   
-  static class GraphCreator { 
+  static class GraphCreator {
 	    static final int VEHICLE_LENGTH = 1;
 	 
 	    GraphCreator() {} 
@@ -395,7 +397,7 @@ public final class Project {
             Graphs.addPath(g, matrix.row(0).values());
             Graphs.addPath(g, Lists.reverse(newArrayList(matrix.row(matrix.rowKeySet().size() - 1).values())));
 	      return new ListenableGraph<>(g);
-	    } 
+	    }
 	 
 	  }
 }

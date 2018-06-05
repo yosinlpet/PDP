@@ -209,8 +209,8 @@ public class Pack extends Parcel implements TickListener{
 		if (timeLapse.getTime() == this.endTime - sim.getTimeStep() && !pdpModel.getParcelState(this).equals(PDPModel.ParcelState.DELIVERED)) {
 			long delay = timeLapse.getTime() + sim.getTimeStep() - this.deliveryTW.end();
 			delay = Math.max(0L, delay);
-			System.out.println(this.packID + " sends its delay: "+Long.toString(delay));
-			statCollector.setPackDelay(delay);
+			System.out.println(this.packID + " sends its delay: "+ Long.toString(delay));
+			statCollector.setPackDelay(delay, pdpModel.getParcelState(this).equals(PDPModel.ParcelState.AVAILABLE));
 		}
 	}
 	

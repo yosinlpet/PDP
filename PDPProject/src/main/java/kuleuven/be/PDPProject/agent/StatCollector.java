@@ -41,6 +41,7 @@ public class StatCollector {
     private double proba;
     private double agv_speed;
     private int factor;
+    private int waitingPacks;
 
     public StatCollector(RoadModel roadModel, String fileName, int nAGVs, long seed, double proba, int factor, double agv_speed) {
         this.fileName = fileName;
@@ -49,6 +50,8 @@ public class StatCollector {
         this.feasAnt  = 0;
         this.intAnt   = 0;
         this.totalAnt = 0;
+
+        this.waitingPacks = 0;
 
         this.truckIDs = new LinkedList<>();
         this.truckDists = new LinkedList<>();
@@ -66,8 +69,9 @@ public class StatCollector {
         this.factor = factor;
     }
 
-    public void setPackDelay(long delay) {
+    public void setPackDelay(long delay, boolean waiting) {
         this.totalDelay += delay;
+        this.waitingPacks += waiting ? 1 : 0;
     }
 
     public void runStats(TimeLapse timeLapse) {
@@ -130,11 +134,13 @@ public class StatCollector {
             printer.println();
             printer.println("========================================================================================================");
             printer.println();
-            printer.println("Total Delay: " + Long.toString(this.totalDelay));
+            printer.println("Total Delay        : " + Long.toString(this.totalDelay));
             printer.println();
-            printer.println("Total Dist : " + String.format("%5.3f", this.totalDist));
+            printer.println("Total Waiting Packs: " + Integer.toString(this.waitingPacks));
             printer.println();
-            printer.println("Total Ants : " + Integer.toString(this.totalAnt));
+            printer.println("Total Dist         : " + String.format("%5.3f", this.totalDist));
+            printer.println();
+            printer.println("Total Ants         : " + Integer.toString(this.totalAnt));
             printer.close();
         }
         catch (IOException e) {

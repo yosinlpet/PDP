@@ -75,7 +75,7 @@ import com.google.common.collect.Table;
  */
 public final class Project {
 
-  private static final int NUM_AGVS = 8;
+  private static final int NUM_AGVS = 10;
   private static final int NUM_PCKGS = 0;
 
   private static final int SPEED_UP = 1;
@@ -83,7 +83,8 @@ public final class Project {
 
   //private static final String MAP = "largerGraph";
   //private static String MAP = "largerGraph3";
-  private static String MAP = "testGraph";
+  //private static String MAP = "testGraph";
+  private static String MAP = "warehouse";
 
 
   private static final String MAP_FILE = "/" + MAP +".dot";
@@ -93,12 +94,13 @@ public final class Project {
   private static final int TEST_SPEED_UP = 64;
   
   private static final int factor = 5;
-  private static final long END = 3600;
-  private static final long SEED = 20L;
+  private static final long END = 500;
+  private static final long SEED = 10L;
 
   private static final double AGV_SPEED = .1d;
   private static final int AGV_CAPACITY = 1;
 
+  private static final boolean VIS = true;
 
   public Project() {}
 
@@ -108,21 +110,23 @@ public final class Project {
    *          simulation.
    */
   public static void main(@Nullable String[] args) {
-    final long endTime = args != null && args.length >= 1 ? Long.parseLong(args[0]) : END;
+      final boolean visual = args != null && args.length >=1 ? Boolean.parseBoolean(args[0]) : VIS;
 
-    final String graphFile = args != null && args.length >= 2 ? args[1] : MAP;
+    final long endTime = args != null && args.length >= 2 ? Long.parseLong(args[1]) : END;
 
-    final long seed = args != null && args.length >= 3 ? Long.parseLong(args[2]) : SEED;
+    final String graphFile = args != null && args.length >= 3 ? args[2] : MAP;
 
-    final double proba = args != null && args.length >= 4 ? Double.parseDouble(args[3]) : NEW_CUSTOMER_PROB;
+    final long seed = args != null && args.length >= 4 ? Long.parseLong(args[3]) : SEED;
 
-    final int fact = args != null && args.length >= 5 ? Integer.parseInt(args[4]) : factor;
+    final double proba = args != null && args.length >= 5 ? Double.parseDouble(args[4]) : NEW_CUSTOMER_PROB;
 
-    final int num_agv = args != null && args.length >= 6 ? Integer.parseInt(args[5]) : NUM_AGVS;
+    final int fact = args != null && args.length >= 6 ? Integer.parseInt(args[5]) : factor;
 
-    final double agv_speed = args != null && args.length >= 7 ? Double.parseDouble(args[6]) : AGV_SPEED;
+    final int num_agv = args != null && args.length >= 7 ? Integer.parseInt(args[6]) : NUM_AGVS;
 
-    run(false, endTime, graphFile, null /* new Display() */, null, null, seed, num_agv, agv_speed, proba, fact);
+    final double agv_speed = args != null && args.length >= 8 ? Double.parseDouble(args[7]) : AGV_SPEED;
+
+    run(false, endTime, graphFile, null /* new Display() */, null, null, seed, num_agv, agv_speed, proba, fact, visual);
   }
 
   /**
@@ -130,7 +134,7 @@ public final class Project {
    * @param testing If <code>true</code> enables the test mode.
    */
   public static void run(boolean testing) {
-    run(testing, Long.MAX_VALUE, MAP_FILE, null, null, null, SEED, NUM_AGVS, AGV_SPEED, NEW_CUSTOMER_PROB, factor);
+    run(testing, Long.MAX_VALUE, MAP_FILE, null, null, null, SEED, NUM_AGVS, AGV_SPEED, NEW_CUSTOMER_PROB, factor, VIS);
   }
 
   /**
@@ -145,21 +149,57 @@ public final class Project {
    */
   public static Simulator run(boolean testing, final long endTime,
                               String graphFile,
-                              @Nullable Display display, @Nullable Monitor m, @Nullable Listener list, long seed, int num_agv, final double agv_speed, final double proba, final int fact) {
+                              @Nullable Display display, @Nullable Monitor m, @Nullable Listener list, long seed, int num_agv,
+                              final double agv_speed, final double proba, final int fact, final boolean visual) {
 	  
 	  int packID = 0;
 
     final View.Builder view = createGui(testing, display, m, list);
 
-    final Simulator simulator = Simulator.builder()
-      .addModel(RoadModelBuilders.staticGraph(loadGraph("/"+graphFile+".dot"))
-    	//.addModel( RoadModelBuilders.dynamicGraph(GraphCreator.createSimpleGraph())
-    			.withDistanceUnit(SI.METER).withSpeedUnit(SI.METERS_PER_SECOND))
-      .addModel(DefaultPDPModel.builder())
-            .addModel(TimeModel.builder().withTickLength(1).withTimeUnit(SI.SECOND))
-      //.addModel(view)
-      .setRandomSeed(seed)
-      .build();
+    final Simulator simulator;
+
+    if (visual) {
+        if (graphFile == "warehouse") {
+            simulator = Simulator.builder()
+                    .addModel(RoadModelBuilders.dynamicGraph(GraphCreator.createSimpleGraph())
+                            .withDistanceUnit(SI.METER).withSpeedUnit(SI.METERS_PER_SECOND))
+                    .addModel(DefaultPDPModel.builder())
+                    .addModel(TimeModel.builder().withTickLength(1).withTimeUnit(SI.SECOND))
+                    .addModel(view)
+                    .setRandomSeed(seed)
+                    .build();
+        }
+        else {
+            simulator = Simulator.builder()
+                    .addModel(RoadModelBuilders.staticGraph(loadGraph("/" + graphFile + ".dot"))
+                            .withDistanceUnit(SI.METER).withSpeedUnit(SI.METERS_PER_SECOND))
+                    .addModel(DefaultPDPModel.builder())
+                    .addModel(TimeModel.builder().withTickLength(1).withTimeUnit(SI.SECOND))
+                    .addModel(view)
+                    .setRandomSeed(seed)
+                    .build();
+        }
+    }
+    else {
+        if (graphFile == "warehouse") {
+            simulator = Simulator.builder()
+                    .addModel(RoadModelBuilders.dynamicGraph(GraphCreator.createSimpleGraph())
+                            .withDistanceUnit(SI.METER).withSpeedUnit(SI.METERS_PER_SECOND))
+                    .addModel(DefaultPDPModel.builder())
+                    .addModel(TimeModel.builder().withTickLength(1).withTimeUnit(SI.SECOND))
+                    .setRandomSeed(seed)
+                    .build();
+        }
+        else {
+            simulator = Simulator.builder()
+                    .addModel(RoadModelBuilders.staticGraph(loadGraph("/" + graphFile + ".dot"))
+                            .withDistanceUnit(SI.METER).withSpeedUnit(SI.METERS_PER_SECOND))
+                    .addModel(DefaultPDPModel.builder())
+                    .addModel(TimeModel.builder().withTickLength(1).withTimeUnit(SI.SECOND))
+                    .setRandomSeed(seed)
+                    .build();
+        }
+    }
 
     final String OUTPUT_FILE = ".logfiles/" + graphFile
             +"/run_nAGV"+String.format("%02d", num_agv)
@@ -314,14 +354,7 @@ public final class Project {
   }
   
   static class GraphCreator { 
-	    static final int LEFT_CENTER_U_ROW = 4; 
-	    static final int LEFT_CENTER_L_ROW = 5; 
-	    static final int LEFT_COL = 4; 
-	    static final int RIGHT_CENTER_U_ROW = 2; 
-	    static final int RIGHT_CENTER_L_ROW = 4; 
-	    static final int RIGHT_COL = 0; 
-	    
-	    static final int VEHICLE_LENGTH = 1; 
+	    static final int VEHICLE_LENGTH = 1;
 	 
 	    GraphCreator() {} 
 	 
@@ -342,56 +375,28 @@ public final class Project {
 	    static ListenableGraph<LengthData> createSimpleGraph() { 
 	      final Graph<LengthData> g = new TableGraph<>(); 
 	 
-	      final Table<Integer, Integer, Point> matrix = createMatrix(8, 6, 
-	          new Point(0, 0)); 
-	 
-	      for (int i = 0; i < matrix.columnMap().size(); i++) { 
-	 
-	        Iterable<Point> path; 
-	        if (i % 2 == 0) { 
-	          path = Lists.reverse(newArrayList(matrix.column(i).values())); 
-	        } else { 
-	          path = matrix.column(i).values(); 
-	        } 
-	        Graphs.addPath(g, path); 
-	      } 
-	 
-	      Graphs.addPath(g, matrix.row(0).values()); 
-	      Graphs.addPath(g, Lists.reverse(newArrayList(matrix.row( 
-	          matrix.rowKeySet().size() - 1).values()))); 
-	 
-	      return new ListenableGraph<>(g); 
+	      final Table<Integer, Integer, Point> matrix = createMatrix(6, 6,
+	          new Point(0, 0));
+
+            for (int i = 0; i < matrix.columnMap().size(); i++) {
+
+                Iterable<Point> path;
+                if (i % 2 == 0) {
+                    path = Lists.reverse(newArrayList(matrix.column(i).values()));
+                }
+                else {
+                    path = matrix.column(i).values();
+                }
+                Graphs.addPath(g, path);
+            }
+
+            Graphs.addPath(g, Lists.reverse(newArrayList(matrix.row(2).values())));
+            Graphs.addPath(g, (newArrayList(matrix.row(matrix.rowKeySet().size()- 3).values())));
+            Graphs.addPath(g, matrix.row(0).values());
+            Graphs.addPath(g, Lists.reverse(newArrayList(matrix.row(matrix.rowKeySet().size() - 1).values())));
+	      return new ListenableGraph<>(g);
 	    } 
 	 
-	    static ListenableGraph<LengthData> createGraph() { 
-	      final Graph<LengthData> g = new TableGraph<>(); 
-	 
-	      final Table<Integer, Integer, Point> leftMatrix = createMatrix(5, 10, 
-	          new Point(0, 0)); 
-	      for (final Map<Integer, Point> column : leftMatrix.columnMap().values()) { 
-	        Graphs.addBiPath(g, column.values()); 
-	      } 
-	      Graphs.addBiPath(g, leftMatrix.row(LEFT_CENTER_U_ROW).values()); 
-	      Graphs.addBiPath(g, leftMatrix.row(LEFT_CENTER_L_ROW).values()); 
-	 
-	      final Table<Integer, Integer, Point> rightMatrix = createMatrix(10, 7, 
-	          new Point(30, 6)); 
-	      for (final Map<Integer, Point> row : rightMatrix.rowMap().values()) { 
-	        Graphs.addBiPath(g, row.values()); 
-	      } 
-	      Graphs.addBiPath(g, rightMatrix.column(0).values()); 
-	      Graphs.addBiPath(g, rightMatrix.column(rightMatrix.columnKeySet().size() 
-	          - 1).values()); 
-	 
-	      Graphs.addPath(g, 
-	          rightMatrix.get(RIGHT_CENTER_U_ROW, RIGHT_COL), 
-	          leftMatrix.get(LEFT_CENTER_U_ROW, LEFT_COL)); 
-	      Graphs.addPath(g, 
-	          leftMatrix.get(LEFT_CENTER_L_ROW, LEFT_COL), 
-	          rightMatrix.get(RIGHT_CENTER_L_ROW, RIGHT_COL)); 
-	 
-	      return new ListenableGraph<>(g); 
-	    } 
 	  }
 }
 

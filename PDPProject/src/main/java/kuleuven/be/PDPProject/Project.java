@@ -94,7 +94,7 @@ public final class Project {
 
   private static final long TEST_STOP_TIME = 20 * 60 * 1000;
   private static final int TEST_SPEED_UP = 64;
-  
+
   private static final int factor = 5;
   private static final long END = 500;
   private static final long SEED = 10L;
@@ -103,6 +103,7 @@ public final class Project {
   private static final int AGV_CAPACITY = 1;
 
   private static final boolean VIS = true;
+  private static final boolean PREND = false;
 
   public Project() {}
 
@@ -128,7 +129,9 @@ public final class Project {
 
     final double agv_speed = args != null && args.length >= 8 ? Double.parseDouble(args[7]) : AGV_SPEED;
 
-    run(false, endTime, graphFile, null /* new Display() */, null, null, seed, num_agv, agv_speed, proba, fact, visual);
+      final boolean p_rend = args != null && args.length >= 9 ? Boolean.parseBoolean(args[8]) : PREND;
+
+    run(false, endTime, graphFile, null /* new Display() */, null, null, seed, num_agv, agv_speed, proba, fact, visual, p_rend);
   }
 
   /**
@@ -136,7 +139,7 @@ public final class Project {
    * @param testing If <code>true</code> enables the test mode.
    */
   public static void run(boolean testing) {
-    run(testing, Long.MAX_VALUE, MAP_FILE, null, null, null, SEED, NUM_AGVS, AGV_SPEED, NEW_CUSTOMER_PROB, factor, VIS);
+    run(testing, Long.MAX_VALUE, MAP_FILE, null, null, null, SEED, NUM_AGVS, AGV_SPEED, NEW_CUSTOMER_PROB, factor, VIS, PREND);
   }
 
   /**
@@ -152,11 +155,11 @@ public final class Project {
   public static Simulator run(boolean testing, final long endTime,
                               final String graphFile,
                               @Nullable Display display, @Nullable Monitor m, @Nullable Listener list, long seed, int num_agv,
-                              final double agv_speed, final double proba, final int fact, final boolean visual) {
-	  
+                              final double agv_speed, final double proba, final int fact, final boolean visual, final boolean p_rend) {
+
 	  int packID = 0;
 
-      final View.Builder view = createGui(testing, display, m, list);
+      final View.Builder view = createGui(testing, p_rend, display, m, list);
 
       final Simulator simulator;
     if (visual) {
@@ -232,8 +235,8 @@ public final class Project {
         }
     	simulator.register(new Truck(position, AGV_CAPACITY, agv_speed,"Truck-"+String.format("%03d", i), rng));
     }
-    
- 
+
+
     for (int i = 0; i < NUM_PCKGS; i++) {
     	Point destination;
         Point departure = roadModel.getRandomPosition(rng);
@@ -243,7 +246,7 @@ public final class Project {
         while (destination.equals(departure));
 		Measure<Double, Length> md = roadModel.getDistanceOfPath(
 				roadModel.getShortestPathTo(departure, destination));
-		
+
 		long distanceShortestPath = (long) md.doubleValue(md.getUnit());
 
 		long maxDeliveryTime =
@@ -273,10 +276,10 @@ public final class Project {
             }
         	while (destination.equals(departure));
 
-        	
+
     		Measure<Double, Length> md = roadModel.getDistanceOfPath(
     				roadModel.getShortestPathTo(departure, destination));
-    		
+
     		long distanceShortestPath = (long) md.doubleValue(md.getUnit());
 
     		long maxDeliveryTime =
@@ -284,7 +287,7 @@ public final class Project {
 
     		TimeWindow tw = TimeWindow.create(time.getStartTime(),
     						time.getStartTime()+maxDeliveryTime);
-        		 		
+
         	simulator.register(new Pack(
     				Parcel.builder(departure, destination)
     					.deliveryTimeWindow(tw)
@@ -303,18 +306,29 @@ public final class Project {
 
   static View.Builder createGui(
       boolean testing,
+      boolean p_rend,
       @Nullable Display display,
       @Nullable Monitor m,
       @Nullable Listener list) {
 
-    View.Builder view = View.builder()
+    View.Builder view;
+    if (p_rend) {
+      view = View.builder()
       .with(GraphRoadModelRenderer.builder().withDirectionArrows().withNodeCircles().withMargin(1))
       .with(RoadUserRenderer.builder()
-        .withImageAssociation(Truck.class, "/multix.png")
-        .withImageAssociation(Pack.class, "/issou.png"))
-          //.withImageAssociation(RoadSign.class, "/roadSign.png"))
+      .withImageAssociation(Truck.class, "/multix.png")
+      .withImageAssociation(Pack.class, "/issou.png"))
       .with(PDPModelRenderer.builder())
       .withTitleAppendix("Issou!");
+    }
+    else {
+      view = View.builder()
+      .with(GraphRoadModelRenderer.builder().withDirectionArrows().withNodeCircles().withMargin(1))
+      .with(RoadUserRenderer.builder()
+      .withImageAssociation(Truck.class, "/multix.png")
+      .withImageAssociation(Pack.class, "/issou.png"))
+      .withTitleAppendix("Issou!");
+    }
 
     if (testing) {
       view = view.withAutoClose()
@@ -354,29 +368,29 @@ public final class Project {
       throw new IllegalStateException(e);
     }
   }
-  
+
   static class GraphCreator {
 	    static final int VEHICLE_LENGTH = 1;
-	 
-	    GraphCreator() {} 
-	 
-	    static ImmutableTable<Integer, Integer, Point> createMatrix(int cols, 
-	        int rows, Point offset) { 
-	      final ImmutableTable.Builder<Integer, Integer, Point> builder = 
-	          ImmutableTable.builder(); 
-	      for (int c = 0; c < cols; c++) { 
-	        for (int r = 0; r < rows; r++) { 
-	          builder.put(r, c, new Point( 
-	              offset.x + c * VEHICLE_LENGTH * 2, 
-	              offset.y + r * VEHICLE_LENGTH * 2)); 
-	        } 
-	      } 
-	      return builder.build(); 
-	    } 
-	 
-	    static ListenableGraph<LengthData> createSimpleGraph() { 
-	      final Graph<LengthData> g = new TableGraph<>(); 
-	 
+
+	    GraphCreator() {}
+
+	    static ImmutableTable<Integer, Integer, Point> createMatrix(int cols,
+	        int rows, Point offset) {
+	      final ImmutableTable.Builder<Integer, Integer, Point> builder =
+	          ImmutableTable.builder();
+	      for (int c = 0; c < cols; c++) {
+	        for (int r = 0; r < rows; r++) {
+	          builder.put(r, c, new Point(
+	              offset.x + c * VEHICLE_LENGTH * 2,
+	              offset.y + r * VEHICLE_LENGTH * 2));
+	        }
+	      }
+	      return builder.build();
+	    }
+
+	    static ListenableGraph<LengthData> createSimpleGraph() {
+	      final Graph<LengthData> g = new TableGraph<>();
+
 	      final Table<Integer, Integer, Point> matrix = createMatrix(6, 6,
 	          new Point(0, 0));
 
@@ -398,8 +412,6 @@ public final class Project {
             Graphs.addPath(g, Lists.reverse(newArrayList(matrix.row(matrix.rowKeySet().size() - 1).values())));
 	      return new ListenableGraph<>(g);
 	    }
-	 
+
 	  }
 }
-
-
